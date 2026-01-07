@@ -346,6 +346,7 @@ function handleHelpCommand(stream: vscode.ChatResponseStream): vscode.ChatResult
 ### Meta Commands
 - \`/status\` - Project overview and health
 - \`/context\` - Show workspace context
+- \`/feedback\` - Report issues or suggestions
 - \`/help\` - This help message
 
 ### Examples

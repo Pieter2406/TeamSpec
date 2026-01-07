@@ -233,6 +233,10 @@
           {
             "name": "context",
             "description": "Show current workspace context and project state"
+          },
+          {
+            "name": "feedback",
+            "description": "Report issues, bugs, or suggestions for TeamSpec"
           }
         ]
       }

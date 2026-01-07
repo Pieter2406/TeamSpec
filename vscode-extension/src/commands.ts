@@ -691,6 +691,36 @@ What would you like to do?`
         ]
     },
     {
+        name: 'feedback',
+        description: 'Report issues, bugs, or improvement suggestions for TeamSpec',
+        role: 'DISPATCHER',
+        macro: `Help the user provide structured feedback about TeamSpec:
+
+1. Ask what type of feedback:
+   - 🐛 Bug Report
+   - 📝 Prompt Issue
+   - 💡 Feature Request
+   - 📚 Documentation Issue
+   - ⚡ UX Improvement
+
+2. Collect relevant details based on feedback type
+
+3. Generate structured feedback in markdown format with:
+   - Type, Date, Severity
+   - Summary and Details
+   - Steps to reproduce (if applicable)
+   - Affected components
+   - Environment info
+   - Suggested fix (optional)
+
+4. Offer to:
+   - Create GitHub issue at github.com/Pieter2406/TeamSpec/issues
+   - Save locally to feedback/ folder
+   - Just display without saving
+
+Be thorough but empathetic. Make it easy to report issues.`
+    },
+    {
         name: 'help',
         description: 'Show available commands and examples',
         role: 'DISPATCHER',
