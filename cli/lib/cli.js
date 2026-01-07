@@ -115,7 +115,7 @@ function parseArgs(args) {
 
   if (args.length > 0 && !args[0].startsWith('-')) {
     const cmd = args[0].toLowerCase();
-    if (['init', 'update', 'lint'].includes(cmd)) {
+    if (['init', 'update', 'lint', 'generate-prompts'].includes(cmd)) {
       options.command = cmd;
       i = 1;
     }
@@ -209,6 +209,7 @@ ${colored('EXAMPLES:', colors.bold)}
   teamspec update --force               # Update without confirmation
   teamspec lint                         # Lint all projects
   teamspec lint --project my-project    # Lint specific project
+  teamspec generate-prompts             # Generate GitHub Copilot prompt files
 
 ${colored('WHAT GETS CREATED:', colors.bold)}
   .teamspec/                 Core framework
@@ -999,6 +1000,26 @@ async function run(args) {
     // Exit with error code if there are errors or blockers
     const hasErrors = results.some(r => r.severity === SEVERITY.ERROR || r.severity === SEVERITY.BLOCKER);
     if (hasErrors) {
+      process.exit(1);
+    }
+    return;
+  }
+
+  // Handle generate-prompts command
+  if (options.command === 'generate-prompts') {
+    const { generateAllPrompts } = require('./prompt-generator');
+    const targetDir = path.resolve(options.target);
+    
+    console.log(`\n${colored('TeamSpec Copilot Prompt Generator', colors.bold + colors.cyan)}`);
+    console.log(`${colored('Target:', colors.bold)} ${targetDir}\n`);
+    
+    try {
+      generateAllPrompts(targetDir);
+      console.log(`\n${colored('✨ Done!', colors.green + colors.bold)}`);
+      console.log(`\nYou can now use ${colored('ts:role-command', colors.cyan)} in GitHub Copilot Chat.`);
+      console.log(`Example: ${colored('ts:ba-project', colors.cyan)} or ${colored('ts:fa-story', colors.cyan)}`);
+    } catch (error) {
+      console.error(colored(`❌ Error: ${error.message}`, colors.red));
       process.exit(1);
     }
     return;
