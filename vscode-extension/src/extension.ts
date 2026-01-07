@@ -374,18 +374,55 @@ function handleContextCommand(
     workspaceContext: Awaited<ReturnType<typeof gatherContext>>,
     stream: vscode.ChatResponseStream
 ): vscode.ChatResult {
-    if (!workspaceContext.projectFolder) {
-        stream.markdown('⚠️ **No TeamSpec project detected**\n\nEnsure your workspace contains:\n- A `project.yml` file, or\n- A `features/` folder, or\n- A `projects/` folder with project subfolders');
-        return { metadata: { command: 'context', hasProject: false } };
+    // Show team context even without project
+    if (workspaceContext.teamContext) {
+        stream.markdown('## 🏢 Team Context\n\n');
+        stream.markdown(`**Organization:** ${workspaceContext.teamContext.org.name}\n`);
+        if (workspaceContext.teamContext.org.department) {
+            stream.markdown(`**Department:** ${workspaceContext.teamContext.org.department}\n`);
+        }
+        stream.markdown(`**Team:** ${workspaceContext.teamContext.team.name}\n`);
+        if (workspaceContext.teamContext.team.roles.length > 0) {
+            stream.markdown(`**Active Roles:** ${workspaceContext.teamContext.team.roles.join(', ')}\n`);
+        }
+        if (workspaceContext.teamContext.org.industry) {
+            stream.markdown(`**Industry:** ${workspaceContext.teamContext.org.industry}\n`);
+        }
+        if (workspaceContext.teamContext.org.profile && workspaceContext.teamContext.org.profile !== 'none') {
+            stream.markdown(`\n### 📋 Profile: ${workspaceContext.teamContext.org.profile}\n`);
+            if (workspaceContext.teamContext.profileConfig) {
+                const pc = workspaceContext.teamContext.profileConfig;
+                stream.markdown(`- **Governance:** ${pc.governanceLevel}\n`);
+                stream.markdown(`- **Sign-off Required:** ${pc.signOffRequired ? 'Yes' : 'No'}\n`);
+                stream.markdown(`- **Audit Trail:** ${pc.auditTrail ? 'Yes' : 'No'}\n`);
+                stream.markdown(`- **Documentation:** ${pc.documentation}\n`);
+            }
+        }
+        if (workspaceContext.teamContext.org.compliance && workspaceContext.teamContext.org.compliance.length > 0) {
+            stream.markdown(`\n### 🔒 Compliance\n`);
+            stream.markdown(`${workspaceContext.teamContext.org.compliance.join(', ')}\n`);
+        }
+        stream.markdown('\n');
     }
 
+    if (!workspaceContext.projectFolder) {
+        if (!workspaceContext.teamContext) {
+            stream.markdown('⚠️ **No TeamSpec context detected**\n\n');
+            stream.markdown('To set up team context, create `.teamspec/context/team.yml`:\n\n');
+            stream.markdown('```yaml\norg:\n  name: "Your Company"\n  profile: startup  # startup | enterprise | regulated\n\nteam:\n  name: "Your Team"\n  roles:\n    - FA\n    - DEV\n    - QA\n```\n\n');
+        }
+        stream.markdown('⚠️ **No TeamSpec project detected**\n\nEnsure your workspace contains:\n- A `project.yml` file, or\n- A `features/` folder, or\n- A `projects/` folder with project subfolders');
+        return { metadata: { command: 'context', hasProject: false, hasTeamContext: !!workspaceContext.teamContext } };
+    }
+
+    stream.markdown('## 📁 Project Context\n\n');
     stream.markdown(formatContextForPrompt(workspaceContext));
 
     if (workspaceContext.projectFolder) {
         stream.markdown(`\n\n**Project Path:** \`${workspaceContext.projectFolder}\``);
     }
 
-    return { metadata: { command: 'context', hasProject: true } };
+    return { metadata: { command: 'context', hasProject: true, hasTeamContext: !!workspaceContext.teamContext } };
 }
 
 /**

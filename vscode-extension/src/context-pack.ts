@@ -16,6 +16,8 @@ export interface WorkspaceContext {
     projectFolder?: string;
     /** Project metadata from project.yml */
     projectMeta?: ProjectMeta;
+    /** Team context from team.yml */
+    teamContext?: TeamContext;
     /** Current file path */
     currentFile?: string;
     /** Current selection text */
@@ -28,6 +30,33 @@ export interface WorkspaceContext {
     stories: StoryRef[];
     /** Recent/relevant ADRs */
     adrs: AdrRef[];
+}
+
+export interface TeamContext {
+    /** Organization info */
+    org: {
+        name: string;
+        department?: string;
+        industry?: string;
+        profile?: 'none' | 'startup' | 'platform-team' | 'enterprise' | 'regulated';
+        compliance?: string[];
+    };
+    /** Team info */
+    team: {
+        name: string;
+        roles: string[];
+    };
+    /** Loaded profile configuration */
+    profileConfig?: ProfileConfig;
+}
+
+export interface ProfileConfig {
+    name: string;
+    governanceLevel: string;
+    signOffRequired: boolean;
+    auditTrail: boolean;
+    changeControlBoard: boolean;
+    documentation: string;
 }
 
 export interface ProjectMeta {
@@ -122,6 +151,119 @@ function parseProjectMeta(projectFolder: string): ProjectMeta | undefined {
     }
 
     return undefined;
+}
+
+/**
+ * Parse team.yml for team context
+ */
+function parseTeamContext(workspaceRoot: string): TeamContext | undefined {
+    // Look for .teamspec/context/team.yml
+    const teamYmlPath = path.join(workspaceRoot, '.teamspec', 'context', 'team.yml');
+    if (!fs.existsSync(teamYmlPath)) {
+        return undefined;
+    }
+
+    try {
+        const content = fs.readFileSync(teamYmlPath, 'utf-8');
+        
+        // Parse org section
+        const orgNameMatch = content.match(/^\s*name:\s*["']?([^"'\n]+)["']?/m);
+        const orgDeptMatch = content.match(/department:\s*["']?([^"'\n]+)["']?/m);
+        const orgIndustryMatch = content.match(/industry:\s*(\w+)/m);
+        const orgProfileMatch = content.match(/profile:\s*(\w+(?:-\w+)?)/m);
+        
+        // Parse compliance array
+        const complianceMatch = content.match(/compliance:\s*\n([\s\S]*?)(?=\n\w|$)/);
+        let compliance: string[] = [];
+        if (complianceMatch) {
+            const complianceLines = complianceMatch[1].match(/-\s*(\w+)/g);
+            if (complianceLines) {
+                compliance = complianceLines.map(l => l.replace(/^-\s*/, ''));
+            }
+        }
+        
+        // Parse team section
+        const teamSection = content.match(/team:\s*\n([\s\S]*?)(?=\n[a-z]+:|$)/i);
+        let teamName = 'Unknown Team';
+        let roles: string[] = [];
+        
+        if (teamSection) {
+            const teamNameMatch = teamSection[1].match(/name:\s*["']?([^"'\n]+)["']?/);
+            if (teamNameMatch) {
+                teamName = teamNameMatch[1].trim();
+            }
+            
+            const rolesMatch = teamSection[1].match(/roles:\s*\n([\s\S]*?)(?=\n\s*[a-z]+:|$)/i);
+            if (rolesMatch) {
+                const roleLines = rolesMatch[1].match(/-\s*(\w+)/g);
+                if (roleLines) {
+                    roles = roleLines.map(l => l.replace(/^-\s*/, ''));
+                }
+            }
+        }
+        
+        const teamContext: TeamContext = {
+            org: {
+                name: orgNameMatch?.[1]?.trim() || 'Unknown Org',
+                department: orgDeptMatch?.[1]?.trim(),
+                industry: orgIndustryMatch?.[1]?.trim(),
+                profile: orgProfileMatch?.[1]?.trim() as TeamContext['org']['profile'],
+                compliance: compliance.length > 0 ? compliance : undefined
+            },
+            team: {
+                name: teamName,
+                roles: roles
+            }
+        };
+        
+        // Load profile configuration if specified
+        if (teamContext.org.profile && teamContext.org.profile !== 'none') {
+            teamContext.profileConfig = loadProfileConfig(workspaceRoot, teamContext.org.profile);
+        }
+        
+        return teamContext;
+    } catch (error) {
+        console.warn('Failed to parse team.yml', error);
+        return undefined;
+    }
+}
+
+/**
+ * Load profile configuration from profiles folder
+ */
+function loadProfileConfig(workspaceRoot: string, profileName: string): ProfileConfig | undefined {
+    const profilePath = path.join(workspaceRoot, '.teamspec', 'profiles', `${profileName}.yml`);
+    if (!fs.existsSync(profilePath)) {
+        return undefined;
+    }
+
+    try {
+        const content = fs.readFileSync(profilePath, 'utf-8');
+        
+        // Parse profile characteristics table or YAML
+        const governanceMatch = content.match(/Governance Level\s*\|\s*(\w+)/i) ||
+                               content.match(/governance[_-]?level:\s*(\w+)/i);
+        const signOffMatch = content.match(/Sign-off Required\s*\|\s*(Yes|No)/i) ||
+                            content.match(/sign[_-]?off[_-]?required:\s*(true|false)/i);
+        const auditMatch = content.match(/Audit Trail\s*\|\s*(Yes|No)/i) ||
+                          content.match(/audit[_-]?trail:\s*(true|false)/i);
+        const ccbMatch = content.match(/Change Control Board\s*\|\s*(Yes|No)/i) ||
+                        content.match(/change[_-]?control[_-]?board:\s*(true|false)/i);
+        const docMatch = content.match(/Documentation\s*\|\s*(\w+)/i) ||
+                        content.match(/documentation:\s*(\w+)/i);
+        
+        return {
+            name: profileName,
+            governanceLevel: governanceMatch?.[1] || 'Standard',
+            signOffRequired: signOffMatch?.[1]?.toLowerCase() === 'yes' || signOffMatch?.[1]?.toLowerCase() === 'true',
+            auditTrail: auditMatch?.[1]?.toLowerCase() === 'yes' || auditMatch?.[1]?.toLowerCase() === 'true',
+            changeControlBoard: ccbMatch?.[1]?.toLowerCase() === 'yes' || ccbMatch?.[1]?.toLowerCase() === 'true',
+            documentation: docMatch?.[1] || 'Standard'
+        };
+    } catch (error) {
+        console.warn(`Failed to load profile: ${profileName}`, error);
+        return undefined;
+    }
 }
 
 /**
@@ -318,6 +460,9 @@ export async function gatherContext(): Promise<WorkspaceContext> {
     const workspaceFolder = workspaceFolders[0];
     context.workspaceRoot = workspaceFolder.uri.fsPath;
 
+    // Load team context from .teamspec/context/team.yml
+    context.teamContext = parseTeamContext(context.workspaceRoot);
+
     // Find project folder
     context.projectFolder = findProjectFolder(workspaceFolder);
     
@@ -379,6 +524,28 @@ export function formatContextForPrompt(context: WorkspaceContext): string {
 
     parts.push('## Current Workspace Context');
     parts.push('');
+
+    // Team context
+    if (context.teamContext) {
+        parts.push(`**Organization:** ${context.teamContext.org.name}`);
+        if (context.teamContext.org.department) {
+            parts.push(`**Department:** ${context.teamContext.org.department}`);
+        }
+        parts.push(`**Team:** ${context.teamContext.team.name}`);
+        if (context.teamContext.team.roles.length > 0) {
+            parts.push(`**Active Roles:** ${context.teamContext.team.roles.join(', ')}`);
+        }
+        if (context.teamContext.org.profile) {
+            parts.push(`**Profile:** ${context.teamContext.org.profile}`);
+        }
+        if (context.teamContext.org.compliance && context.teamContext.org.compliance.length > 0) {
+            parts.push(`**Compliance:** ${context.teamContext.org.compliance.join(', ')}`);
+        }
+        if (context.teamContext.profileConfig) {
+            parts.push(`**Governance:** ${context.teamContext.profileConfig.governanceLevel} (Sign-off: ${context.teamContext.profileConfig.signOffRequired ? 'Required' : 'Not Required'})`);
+        }
+        parts.push('');
+    }
 
     if (context.projectMeta) {
         parts.push(`**Project:** ${context.projectMeta.name} (${context.projectMeta.id})`);
