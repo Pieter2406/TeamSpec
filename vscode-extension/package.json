@@ -241,6 +241,36 @@
         ]
       }
     ],
+    "commands": [
+      {
+        "command": "teamspec.createProject",
+        "title": "TeamSpec: Create Project Structure"
+      },
+      {
+        "command": "teamspec.createEpic",
+        "title": "TeamSpec: Create Epic"
+      },
+      {
+        "command": "teamspec.createFeature",
+        "title": "TeamSpec: Create Feature File"
+      },
+      {
+        "command": "teamspec.createDecision",
+        "title": "TeamSpec: Log Decision"
+      },
+      {
+        "command": "teamspec.createStory",
+        "title": "TeamSpec: Create Story"
+      },
+      {
+        "command": "teamspec.createDevPlan",
+        "title": "TeamSpec: Create Dev Plan"
+      },
+      {
+        "command": "teamspec.createTestCases",
+        "title": "TeamSpec: Create Test Cases"
+      }
+    ],
     "configuration": {
       "title": "TeamSpec",
       "properties": {

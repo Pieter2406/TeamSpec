@@ -52,7 +52,65 @@ export function activate(context: vscode.ExtensionContext) {
         output.show();
     });
 
-    context.subscriptions.push(participant, reloadCommand, contextCommand);
+    // Register action commands for chat participant buttons
+    const createProjectCommand = vscode.commands.registerCommand('teamspec.createProject', async () => {
+        // Open chat with /ba-project command
+        vscode.commands.executeCommand('workbench.action.chat.open', {
+            query: '@teamspec /ba-project '
+        });
+    });
+
+    const createEpicCommand = vscode.commands.registerCommand('teamspec.createEpic', async () => {
+        vscode.commands.executeCommand('workbench.action.chat.open', {
+            query: '@teamspec /ba-epic '
+        });
+    });
+
+    const createFeatureCommand = vscode.commands.registerCommand('teamspec.createFeature', async () => {
+        vscode.commands.executeCommand('workbench.action.chat.open', {
+            query: '@teamspec /ba-feature '
+        });
+    });
+
+    const createDecisionCommand = vscode.commands.registerCommand('teamspec.createDecision', async () => {
+        vscode.commands.executeCommand('workbench.action.chat.open', {
+            query: '@teamspec /ba-decision '
+        });
+    });
+
+    const createStoryCommand = vscode.commands.registerCommand('teamspec.createStory', async (featureId?: string) => {
+        const query = featureId 
+            ? `@teamspec /fa-story ${featureId} `
+            : '@teamspec /fa-story ';
+        vscode.commands.executeCommand('workbench.action.chat.open', { query });
+    });
+
+    const createDevPlanCommand = vscode.commands.registerCommand('teamspec.createDevPlan', async (storyId?: string) => {
+        const query = storyId 
+            ? `@teamspec /dev-plan ${storyId} `
+            : '@teamspec /dev-plan ';
+        vscode.commands.executeCommand('workbench.action.chat.open', { query });
+    });
+
+    const createTestCasesCommand = vscode.commands.registerCommand('teamspec.createTestCases', async (featureId?: string) => {
+        const query = featureId 
+            ? `@teamspec /qa-test ${featureId} `
+            : '@teamspec /qa-test ';
+        vscode.commands.executeCommand('workbench.action.chat.open', { query });
+    });
+
+    context.subscriptions.push(
+        participant, 
+        reloadCommand, 
+        contextCommand,
+        createProjectCommand,
+        createEpicCommand,
+        createFeatureCommand,
+        createDecisionCommand,
+        createStoryCommand,
+        createDevPlanCommand,
+        createTestCasesCommand
+    );
     
     console.log('TeamSpec extension activated');
 }
@@ -200,7 +258,7 @@ async function handleCommand(
     }
 
     // Add action buttons based on command
-    addActionButtons(command.role, stream, ids);
+    addActionButtons(command.role, stream, ids, request.command);
 
     return {
         metadata: {
@@ -478,23 +536,46 @@ function handleStatusCommand(
 }
 
 /**
- * Add action buttons based on role
+ * Add action buttons based on role and command
  */
 function addActionButtons(
     role: RoleCode,
     stream: vscode.ChatResponseStream,
-    ids: { featureIds: string[]; storyIds: string[] }
+    ids: { featureIds: string[]; storyIds: string[] },
+    commandName?: string
 ): void {
-    // Add relevant action buttons based on role and context
+    // Add relevant action buttons based on role, command, and context
     const buttons: vscode.Command[] = [];
 
     switch (role) {
         case 'BA':
-            buttons.push({
-                command: 'teamspec.createFeature',
-                title: '📄 Create Feature File',
-                arguments: []
-            });
+            // Show different buttons based on the specific BA subcommand
+            if (commandName === 'ba-project' || commandName?.includes('project')) {
+                buttons.push({
+                    command: 'teamspec.createProject',
+                    title: '📁 Create Project Structure',
+                    arguments: []
+                });
+            } else if (commandName === 'ba-epic' || commandName?.includes('epic')) {
+                buttons.push({
+                    command: 'teamspec.createEpic',
+                    title: '🎯 Create Epic',
+                    arguments: []
+                });
+            } else if (commandName === 'ba-decision' || commandName?.includes('decision')) {
+                buttons.push({
+                    command: 'teamspec.createDecision',
+                    title: '📋 Log Decision',
+                    arguments: []
+                });
+            } else {
+                // Default to feature for ba-feature or generic ba command
+                buttons.push({
+                    command: 'teamspec.createFeature',
+                    title: '📄 Create Feature File',
+                    arguments: []
+                });
+            }
             break;
         case 'FA':
             if (ids.featureIds.length > 0) {
