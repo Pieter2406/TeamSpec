@@ -1,0 +1,29 @@
+# Development files
+test/
+*.test.js
+.eslintrc*
+.prettierrc*
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+
+# Misc
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+
+# CI
+.github/
+.travis.yml
+.circleci/
+
+# Docs (keep README.md)
+CONTRIBUTING.md
+CHANGELOG.md
+docs/

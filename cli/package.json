@@ -7,8 +7,9 @@
     "teamspec": "./bin/teamspec-init.js"
   },
   "scripts": {
-    "test": "mocha test/**/*.test.js",
-    "lint": "eslint lib/**/*.js"
+    "test": "node --test test/**/*.test.js",
+    "lint": "eslint lib/**/*.js",
+    "prepublishOnly": "npm test"
   },
   "keywords": [
     "teamspec",
@@ -20,13 +21,16 @@
     "claude",
     "ai-coding",
     "documentation",
-    "templates"
+    "templates",
+    "scrum",
+    "kanban",
+    "software-development"
   ],
   "author": "TeamSpec Contributors",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/teamspec/teamspec.git"
+    "url": "git+https://github.com/teamspec/teamspec.git"
   },
   "bugs": {
     "url": "https://github.com/teamspec/teamspec/issues"
@@ -39,9 +43,8 @@
     "bin/",
     "lib/",
     "teamspec-core/",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
-  "devDependencies": {
-    "mocha": "^11.0.0"
-  }
+  "preferGlobal": true
 }

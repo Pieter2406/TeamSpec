@@ -107,7 +107,7 @@ function parseArgs(args) {
 
   if (args.length > 0 && !args[0].startsWith('-')) {
     const cmd = args[0].toLowerCase();
-    if (['init', 'update'].includes(cmd)) {
+    if (['init', 'update', 'lint'].includes(cmd)) {
       options.command = cmd;
       i = 1;
     }
@@ -170,6 +170,7 @@ ${colored('USAGE:', colors.bold)}
 ${colored('COMMANDS:', colors.bold)}
   init [options]          Initialize TeamSpec in a repository (default)
   update [options]        Update TeamSpec core files (keeps team context)
+  lint [options]          Lint project artifacts against TeamSpec rules
 
 ${colored('OPTIONS:', colors.bold)}
   -h, --help              Show this help message
@@ -194,6 +195,8 @@ ${colored('EXAMPLES:', colors.bold)}
   teamspec --profile startup -y         # Quick setup with startup profile
   teamspec update                       # Update core files, keep context
   teamspec update --force               # Update without confirmation
+  teamspec lint                         # Lint all projects
+  teamspec lint --project my-project    # Lint specific project
 
 ${colored('WHAT GETS CREATED:', colors.bold)}
   .teamspec/                 Core framework
@@ -818,6 +821,31 @@ async function run(args) {
 
   if (options.version) {
     printVersion();
+    return;
+  }
+
+  // Handle lint command
+  if (options.command === 'lint') {
+    const { Linter, SEVERITY } = require('./linter');
+    const targetDir = path.resolve(options.target);
+    
+    console.log(`\n${colored('TeamSpec Linter', colors.bold + colors.cyan)}`);
+    console.log(`${colored('Scanning:', colors.bold)} ${targetDir}`);
+    
+    if (options.project) {
+      console.log(`${colored('Project:', colors.bold)} ${options.project}`);
+    }
+    
+    const linter = new Linter(targetDir);
+    const results = await linter.run({ project: options.project });
+    
+    console.log(linter.formatResults(results));
+    
+    // Exit with error code if there are errors or blockers
+    const hasErrors = results.some(r => r.severity === SEVERITY.ERROR || r.severity === SEVERITY.BLOCKER);
+    if (hasErrors) {
+      process.exit(1);
+    }
     return;
   }
 
