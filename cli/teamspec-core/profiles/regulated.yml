@@ -1,0 +1,97 @@
+# Regulated Industry Profile
+
+> **Version:** 2.0  
+> **Applies To:** Banking, Healthcare, Government, Insurance
+
+This profile adds compliance-focused governance overlays to TeamSpec.
+
+---
+
+## Profile Characteristics
+
+| Aspect | Configuration |
+|--------|---------------|
+| Governance Level | Strict |
+| Sign-off Required | Yes |
+| Audit Trail | Yes |
+| Change Control Board | Yes |
+| Documentation | Comprehensive |
+
+---
+
+## Additional Checkpoints
+
+### Definition of Ready Additions
+
+| Check | Enforcement |
+|-------|-------------|
+| Risk assessment completed | Required |
+| Compliance impact documented | Required |
+| Data classification reviewed | Required |
+| Security review scheduled (if applicable) | Required |
+
+### Definition of Done Additions
+
+| Check | Enforcement |
+|-------|-------------|
+| Compliance sign-off obtained | Required |
+| Audit log entries verified | Required |
+| Release notes drafted | Required |
+| Rollback plan documented | Required |
+
+---
+
+## Required Artifacts
+
+Stories in regulated environments MUST include:
+
+1. **Risk Assessment Section**
+   ```markdown
+   ## Risk Assessment
+   
+   | Risk | Impact | Mitigation |
+   |------|--------|------------|
+   ```
+
+2. **Compliance Impact Section**
+   ```markdown
+   ## Compliance Impact
+   
+   - **Affected Regulations:** [SOX/PCI-DSS/HIPAA/etc.]
+   - **Data Classification:** [Public/Internal/Confidential/Restricted]
+   - **Audit Requirements:** [Yes/No]
+   ```
+
+---
+
+## Approval Gates
+
+| Gate | Approver | When |
+|------|----------|------|
+| Story Creation | BA + Compliance | Before backlog |
+| Sprint Entry | SM + Risk Officer | Sprint planning |
+| Release | CCB | Before deployment |
+
+---
+
+## Recommended Compliance Frameworks
+
+- SOX (Sarbanes-Oxley)
+- PCI-DSS (Payment Card Industry)
+- HIPAA (Health Insurance Portability)
+- GDPR (General Data Protection)
+- SOC2 (Service Organization Control)
+- ISO27001 (Information Security)
+- FedRAMP (Federal Risk and Authorization)
+- POPIA (Protection of Personal Information Act)
+
+---
+
+## Feature Canon Requirements
+
+For regulated environments, Feature Canon MUST include:
+
+1. **Compliance section** in feature files
+2. **Data handling documentation** 
+3. **Audit trail** of all changes
+4. **Version history** with approvers

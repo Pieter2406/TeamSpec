@@ -1,0 +1,129 @@
+# Sprint {N} Goal
+
+> **Template Version**: 2.0  
+> **Last Updated**: 2026-01-07  
+> **Sprint Duration**: {YYYY-MM-DD} to {YYYY-MM-DD}  
+> **Status**: Planning | Active | Closed
+
+---
+
+**Document Owner:** SM (Scrum Master)  
+**Artifact Type:** Operational (Sprint-bound)  
+**Location:** `sprints/sprint-{N}/sprint-goal.md`
+
+---
+
+## Sprint Goal
+
+> {One clear, measurable objective that the team commits to achieving this sprint}
+
+**Success Criteria**:
+- [ ] {Specific, measurable outcome 1}
+- [ ] {Specific, measurable outcome 2}
+- [ ] {Specific, measurable outcome 3}
+
+---
+
+## Sprint Metadata
+
+| Field | Value |
+|-------|-------|
+| **Sprint Number** | {N} |
+| **Start Date** | {YYYY-MM-DD} |
+| **End Date** | {YYYY-MM-DD} |
+| **Capacity** | {N} points |
+| **Scrum Master** | @{sm} |
+
+---
+
+## Committed Stories
+
+| Story ID | Title | Points | Dev Plan | Owner | Status |
+|----------|-------|--------|----------|-------|--------|
+| [S-XXX](../../stories/ready-for-development/S-XXX-*.md) | {Title} | {N} | [Plan](../../dev-plans/story-XXX-tasks.md) | @{dev} | Not Started |
+
+**Total Committed**: {N} points
+
+---
+
+## Sprint Scope
+
+### In Scope
+- {Feature/capability being delivered}
+- {Feature/capability being delivered}
+
+### Out of Scope
+- {Explicitly excluded items}
+- {Deferred to future sprint}
+
+### Dependencies
+- {External dependency or blocker}
+
+---
+
+## Acceptance Criteria for Sprint Goal
+
+**Given** the sprint is complete  
+**When** we review the deliverables  
+**Then**:
+- [ ] {Goal criterion 1 is met}
+- [ ] {Goal criterion 2 is met}
+- [ ] All committed stories meet Definition of Done
+- [ ] Feature Canon updated for all behavior-changing stories
+
+---
+
+## Daily Progress
+
+| Day | Date | Remaining Pts | Notes |
+|-----|------|---------------|-------|
+| 1 | {YYYY-MM-DD} | {N} | Sprint started |
+
+---
+
+## Blockers & Risks
+
+| Issue | Impact | Owner | Status |
+|-------|--------|-------|--------|
+| _None_ | | | |
+
+---
+
+## Canon Sync Tracking
+
+| Story | Impact Type | Canon Updated? | FA Verified |
+|-------|-------------|----------------|-------------|
+| S-XXX | Adds/Changes | [ ] | [ ] |
+
+---
+
+## Sprint Review Notes
+
+_To be filled at sprint review_
+
+### Demo Items
+- [ ] {Story/feature to demo}
+
+### Stakeholder Feedback
+- {Feedback item}
+
+---
+
+## Retrospective Actions
+
+_To be filled at retrospective_
+
+| What went well | What to improve | Action item |
+|----------------|-----------------|-------------|
+| | | |
+
+---
+
+## Sprint Closure
+
+| Metric | Value |
+|--------|-------|
+| Velocity | _TBD_ |
+| Completion Rate | _TBD_ |
+| Canon Sync Complete | [ ] |
+| Closed Date | _TBD_ |

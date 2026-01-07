@@ -1,0 +1,69 @@
+# TeamSpec Configuration
+# Version: 2.0.0
+
+version: "2.0"
+name: "TeamSpec Feature Canon Operating Model"
+
+# Core principles
+principles:
+  - Feature Canon is the source of truth for system behavior
+  - Stories describe deltas (changes), not full behavior
+  - Structural artifacts require explicit creation commands
+  - Each role has clear ownership boundaries
+
+# Folder structure reference
+structure:
+  teamspec_root: ".teamspec"
+  project_root: "projects/{project-id}"
+  
+  folders:
+    features: "projects/{project-id}/features"
+    stories: "projects/{project-id}/stories"
+    adr: "projects/{project-id}/adr"
+    decisions: "projects/{project-id}/decisions"
+    dev_plans: "projects/{project-id}/dev-plans"
+    qa: "projects/{project-id}/qa"
+    sprints: "projects/{project-id}/sprints"
+    epics: "projects/{project-id}/epics"
+
+# Role definitions
+roles:
+  BA:
+    name: "Business Analyst"
+    owns:
+      - "Problem/goal definition"
+      - "Business value and scope"
+      - "Feature Canon: Purpose & Scope section"
+  FA:
+    name: "Functional Analyst"
+    owns:
+      - "Functional specifications"
+      - "Story slicing"
+      - "Feature Canon: Behavior section"
+      - "Feature Canon: Change Log"
+  SA:
+    name: "Solution Architect"
+    owns:
+      - "Technical design"
+      - "Architecture decisions (ADRs)"
+  DEV:
+    name: "Developer"
+    owns:
+      - "Implementation"
+      - "Development plans"
+  QA:
+    name: "Quality Assurance"
+    owns:
+      - "Test cases (feature-level)"
+      - "Bug reports"
+      - "UAT packs"
+  SM:
+    name: "Scrum Master"
+    owns:
+      - "Sprint management"
+      - "Process facilitation"
+  DES:
+    name: "Designer"
+    owns:
+      - "UI/UX design"
+      - "Design system"

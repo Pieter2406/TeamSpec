@@ -1,0 +1,47 @@
+{
+  "name": "teamspec",
+  "version": "3.0.0",
+  "description": "CLI tool to bootstrap TeamSpec 2.0 Feature Canon operating model in any repository",
+  "main": "lib/cli.js",
+  "bin": {
+    "teamspec": "./bin/teamspec-init.js"
+  },
+  "scripts": {
+    "test": "mocha test/**/*.test.js",
+    "lint": "eslint lib/**/*.js"
+  },
+  "keywords": [
+    "teamspec",
+    "agile",
+    "specifications",
+    "feature-canon",
+    "copilot",
+    "cursor",
+    "claude",
+    "ai-coding",
+    "documentation",
+    "templates"
+  ],
+  "author": "TeamSpec Contributors",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/teamspec/teamspec.git"
+  },
+  "bugs": {
+    "url": "https://github.com/teamspec/teamspec/issues"
+  },
+  "homepage": "https://github.com/teamspec/teamspec#readme",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "files": [
+    "bin/",
+    "lib/",
+    "teamspec-core/",
+    "README.md"
+  ],
+  "devDependencies": {
+    "mocha": "^11.0.0"
+  }
+}

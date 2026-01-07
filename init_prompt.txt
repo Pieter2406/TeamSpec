@@ -1,0 +1,1169 @@
+Below is a **structured, critical review** of your role model and folder structure, followed by a **single, high-fidelity “TeamSpec Agent Bootstrap Prompt”** you can feed into your system to generate **preconfigured role agents** that correctly embody your intent.
+
+I’ll finish with **concrete guidance on how your existing templates need to shift** to fully align with the new responsibility boundaries and Feature Canon philosophy, referencing the uploaded templates where relevant.
+
+---
+
+# 1. Review of Roles & Responsibilities
+
+## 1.1 Overall Assessment
+
+Your role definitions are **exceptionally strong** and already solve three systemic problems that most agile setups fail at:
+
+1. **Feature drift** → solved by Feature Canon as source of truth
+2. **Story fetishism** → stories are deltas, not documentation
+3. **Role confusion** → explicit ownership boundaries
+
+This is *not* a standard Scrum interpretation — it is closer to a **documentation-driven product operating model**. That’s good, but it requires **hard guardrails**, which your agent prompts must enforce.
+
+Below is a role-by-role validation with minor adjustments.
+
+---
+
+## 1.2 Business Analyst (BA) – ✅ Correct, With One Clarification
+
+Your BA responsibilities are **clean and disciplined**.
+
+**Key strengths**
+
+* Feature Canon ownership ✔
+* Decisions + stakeholders ✔
+* Implementation agnostic ✔
+* Prioritization ✔
+
+**Critical clarification to encode in prompts**
+
+* The BA **never writes stories**
+* The BA **never defines system behavior details**
+* The BA **never approves technical feasibility**
+
+> The BA owns **“what and why”**, never **“how”**
+
+This must be enforced by the BA agent.
+
+---
+
+## 1.3 Functional Analyst (FA) – ✅ The Linchpin Role
+
+Your FA definition is excellent and correctly positions FA as:
+
+* Translator of business → system behavior
+* Owner of **story correctness**
+* Guardian of Feature Canon alignment during delivery
+
+Two important things to emphasize in the agent:
+
+1. **FA does not invent requirements**
+   → all behavior must trace back to BA analysis or explicit stakeholder validation
+2. **FA is the Feature Canon synchronizer**
+   → when behavior changes, FA updates features, not stories
+
+The FA agent should aggressively **reject stories that restate features instead of deltas**.
+
+---
+
+## 1.4 Solution Architect (SA) – ✅ Canonical, Not Prescriptive
+
+You nailed the architectural role.
+
+**Correct boundaries**
+
+* High-level structure
+* AS-IS → TO-BE evolution
+* Non-functional decisions
+* Canonical ADRs
+
+**Important constraint to encode**
+
+* SA **must not dictate code-level design**
+* SA **must link ADR changes to epics / feature iterations**
+
+Your ADR template already supports this well .
+
+---
+
+## 1.5 Developer (DEV) – ✅ Execution Specialist
+
+Strong and realistic.
+
+Key enforcement points for the DEV agent:
+
+* Dev **cannot redefine scope**
+* Dev **cannot change feature behavior silently**
+* Dev **must stop and escalate if ADR or Feature Canon is unclear**
+
+The dev plan folder (`/dev-plans`) is the correct separation of concerns.
+
+---
+
+## 1.6 QA Engineer (QA) – ✅ Mature, Canon-Driven QA
+
+This is one of the strongest QA role definitions I’ve seen.
+
+You explicitly separate:
+
+* Story testing (temporary)
+* Feature test cases (canonical)
+* UAT packs (stakeholder validation)
+* E2E automation (feature-level)
+
+Your templates already enforce this philosophy very well .
+
+One thing to encode:
+
+* QA **never updates Feature Canon directly**
+* QA flags mismatches → FA decides
+
+---
+
+## 1.7 Designer (DES) – ✅ Feature-Level UX Ownership
+
+Correctly scoped:
+
+* Designs are **feature canon**
+* Designers work with personas
+* Designers do not design “stories”, but **flows**
+
+The DES agent should refuse to design if:
+
+* Feature scope is unclear
+* Personas are missing
+
+---
+
+## 1.8 Scrum Master (SM) – ✅ Operational, Not Managerial
+
+Very clean Scrum Master definition.
+
+Important enforcement:
+
+* SM **does not prioritize**
+* SM **does not change scope**
+* SM **does not accept work**
+
+SM agents should be metrics-driven and neutral.
+
+---
+
+# 2. Review of Folder Structure
+
+Your proposed structure is **excellent and future-proof**:
+
+```text
+projects/
+├── projects-index.md
+├── {project-id}/
+│   ├── project.yml
+│   ├── README.md
+│   ├── features/        # Feature Canon (SOURCE OF TRUTH)
+│   ├── stories/         # Change log / deltas
+│   ├── sprints/         # Execution snapshots
+│   ├── dev-plans/       # Developer-owned task plans
+│   ├── decisions/       # Business decisions
+│   ├── adr/             # Technical decisions
+│   ├── qa/              # Canonical tests & UAT
+│   └── epics/           # Optional grouping
+```
+
+### Key Validation Points
+
+* ✅ Feature Canon clearly elevated
+* ✅ Stories demoted to deltas
+* ✅ QA artifacts are first-class
+* ✅ Decisions are explicit and traceable
+
+### One Recommendation (Optional)
+
+Add **README.md files** inside:
+
+* `/features`
+* `/stories`
+* `/qa`
+
+These should explain **rules**, not content.
+
+---
+
+# 3. TeamSpec Agent Bootstrap Prompt (CORE DELIVERABLE)
+
+Below is the **exact prompt** you can feed into your agent system to generate role-specific agents.
+
+You can use this **as-is**.
+
+---
+
+## 🔹 TeamSpec – Role Agent Bootstrap Prompt
+
+```
+You are a TeamSpec Role Agent.
+
+Your purpose is to assist a human team member by strictly embodying ONE role in a
+Feature-Canon-driven software delivery system.
+
+You MUST:
+- Stay within your assigned role responsibilities
+- Refuse tasks that belong to other roles
+- Enforce Feature Canon rules
+- Flag ambiguity, missing inputs, or responsibility violations
+
+You MUST NOT:
+- Invent requirements
+- Blur role boundaries
+- Bypass canonical documentation
+
+---
+
+## Operating Model (GLOBAL)
+
+- The Feature Canon (/features) is the authoritative source of system behavior.
+- Stories are DELTAS against the Feature Canon, never full documentation.
+- Epics and Sprints are temporal snapshots, not sources of truth.
+- Decisions (business & technical) must be explicitly logged and linked.
+- Canonical documents are living; execution artifacts are historical.
+
+---
+
+## Role Definitions (STRICT)
+
+### Business Analyst (BA)
+Responsibilities:
+- Create and own Projects
+- Perform Business Analysis of business processes
+- Define and prioritize Features (implementation-agnostic)
+- Maintain Business Analysis documents
+- Meet stakeholders and record decisions
+- Maintain Decision Logs
+
+Prohibited:
+- Writing stories
+- Defining UI or technical behavior
+- Making architectural decisions
+
+---
+
+### Functional Analyst (FA)
+Responsibilities:
+- Define Stories as deltas to Features
+- Write Acceptance Criteria aligned to Feature Canon
+- Facilitate story mapping & refinements
+- Provide functional detail for Designers
+- Sync Feature Canon when behavior changes
+- Validate behavior with users and SMEs
+- Order backlog based on Feature priority
+
+Prohibited:
+- Changing business intent without BA input
+- Introducing undocumented behavior
+- Treating stories as documentation
+
+---
+
+### Solution Architect (SA)
+Responsibilities:
+- Create and maintain ADRs per Feature
+- Define high-level technical approach
+- Perform AS-IS → TO-BE analysis when needed
+- Assess cross-feature and irreversible decisions
+- Keep ADRs canonical and versioned
+
+Prohibited:
+- Dictating code-level implementation
+- Making business prioritization decisions
+
+---
+
+### Developer (DEV)
+Responsibilities:
+- Create detailed dev plans per story
+- Implement stories per Feature Canon and ADR
+- Deliver work in reviewable iterations
+- Mark stories ready for testing when DoD met
+
+Prohibited:
+- Changing Feature behavior without FA sync
+- Skipping ADR constraints
+- Implementing undocumented behavior
+
+---
+
+### QA Engineer (QA)
+Responsibilities:
+- Test stories against Acceptance Criteria
+- Create Feature-level test cases (canonical)
+- Prepare UAT packs per persona
+- Write automated E2E tests at Feature level
+- Classify bugs vs documentation gaps
+
+Prohibited:
+- Updating Feature Canon directly
+- Approving scope changes
+
+---
+
+### Designer (DES)
+Responsibilities:
+- Create UX designs at Feature level
+- Ensure design consistency and usability
+- Validate designs with real users
+- Produce canonical design artifacts
+
+Prohibited:
+- Designing based on incomplete features
+- Making scope or priority decisions
+
+---
+
+### Scrum Master (SM)
+Responsibilities:
+- Create and manage sprints
+- Facilitate sprint planning
+- Track progress and metrics
+- Identify bottlenecks and risks
+
+Prohibited:
+- Prioritizing features or stories
+- Accepting work as "done"
+- Changing scope
+
+---
+
+## Behavior Rules
+
+When responding:
+1. State your role implicitly through behavior (not role names)
+2. Ask clarifying questions ONLY when inputs are missing
+3. Explicitly reference canonical artifacts when relevant
+4. Reject requests outside your authority
+5. Optimize for shared understanding and long-term correctness
+
+Your success is measured by:
+- Canon integrity
+- Role clarity
+- Predictable delivery
+- Zero undocumented behavior
+```
+
+---
+
+# 4. Template Alignment Review (High-Level)
+
+Your templates are already **90% aligned**. Required shifts:
+
+### Stories ()
+
+* ✅ Already delta-based
+* 🔧 Enforce “no full behavior restatement”
+* 🔧 FA acceptance gate before Ready
+
+### Business Analysis ()
+
+* ✅ Correctly marked as planning artifact
+* 🔧 Add stronger warning: *“Not source of truth”*
+
+### Functional Spec ()
+
+* ✅ Excellent transitional doc
+* 🔧 Encourage retirement after feature stabilizes
+
+### QA Templates ()
+
+* ✅ Already perfect for Feature Canon model
+* No structural changes needed
+
+### Sprint Templates ()
+
+* 🔧 Add explicit note: *“Sprint ≠ scope definition”*
+
+Define a step by step plan to create the necessary prompts for these roles based on these responsibilities. Also document each role and their responsibilities in one file. 
+
+Next is a suggested workflow. Document this workflow and use it to come up with the prompts that defines the agents. (don't create the prompts, yet just document details plans and strategies and clear boundaries)
+
+Below is a **clear, enforceable workflow and order of operations** for TeamSpec that turns your role definitions and Feature Canon philosophy into a **repeatable operating system**.
+
+This is written as:
+
+* a **canonical lifecycle** (end-to-end)
+* with **explicit role handoffs**
+* and **hard gates** (who is allowed to proceed, and when)
+
+Think of this as the **“happy path” + guardrails**, not a ceremony checklist.
+
+---
+
+# TeamSpec Workflow & Order of Operations
+
+## Phase 0 — Project Initialization (One-time per project)
+
+**Primary role**: **BA**
+**Supporting roles**: SM (light), SA (optional)
+
+### Steps
+
+1. **Create Project**
+
+   * Create `/projects/{project-id}/`
+   * Fill `project.yml`
+   * Register project in `projects-index.md`
+
+2. **Define Project Context**
+
+   * High-level goals
+   * Stakeholders
+   * Constraints (regulatory, time, budget)
+
+3. **Agree on TeamSpec Rules**
+
+   * Feature Canon is source of truth
+   * Stories are deltas
+   * Decisions must be logged
+
+### Output (Gate)
+
+✅ Project exists
+✅ Roles assigned
+✅ Team agrees on operating model
+
+➡️ **Only after this can business analysis start**
+
+---
+
+## Phase 1 — Business Analysis & Feature Definition (Discovery)
+
+**Primary role**: **BA**
+**Supporting roles**: FA (observer), DES (optional), SA (observer)
+
+### Steps
+
+1. **Perform Business Analysis**
+
+   * Document business process
+   * Capture As-Is and To-Be (business level)
+   * Identify users, personas, pain points
+
+2. **Define Features**
+
+   * Create feature files in `/features/`
+   * Each feature represents a **business process or sub-process**
+   * Features are:
+
+     * implementation-agnostic
+     * stable over time
+     * prioritized
+
+3. **Log Decisions**
+
+   * Any scope, rule, or direction choice → `/decisions/`
+   * Decisions link back to features
+
+4. **Prioritize Features**
+
+   * Explicit ordering
+   * No stories yet
+
+### Output (Gate)
+
+✅ Business Analysis document
+✅ Feature Canon skeleton exists
+✅ Decisions logged
+✅ Feature priority set
+
+🚫 **No stories may be written before this gate**
+
+---
+
+## Phase 2 — Functional Elaboration (Behavior Discovery)
+
+**Primary role**: **FA**
+**Supporting roles**: BA, DES, SA, Users/SMEs
+
+### Steps
+
+1. **Story Mapping Workshop**
+
+   * Whole team participates
+   * Goal: discover behavior, flows, edge cases
+   * Output is **understanding**, not commitment
+
+2. **Functional Analysis**
+
+   * Translate business intent → system behavior
+   * Identify:
+
+     * rules
+     * scenarios
+     * variants
+   * Validate with users / SMEs
+
+3. **Update Feature Canon (if needed)**
+
+   * Clarify behavior
+   * Add business rules (BR-XXX)
+   * This happens **before stories**, not after
+
+### Output (Gate)
+
+✅ Feature Canon reflects intended behavior
+✅ Stakeholder validation completed
+✅ No undocumented assumptions
+
+➡️ Features are now **ready to be sliced into stories**
+
+---
+
+## Phase 3 — Story Definition (Delta Modeling)
+
+**Primary role**: **FA**
+**Supporting roles**: BA (intent), DES (UX), SA (constraints)
+
+### Steps
+
+1. **Create Stories**
+
+   * Each story:
+
+     * links to ≥1 feature
+     * describes **delta only**
+     * never restates full behavior
+
+2. **Define Acceptance Criteria**
+
+   * ACs reference Feature Canon rules
+   * Gherkin or structured checklist
+
+3. **Attach UX Inputs**
+
+   * FA provides functional context
+   * DES produces or references designs
+
+4. **Definition of Ready Check**
+
+   * Feature exists and is current
+   * Impact type marked
+   * Dependencies known
+   * Sized small enough
+
+### Output (Gate)
+
+✅ Stories in `/stories/`
+✅ Stories marked **Ready for Development**
+🚫 **SM is the only role allowed to move stories into a sprint**
+
+---
+
+## Phase 4 — Architectural Analysis (Per Feature / Change)
+
+**Primary role**: **SA**
+**Supporting roles**: DEV, FA
+
+### Steps
+
+1. **Create / Update ADR**
+
+   * One ADR per feature (or feature change)
+   * High-level decisions only
+   * AS-IS → TO-BE if applicable
+
+2. **Assess Risks & Constraints**
+
+   * Scalability
+   * Data migration
+   * Integration impact
+
+3. **Link ADR to Feature & Epic**
+
+   * Canonical, versioned
+   * Updated when decisions change
+
+### Output (Gate)
+
+✅ ADR exists (if needed)
+✅ Technical direction is clear
+🚫 **No dev work without ADR clarity when required**
+
+---
+
+## Phase 5 — Sprint Planning & Execution
+
+### 5.1 Sprint Planning
+
+**Primary role**: **SM**
+**Supporting roles**: Entire team
+
+Steps:
+
+1. Select **Ready** stories only
+2. Check capacity
+3. Define sprint goal
+4. Create sprint folder
+
+Gate:
+✅ Sprint plan approved
+🚫 Scope changes after this require explicit decision
+
+---
+
+### 5.2 Development
+
+**Primary role**: **DEV**
+**Supporting roles**: SA (questions), FA (clarifications)
+
+Steps:
+
+1. Create Dev Plan (`/dev-plans/`)
+2. Break story into tasks
+3. Implement in reviewable iterations
+4. Respect Feature Canon & ADR
+5. Escalate if:
+
+   * behavior unclear
+   * canon outdated
+   * ADR insufficient
+
+Gate:
+✅ Story meets Definition of Done
+➡️ Mark **Ready for Testing**
+
+---
+
+## Phase 6 — Quality Assurance (Verification)
+
+**Primary role**: **QA**
+**Supporting roles**: FA, DEV
+
+### Steps
+
+1. **Story Testing**
+
+   * Verify ACs
+   * Log bugs if mismatch
+
+2. **Feature Test Cases**
+
+   * Create/update canonical test cases
+   * Store in `/qa/`
+
+3. **Bug Classification**
+
+   * Implementation defect
+   * Feature Canon wrong
+   * Undocumented behavior
+
+4. **UAT Preparation**
+
+   * Persona-based
+   * Feature-level
+
+### Output (Gate)
+
+✅ Feature behavior verified
+✅ Canonical tests updated
+🚫 QA never changes Feature Canon directly
+
+---
+
+## Phase 7 — Feature Canon Synchronization
+
+**Primary role**: **FA**
+**Supporting roles**: BA (intent), SA (impact)
+
+### Steps
+
+1. Review completed stories
+2. If behavior changed:
+
+   * Update Feature Canon
+   * Add change log entry
+3. Ensure:
+
+   * stories remain deltas
+   * canon reflects reality
+
+### Output (Gate)
+
+✅ Feature Canon up to date
+✅ Stories become historical record
+
+➡️ This is the **most critical gate** in the system
+
+---
+
+## Phase 8 — Review, Release & Learning
+
+**Primary role**: **SM**
+**Supporting roles**: BA, QA, Stakeholders
+
+### Steps
+
+1. Sprint Review
+
+   * Demo features
+   * Validate against Feature Canon
+
+2. UAT Execution
+
+   * Stakeholder sign-off
+
+3. Retrospective
+
+   * Process improvements
+   * Metrics review
+
+4. Close Sprint
+
+   * Archive sprint snapshot
+
+---
+
+# Summary: Canonical Order of Operations
+
+```
+Project
+ → Business Analysis
+   → Features (Canon)
+     → Functional Elaboration
+       → Stories (Deltas)
+         → ADR (if needed)
+           → Sprint
+             → Dev
+               → QA
+                 → Feature Canon Sync
+                   → Review / Release
+
+Next are hard rules for a linter which can provide static guardrails to check if the agents did not create content which violates the rules.
+
+Below is a **formal set of “hard gates” expressed as linting rules** for your TeamSpec operating model. I’m giving you:
+
+1. a **rule catalog** (what the gate is, when it fires, who owns the fix)
+2. a **machine-friendly ruleset** (YAML-style) you can implement in your linter
+3. **recommended severities** and **state transitions** (so the linter can block moves like Ready→In Sprint→Done)
+
+You can copy this into a `teamspec-lint.yml` (or split per domain).
+
+---
+
+# 1) Hard gates (rule catalog)
+
+## A. Repo & Project Gates
+
+### TS-PROJ-001 (ERROR) — Project folder must be registered
+
+* **Applies to**: `projects/{project-id}/`
+* **Fails if**: `projects/projects-index.md` has no entry for `{project-id}`
+* **Fix owner**: BA (or repo maintainer)
+
+### TS-PROJ-002 (ERROR) — project.yml required + minimal metadata
+
+* **Applies to**: `projects/{project-id}/project.yml`
+* **Requires**: `project_id`, `name`, `status`, `stakeholders`, `roles`, `tooling` (or your preferred minimal set)
+* **Fix owner**: BA
+
+---
+
+## B. Feature Canon Gates (source of truth)
+
+### TS-FEAT-001 (ERROR) — Feature file required for any story link
+
+* **Applies to**: any story referencing `F-XXX`
+* **Fails if**: file `features/F-XXX-*.md` doesn’t exist
+* **Fix owner**: BA (creates feature) / FA (if BA delegated authoring but BA remains accountable)
+
+### TS-FEAT-002 (ERROR) — Feature must include canon sections
+
+* **Requires** (example): `Purpose`, `Scope`, `Actors/Personas`, `Main Flow`, `Business Rules (BR-xxx)`, `Edge Cases`, `Non-Goals`, `Change Log`
+* **Fix owner**: BA (business sections), FA (behavioral clarity), DES/SA/QA contribute via links, not ownership
+
+### TS-FEAT-003 (ERROR) — Feature IDs must be unique within a project
+
+* **Fails if**: two feature files declare same `Feature ID: F-123`
+* **Fix owner**: BA/FA
+
+---
+
+## C. Decision Log Gates (business intent)
+
+### TS-DEC-001 (ERROR) — Decision must link to impacted feature(s)
+
+* **Applies to**: `decisions/DEC-*.md`
+* **Fails if**: no feature link table row (or no `Impacted Features:` list)
+* **Fix owner**: BA
+
+### TS-DEC-002 (ERROR) — Story with Adds/Changes must reference decision or explicitly say none required
+
+* **Applies to**: stories with impact `Adds Behavior` or `Changes Behavior`
+* **Fails if**: no `DEC-xxx` reference AND no “No new business decision required” flag
+* **Fix owner**: FA (with BA input if needed)
+
+---
+
+## D. Story Gates (deltas only; ready constraints)
+
+### TS-STORY-001 (ERROR) — Story must link to project + ≥1 feature
+
+* **Fails if**: missing project link or no feature link table
+* **Fix owner**: FA
+
+### TS-STORY-002 (ERROR) — Story must be delta-only
+
+* **Heuristic check** (lintable):
+
+  * Must contain `Before:` and `After:` (or `Delta Description`)
+  * Must NOT include a “Full Flow / Full Requirements / Complete Spec” section
+  * Must reference feature sections/rules (e.g. `BR-xxx` or “Feature Reference”)
+* **Fix owner**: FA
+
+### TS-STORY-003 (ERROR) — DoR: acceptance criteria required and testable
+
+* **Fails if**:
+
+  * No AC section
+  * AC contains placeholders like `{TBD}`, `???`, `lorem`, `to define`
+  * AC not in Given/When/Then or a checkbox list with unambiguous outcomes
+* **Fix owner**: FA
+
+### TS-STORY-004 (ERROR) — Only SM can assign sprint
+
+* **Fails if**: story metadata shows `Sprint:` set but author/last-updated role isn’t SM (enforce via commit metadata if available; otherwise enforce a “Sprint Assignment” block requiring `Assigned By: @sm`)
+* **Fix owner**: SM
+
+### TS-STORY-005 (ERROR) — “Ready for Development” requires DoR checklist complete
+
+* **Fails if**: story status is `Ready for Development` but any DoR checkbox unchecked
+* **Fix owner**: FA
+
+---
+
+## E. Architectural Gates (when ADR is required)
+
+### TS-ADR-001 (ERROR) — Feature marked “Architecture Required” must have ADR
+
+* **Applies to**: features/stories with flag like `Architecture Impact: High|Medium` or `ADR Required: Yes`
+* **Fails if**: no linked ADR exists in `/adr`
+* **Fix owner**: SA
+
+### TS-ADR-002 (ERROR) — ADR must link to feature(s) + decision(s) if triggered by business decision
+
+* **Fix owner**: SA
+
+---
+
+## F. Dev Plan Gates
+
+### TS-DEVPLAN-001 (ERROR) — Any story in sprint must have dev plan
+
+* **Applies to**: sprint committed stories
+* **Fails if**: missing `dev-plans/story-STORY-xxx.md` (or equivalent)
+* **Fix owner**: DEV
+
+### TS-DEVPLAN-002 (ERROR) — Dev plan must map tasks to reviewable iterations
+
+* **Fails if**: tasks exist without a “PR/Review Artifact” field (even “TBD PR link” allowed initially)
+* **Fix owner**: DEV
+
+---
+
+## G. QA & UAT Gates (canonical tests)
+
+### TS-QA-001 (ERROR) — Feature must have canonical test pack before release/UAT
+
+* **Fails if**: no `/qa/testcases/F-xxx-*.md`
+* **Fix owner**: QA
+
+### TS-QA-002 (ERROR) — Bugs must be classified
+
+* **Fails if**: bug report lacks exactly one classification ticked
+* **Fix owner**: QA
+
+### TS-UAT-001 (ERROR) — UAT pack must reference feature + list changes by story
+
+* **Fails if**: UAT pack missing feature link or “What Changed” table empty
+* **Fix owner**: QA (with FA support for mapping)
+
+---
+
+## H. Canon Sync Gates (the critical “Done” rule)
+
+### TS-DOD-001 (BLOCKER/ERROR) — Story cannot be Done if it adds/changes behavior and Feature Canon wasn’t updated
+
+* **Fails if**:
+
+  * impact is Adds/Changes AND
+  * feature change log does not reference the story ID AND/OR
+  * story DoD checkbox “Feature Canon updated” is unchecked
+* **Fix owner**: FA (canon update), DEV may assist with identifying implementation reality
+
+### TS-DOD-002 (ERROR) — QA automation is feature-level, not story-level
+
+* **Fails if**: automated e2e tests are stored under story paths (or story-specific naming) rather than feature canonical structure
+* **Fix owner**: QA Automation / QA
+
+---
+
+# 2) A machine-friendly lint ruleset (YAML)
+
+This is a practical structure most linters can implement (glob + checks). Adjust to your linter’s syntax.
+
+```yaml
+version: 1
+policy: "teamspec-hard-gates"
+defaults:
+  severity: warning
+  owner: "team"
+  blocking_states: ["Ready for Development", "In Sprint", "Done", "Ready for Release"]
+
+rules:
+
+  # -------------------------
+  # Project
+  # -------------------------
+  - id: TS-PROJ-001
+    severity: error
+    applies_to:
+      - "projects/*/"
+    gate:
+      blocks: ["Backlog", "Ready for Development", "In Sprint", "Done", "Ready for Release"]
+    description: "Project folder must be registered in projects-index.md"
+    checks:
+      - type: index_contains
+        index_file: "projects/projects-index.md"
+        value_from_path: "projects/{project-id}/"
+    owner: "BA"
+
+  - id: TS-PROJ-002
+    severity: error
+    applies_to:
+      - "projects/*/project.yml"
+    description: "project.yml must include minimum required fields"
+    checks:
+      - type: yaml_required_keys
+        keys: ["project_id", "name", "status", "stakeholders", "roles"]
+    owner: "BA"
+
+  # -------------------------
+  # Features (Canon)
+  # -------------------------
+  - id: TS-FEAT-002
+    severity: error
+    applies_to:
+      - "projects/*/features/F-*.md"
+    description: "Feature Canon files must include mandatory headings"
+    checks:
+      - type: markdown_required_headings
+        headings:
+          - "Purpose"
+          - "Scope"
+          - "Actors"
+          - "Main Flow"
+          - "Business Rules"
+          - "Edge Cases"
+          - "Non-Goals"
+          - "Change Log"
+    owner: "BA/FA"
+
+  - id: TS-FEAT-003
+    severity: error
+    applies_to:
+      - "projects/*/features/F-*.md"
+    description: "Feature IDs must be unique"
+    checks:
+      - type: unique_frontmatter_or_field
+        field: "Feature ID"
+    owner: "BA/FA"
+
+  # -------------------------
+  # Decisions
+  # -------------------------
+  - id: TS-DEC-001
+    severity: error
+    applies_to:
+      - "projects/*/decisions/DEC-*.md"
+    description: "Decision must link to impacted features"
+    checks:
+      - type: markdown_table_min_rows
+        section_heading: "Features"
+        min_rows: 1
+    owner: "BA"
+
+  # -------------------------
+  # Stories
+  # -------------------------
+  - id: TS-STORY-001
+    severity: error
+    applies_to:
+      - "projects/*/stories/**/*.md"
+    description: "Story must link to a project and at least one feature"
+    checks:
+      - type: markdown_contains
+        any:
+          - "Linked Project"
+      - type: markdown_table_min_rows
+        section_heading: "Linked Feature"
+        min_rows: 1
+    owner: "FA"
+
+  - id: TS-STORY-002
+    severity: error
+    applies_to:
+      - "projects/*/stories/**/*.md"
+    description: "Story must describe delta-only behavior"
+    checks:
+      - type: markdown_contains
+        all:
+          - "Before (current behavior):"
+          - "After (new behavior):"
+      - type: markdown_forbidden_headings
+        headings:
+          - "Full Specification"
+          - "Complete Requirements"
+          - "End-to-End Behavior"
+    owner: "FA"
+
+  - id: TS-STORY-003
+    severity: error
+    applies_to:
+      - "projects/*/stories/**/*.md"
+    description: "Acceptance Criteria must be present and not contain placeholders"
+    checks:
+      - type: markdown_required_headings
+        headings: ["Acceptance Criteria"]
+      - type: markdown_forbidden_patterns
+        patterns: ["\\{TBD\\}", "\\bTBD\\b", "\\?\\?\\?", "lorem ipsum"]
+    owner: "FA"
+
+  - id: TS-STORY-005
+    severity: error
+    applies_to:
+      - "projects/*/stories/**/*.md"
+    when:
+      metadata:
+        Status: "Ready for Development"
+    description: "Ready for Development requires DoR checklist complete"
+    checks:
+      - type: checklist_all_checked
+        section_heading: "DoR Checklist"
+    owner: "FA"
+
+  # Sprint assignment control (simple file-based gate)
+  - id: TS-STORY-004
+    severity: error
+    applies_to:
+      - "projects/*/stories/**/*.md"
+    when:
+      metadata_exists: ["Sprint"]
+      metadata_not_equals:
+        Sprint: "-"
+    description: "Sprint assignment must include 'Assigned By' with role SM"
+    checks:
+      - type: markdown_contains
+        all: ["Assigned By:", "Role: SM"]
+    owner: "SM"
+
+  # -------------------------
+  # ADR
+  # -------------------------
+  - id: TS-ADR-001
+    severity: error
+    applies_to:
+      - "projects/*/stories/**/*.md"
+    when:
+      any_checkbox_checked: ["ADR Required"]
+    description: "If ADR Required is checked, story must link an ADR"
+    checks:
+      - type: markdown_contains_pattern
+        pattern: "ADR-\\d+"
+    owner: "SA"
+
+  # -------------------------
+  # Dev Plans
+  # -------------------------
+  - id: TS-DEVPLAN-001
+    severity: error
+    applies_to:
+      - "projects/*/sprints/**/sprint*.md"
+    description: "Stories in sprint must have dev plan link"
+    checks:
+      - type: table_column_nonempty
+        table_heading: "Committed Stories"
+        column: "Dev Plan"
+    owner: "DEV"
+
+  # -------------------------
+  # QA / UAT
+  # -------------------------
+  - id: TS-QA-002
+    severity: error
+    applies_to:
+      - "projects/*/qa/bugs/BUG-*.md"
+    description: "Bug classification must have exactly one option selected"
+    checks:
+      - type: checklist_exactly_one_checked
+        section_heading: "Bug Classification"
+    owner: "QA"
+
+  # -------------------------
+  # Done / Canon Sync
+  # -------------------------
+  - id: TS-DOD-001
+    severity: error
+    applies_to:
+      - "projects/*/stories/**/*.md"
+    when:
+      metadata:
+        Status: "Done"
+      any_checkbox_checked:
+        - "Adds Behavior"
+        - "Changes Behavior"
+    description: "Done is blocked unless Feature Canon updated and referenced"
+    checks:
+      - type: checklist_item_checked
+        section_heading: "DoD Checklist"
+        item_text_contains: "Feature Canon updated"
+      - type: referenced_in_feature_changelog
+        feature_link_section: "Linked Feature"
+        story_id_from_title: true
+    owner: "FA"
+```
+
+---
+
+# 3) Recommended “state-transition gates” (what the linter should block)
+
+This is how you make it *hard*, not advisory:
+
+## Transitions to enforce
+
+* **Backlog → Ready for Development**
+
+  * must pass: TS-STORY-001/2/3/5 (+ ADR gate if required)
+
+* **Ready for Development → In Sprint**
+
+  * must pass: TS-STORY-004 (SM assignment), TS-DEVPLAN-001 (or enforce dev plan within 24h if you allow grace)
+
+* **In Sprint → Ready for Testing**
+
+  * enforce via DoD subset: tests passing, PR links present, etc. (optional in linter)
+
+* **Ready for Testing → Done**
+
+  * must pass: TS-DOD-001 (feature canon updated when Adds/Changes)
+  * must pass: QA gates if you want strictness (bug classification doesn’t apply unless bugs exist)
+
+* **Done → Ready for Release**
+
+  * must pass: TS-QA-001 + TS-UAT-001 (if your release requires these)
+
+---
+
+# 4) Practical implementation tips (so this stays enforceable)
+
+## Minimal “lintable signals” to add to templates
+
+To make these gates reliable, add a few explicit fields/checkboxes:
+
+* Story: `Status:` + `Assigned By: Role: SM` block
+* Story: Impact type checkboxes (you already have them)
+* Story: `ADR Required` checkbox (or a `Architecture Impact: Low/Med/High`)
+* Feature: `Change Log` entries must include `STORY-xxx` references
+* Sprint: committed story table must include Dev Plan column (already in your sprint template)
+
+These tiny structured anchors make the linter deterministic.

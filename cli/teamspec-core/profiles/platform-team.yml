@@ -1,0 +1,104 @@
+# Platform Team Profile
+
+> **Version:** 2.0  
+> **Applies To:** Platform teams, infrastructure teams, API teams, DevOps
+
+This profile emphasizes API contracts, SLAs, and cross-team coordination.
+
+---
+
+## Profile Characteristics
+
+| Aspect | Configuration |
+|--------|---------------|
+| Governance Level | Moderate |
+| Sign-off Required | For breaking changes |
+| Audit Trail | Optional |
+| Change Control Board | No |
+| Documentation | API-focused |
+
+---
+
+## Additional Checkpoints
+
+### Definition of Ready Additions
+
+| Check | Enforcement |
+|-------|-------------|
+| API contract defined (if applicable) | Required |
+| Consumer impact assessed | Required |
+| SLA implications documented | Required |
+| Backward compatibility checked | Required |
+
+### Definition of Done Additions
+
+| Check | Enforcement |
+|-------|-------------|
+| API documentation updated | Required |
+| Consumer teams notified | Required |
+| Runbook updated (if operational) | Required |
+| Monitoring/alerting configured | Required |
+
+---
+
+## Required Artifacts
+
+Platform stories SHOULD include:
+
+1. **API Impact Section**
+   ```markdown
+   ## API Impact
+   
+   | Endpoint | Change Type | Breaking? |
+   |----------|-------------|-----------|
+   ```
+
+2. **Consumer Impact Section**
+   ```markdown
+   ## Consumer Impact
+   
+   - **Affected Teams:** [Team A, Team B]
+   - **Migration Required:** [Yes/No]
+   - **Deprecation Timeline:** [Date]
+   ```
+
+3. **SLA Considerations**
+   ```markdown
+   ## SLA Considerations
+   
+   - **Availability Impact:** [None/Minor/Major]
+   - **Performance Impact:** [None/Minor/Major]
+   - **Monitoring:** [Dashboard link]
+   ```
+
+---
+
+## Breaking Change Process
+
+For breaking changes:
+
+1. **Announce** — Notify consumers 2 sprints ahead
+2. **Document** — Create migration guide
+3. **Support** — Provide backward compatibility period
+4. **Deprecate** — Follow deprecation timeline
+
+---
+
+## Feature Canon Emphasis
+
+For platform teams, Feature Canon should include:
+
+1. **API contracts** (OpenAPI specs, etc.)
+2. **SLA definitions**
+3. **Consumer documentation**
+4. **Operational runbooks**
+
+---
+
+## Cross-Team Coordination
+
+| Artifact | Purpose |
+|----------|---------|
+| API Changelog | Track all API changes |
+| Consumer Registry | Know who uses what |
+| Deprecation Log | Track deprecation timelines |

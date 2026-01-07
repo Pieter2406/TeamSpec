@@ -1,0 +1,127 @@
+# Enterprise Profile
+
+> **Version:** 2.0  
+> **Applies To:** Large organizations, multi-team environments, enterprise software
+
+This profile adds governance, audit trails, and cross-team coordination.
+
+---
+
+## Profile Characteristics
+
+| Aspect | Configuration |
+|--------|---------------|
+| Governance Level | High |
+| Sign-off Required | Yes |
+| Audit Trail | Yes |
+| Change Control Board | Optional |
+| Documentation | Comprehensive |
+
+---
+
+## Additional Checkpoints
+
+### Definition of Ready Additions
+
+| Check | Enforcement |
+|-------|-------------|
+| Architecture review completed | Required |
+| Cross-team dependencies identified | Required |
+| Stakeholder approval obtained | Required |
+| Resource allocation confirmed | Required |
+
+### Definition of Done Additions
+
+| Check | Enforcement |
+|-------|-------------|
+| Documentation fully updated | Required |
+| Stakeholder sign-off obtained | Required |
+| Training materials updated (if user-facing) | Required |
+| Release communication sent | Required |
+
+---
+
+## Required Artifacts
+
+Enterprise stories SHOULD include:
+
+1. **Stakeholder Section**
+   ```markdown
+   ## Stakeholders
+   
+   | Stakeholder | Role | Sign-off Required |
+   |-------------|------|-------------------|
+   ```
+
+2. **Dependencies Section**
+   ```markdown
+   ## Dependencies
+   
+   | Dependency | Team | Status |
+   |------------|------|--------|
+   ```
+
+3. **Communication Plan**
+   ```markdown
+   ## Communication Plan
+   
+   - **Announcement Channel:** [Slack/Email/etc.]
+   - **Training Required:** [Yes/No]
+   - **Documentation Link:** [URL]
+   ```
+
+---
+
+## Governance Structure
+
+### Approval Hierarchy
+
+| Artifact | Approver |
+|----------|----------|
+| Feature (new) | BA + Product Owner |
+| Epic (new) | BA + Director |
+| Architecture Decision | SA + Tech Lead |
+| Story (high impact) | FA + BA |
+
+### Review Cadence
+
+| Review | Frequency | Participants |
+|--------|-----------|--------------|
+| Architecture Review | Weekly | SA, Tech Leads |
+| Feature Review | Bi-weekly | BA, FA, Product |
+| Sprint Review | End of sprint | Full team + stakeholders |
+
+---
+
+## Multi-Team Coordination
+
+For stories affecting multiple teams:
+
+1. **Identify teams** — List all affected teams
+2. **Align sprints** — Coordinate timing
+3. **Integration testing** — Plan cross-team testing
+4. **Communication** — Establish sync meetings
+
+---
+
+## Feature Canon Requirements
+
+For enterprise environments:
+
+1. **Version control** — All changes tracked
+2. **Approval history** — Who approved what
+3. **Impact analysis** — Dependencies documented
+4. **Traceability** — Link to business objectives
+
+---
+
+## Metrics and Reporting
+
+Track and report:
+
+| Metric | Purpose |
+|--------|---------|
+| Lead time | Story creation to deployment |
+| Cycle time | Development start to deployment |
+| Throughput | Stories per sprint |
+| Canon coverage | % features documented |

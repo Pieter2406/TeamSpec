@@ -1,0 +1,222 @@
+# Team Context Schema
+# Version: 2.0.0
+# 
+# This schema defines the structure of team.yml files.
+# Use this to validate your team configuration.
+
+$schema: "http://json-schema.org/draft-07/schema#"
+title: "TeamSpec Team Context Configuration"
+description: "Configuration file for team-specific TeamSpec settings"
+
+type: object
+required:
+  - org
+  - team
+
+properties:
+  # ===========================================================================
+  # Organization
+  # ===========================================================================
+  org:
+    type: object
+    required:
+      - name
+    properties:
+      name:
+        type: string
+        description: "Organization name"
+        examples: ["Acme Corp", "My Startup"]
+      
+      department:
+        type: string
+        description: "Department or business unit"
+        examples: ["Engineering", "Product Development"]
+      
+      industry:
+        type: string
+        description: "Industry sector"
+        enum:
+          - technology
+          - finance
+          - healthcare
+          - retail
+          - manufacturing
+          - government
+          - other
+      
+      profile:
+        type: string
+        description: "Team profile for governance level"
+        enum:
+          - none
+          - startup
+          - platform-team
+          - enterprise
+          - regulated
+        default: none
+      
+      compliance:
+        type: array
+        description: "Compliance frameworks"
+        items:
+          type: string
+          enum:
+            - SOX
+            - PCI-DSS
+            - HIPAA
+            - GDPR
+            - SOC2
+            - ISO27001
+            - FedRAMP
+            - POPIA
+
+  # ===========================================================================
+  # Team
+  # ===========================================================================
+  team:
+    type: object
+    required:
+      - name
+      - roles
+    properties:
+      name:
+        type: string
+        description: "Team name"
+        examples: ["Platform Team", "Web Squad"]
+      
+      roles:
+        type: array
+        description: "Active roles in the team"
+        items:
+          type: string
+          enum:
+            - BA
+            - FA
+            - SA
+            - DEV
+            - QA
+            - SM
+            - DES
+      
+      roster:
+        type: object
+        description: "Map of roles to team members"
+        additionalProperties:
+          type: array
+          items:
+            type: string
+      
+      cadence:
+        type: object
+        properties:
+          type:
+            type: string
+            enum:
+              - scrum
+              - kanban
+              - scrumban
+          sprint_length_days:
+            type: integer
+            minimum: 1
+            maximum: 28
+      
+      channels:
+        type: object
+        description: "Communication channels"
+        properties:
+          slack:
+            type: string
+          jira_project:
+            type: string
+          confluence_space:
+            type: string
+
+  # ===========================================================================
+  # Technology Stack
+  # ===========================================================================
+  tech:
+    type: object
+    properties:
+      stack:
+        type: array
+        description: "Technologies used"
+        items:
+          type: string
+        examples:
+          - ["Python", "React", "PostgreSQL"]
+          - ["Java", "Spring Boot", "MongoDB"]
+      
+      architecture:
+        type: object
+        properties:
+          type:
+            type: string
+            enum:
+              - monolith
+              - microservices
+              - modular-monolith
+              - serverless
+      
+      quality:
+        type: object
+        properties:
+          min_test_coverage:
+            type: integer
+            minimum: 0
+            maximum: 100
+          require_code_review:
+            type: boolean
+
+  # ===========================================================================
+  # Governance
+  # ===========================================================================
+  governance:
+    type: object
+    properties:
+      sign_off_required:
+        type: boolean
+        description: "Require explicit sign-off on deliverables"
+        default: false
+      
+      audit_trail:
+        type: boolean
+        description: "Maintain detailed audit trail"
+        default: false
+      
+      change_control_board:
+        type: boolean
+        description: "Require CCB approval for changes"
+        default: false
+
+  # ===========================================================================
+  # Feature Canon Configuration
+  # ===========================================================================
+  feature_canon:
+    type: object
+    properties:
+      ownership:
+        type: object
+        description: "Section ownership mapping"
+        properties:
+          purpose_and_scope:
+            type: string
+            enum: [BA, FA]
+            default: BA
+          behavior:
+            type: string
+            enum: [FA, BA]
+            default: FA
+          change_log:
+            type: string
+            enum: [FA, BA]
+            default: FA
+      
+      require_feature_links:
+        type: boolean
+        description: "Require stories to link to features"
+        default: true
+      
+      require_delta_format:
+        type: boolean
+        description: "Require before/after delta format in stories"
+        default: true

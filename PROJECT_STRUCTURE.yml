@@ -1,0 +1,372 @@
+# Project Structure Encoding - YAML Reference
+# This file encodes the project folder structure for use in AI prompts and automation
+
+project_structure:
+  root_level:
+    - path: "projects/"
+      description: "Multi-project root directory"
+      owner: "all roles"
+      
+  project_folders:
+    - path: "projects/{project-id}/"
+      description: "Individual project directory"
+      owner: "all roles"
+      files:
+        - name: "project.yml"
+          description: "Project metadata and configuration"
+          owner: "BA"
+        - name: "README.md"
+          description: "Project overview (optional)"
+          owner: "BA"
+    
+    - path: "projects/{project-id}/features/"
+      name: "Feature Canon"
+      owner: "FA"
+      purpose: "Single source of truth for current system behavior"
+      lifespan: "Permanent, evolves"
+      key_files:
+        - name: "features-index.md"
+          description: "Master index of all features"
+        - name: "story-ledger.md"
+          description: "Append-only record of completed stories"
+        - name: "F-XXX-feature-name.md"
+          description: "Individual feature file (permanent identifier)"
+          naming_pattern: "F-[0-9]{3,}-[a-z-]+"
+          example: "F-001-user-authentication.md"
+      sections:
+        - "Purpose"
+        - "Behavior"
+        - "Business Rules"
+        - "Acceptance Criteria"
+        - "Change Log"
+      rules:
+        - "Features describe current (not planned) behavior"
+        - "Features are permanent with sequential IDs"
+        - "Feature Canon is source of truth for new stories"
+        - "Updated via FA sync after stories complete"
+    
+    - path: "projects/{project-id}/stories/"
+      name: "User Stories"
+      owner: "FA (create), DEV (refine), SM (sprint assignment)"
+      purpose: "Describe implementation deltas (changes to system)"
+      lifespan: "Sprint-bound, then archived"
+      subfolders:
+        - path: "backlog/"
+          description: "New stories, not yet refined"
+          purpose: "Initial story creation and review"
+          workflow_order: 1
+          owner: "FA"
+        - path: "ready-to-refine/"
+          description: "Stories ready for developer input"
+          purpose: "Refinement preparation"
+          workflow_order: 2
+          owner: "FA → DEV"
+        - path: "ready-for-development/"
+          description: "Refined stories ready for sprint"
+          purpose: "Sprint-ready stories with dev plans"
+          workflow_order: 3
+          owner: "DEV → SM"
+      naming_pattern: "S-[0-9]{3,}-[a-z-]+"
+      example: "S-001-add-login-form.md"
+      sections:
+        - "Linked Features (required)"
+        - "As a / I want / So that"
+        - "Acceptance Criteria"
+        - "Development Plan"
+        - "Notes"
+      workflow:
+        - state: "backlog"
+          next: "ready-to-refine"
+          transition_by: "FA"
+          trigger: "Initial review complete"
+        - state: "ready-to-refine"
+          next: "ready-for-development"
+          transition_by: "DEV"
+          trigger: "Refinement complete"
+        - state: "ready-for-development"
+          next: "sprint-N"
+          transition_by: "SM"
+          trigger: "Sprint committed"
+        - state: "sprint-N"
+          next: "archived"
+          transition_by: "FA"
+          trigger: "Story completed, Feature Canon updated"
+    
+    - path: "projects/{project-id}/sprints/"
+      name: "Sprint Management"
+      owner: "SM (Scrum Master)"
+      purpose: "Organize work by sprint, track progress"
+      lifespan: "Sprint-bound"
+      key_files:
+        - name: "active-sprint.md"
+          description: "Living document - current sprint status"
+          sections:
+            - "Sprint number and timeline"
+            - "Sprint goal"
+            - "Committed stories"
+            - "Burndown chart"
+            - "Velocity"
+            - "Health status"
+        - name: "sprint-N/sprint-goal.md"
+          description: "Individual sprint goal and stories"
+          naming_pattern: "sprint-[0-9]+/"
+          example: "sprint-1/"
+          sections:
+            - "Timeline"
+            - "Goal"
+            - "Committed Stories"
+            - "Metrics"
+    
+    - path: "projects/{project-id}/dev-plans/"
+      name: "Development Task Breakdown"
+      owner: "DEV"
+      purpose: "Task-level breakdown for story implementation"
+      lifespan: "Story-bound"
+      structure: "Flat (not sprint-specific)"
+      naming_pattern: "story-[0-9]{3,}-tasks.md"
+      example: "story-001-tasks.md"
+      sections:
+        - "Story reference (link)"
+        - "Estimated Effort"
+        - "Actual Effort"
+        - "Task Breakdown"
+        - "Implementation Notes"
+        - "Testing Strategy"
+      task_sections:
+        - "Task description"
+        - "Effort estimate"
+        - "Status (Todo/In Progress/Done)"
+        - "Acceptance criteria"
+    
+    - path: "projects/{project-id}/decisions/"
+      name: "Decision Logs"
+      owner: "Whole team (any role can log)"
+      purpose: "Record important project decisions and rationale"
+      lifespan: "Permanent"
+      naming_pattern: "DECISION-[0-9]{3,}-[a-z-]+.md"
+      example: "DECISION-001-use-postgresql.md"
+      sections:
+        - "Date"
+        - "Decision Maker"
+        - "Status (Proposed/Approved/Implemented/Superseded)"
+        - "Problem Statement"
+        - "Context"
+        - "Options Considered"
+        - "Decision (chosen and why)"
+        - "Consequences"
+        - "Links (Features, Stories, ADRs)"
+    
+    - path: "projects/{project-id}/adr/"
+      name: "Architecture Decision Records"
+      owner: "ARCH"
+      purpose: "Record technical decisions with architectural impact"
+      lifespan: "Permanent (superseded records kept for history)"
+      naming_pattern: "ADR-[0-9]{3,}-[a-z-]+.md"
+      example: "ADR-001-microservices-architecture.md"
+      statuses:
+        - "Proposed"
+        - "Accepted"
+        - "Superseded"
+        - "Deprecated"
+      sections:
+        - "Status"
+        - "Date"
+        - "Author"
+        - "Problem"
+        - "Context"
+        - "Decision"
+        - "Rationale"
+        - "Consequences (Positive, Negative, Mitigations)"
+        - "Related (Features, Stories, other ADRs)"
+    
+    - path: "projects/{project-id}/qa/"
+      name: "Quality Assurance Artifacts"
+      owner: "TEST"
+      purpose: "Test design, test cases, validation"
+      lifespan: "Evolves with features"
+      subfolders:
+        - path: "test-cases/"
+          description: "Test case files organized by feature"
+          file_naming: "F-[0-9]{3,}-test-cases.md"
+          example: "F-001-test-cases.md"
+        - name: "test-results.md"
+          description: "Summary of test execution"
+        - name: "automation-strategy.md"
+          description: "Automation plan and progress"
+      test_case_naming: "TC-[0-9]{3,}-[description]"
+      test_case_sections:
+        - "Test Type (Unit/Integration/E2E/Manual)"
+        - "Related Story"
+        - "Setup"
+        - "Steps"
+        - "Expected Result"
+        - "Actual Result"
+        - "Status (Pass/Fail/Blocked)"
+    
+    - path: "projects/{project-id}/epics/"
+      name: "Epic Definitions"
+      owner: "BA"
+      purpose: "Group related features into larger initiatives"
+      lifespan: "Permanent"
+      optional: true
+      naming_pattern: "EPIC-[0-9]{3,}-[a-z-]+.md"
+      example: "EPIC-001-payment-system.md"
+      sections:
+        - "Business Value"
+        - "Timeline"
+        - "Related Features"
+        - "Overview"
+        - "Success Criteria"
+
+role_responsibilities:
+  BA:
+    folders: ["features", "epics"]
+    operations:
+      - "Define and maintain Feature Canon"
+      - "Create feature files"
+      - "Define epics"
+      - "Sync business attributes (BA-AUTO-SYNC)"
+  
+  FA:
+    folders: ["features", "stories"]
+    operations:
+      - "Create and refine feature files"
+      - "Create stories in backlog/"
+      - "Move stories to ready-to-refine/"
+      - "Sync Feature Canon after stories complete (FA-AUTO-SYNC)"
+      - "Update story-ledger.md"
+  
+  ARCH:
+    folders: ["adr", "decisions"]
+    operations:
+      - "Create ADRs for technical decisions"
+      - "Maintain architecture documentation"
+      - "Link ADRs to features and stories"
+  
+  DEV:
+    folders: ["dev-plans", "stories/ready-for-development"]
+    operations:
+      - "Refine stories in ready-to-refine/ → ready-for-development/"
+      - "Create development plans"
+      - "Break stories into tasks"
+      - "Implement code"
+      - "Generate structured commits"
+  
+  TEST:
+    folders: ["qa"]
+    operations:
+      - "Design test cases"
+      - "Record test results"
+      - "Plan automation strategy"
+      - "Validate acceptance criteria"
+  
+  SM:
+    folders: ["sprints", "stories"]
+    operations:
+      - "Create sprint folders"
+      - "Manage active-sprint.md"
+      - "Assign stories to sprints"
+      - "Track velocity"
+      - "Close sprints"
+      - "Facilitate ceremonies"
+
+cross_reference_rules:
+  features:
+    should_link_to:
+      - "decisions/ (related business decisions)"
+      - "adr/ (related technical decisions)"
+      - "stories/ (related stories)"
+      - "qa/ (related test cases)"
+  
+  stories:
+    must_link_to:
+      - "features/ (what it implements) - REQUIRED"
+      - "dev-plans/ (how to build it)"
+    should_link_to:
+      - "qa/ (test cases)"
+  
+  dev_plans:
+    must_link_to:
+      - "stories/ (which story this implements)"
+  
+  test_cases:
+    should_link_to:
+      - "features/ (which feature)"
+      - "stories/ (which story)"
+  
+  decisions:
+    should_link_to:
+      - "features/ (what feature it impacts)"
+      - "stories/ (what story it impacts)"
+      - "adr/ (if architecture-related)"
+  
+  adr:
+    should_link_to:
+      - "decisions/ (related decisions)"
+      - "features/ (features using this architecture)"
+
+naming_conventions:
+  identifier_types:
+    feature: "F-[0-9]{3,}"
+    story: "S-[0-9]{3,}"
+    decision: "DECISION-[0-9]{3,}"
+    adr: "ADR-[0-9]{3,}"
+    test_case: "TC-[0-9]{3,}"
+    epic: "EPIC-[0-9]{3,}"
+    sprint: "sprint-[0-9]+"
+  
+  naming_pattern: "[IDENTIFIER]-[kebab-case-description]"
+  
+  examples:
+    feature: "F-001-user-authentication.md"
+    story: "S-015-implement-oauth2.md"
+    decision: "DECISION-003-use-postgresql.md"
+    adr: "ADR-005-microservices-architecture.md"
+    epic: "EPIC-002-payment-system.md"
+    sprint: "sprint-12/"
+
+workflow_states:
+  story_states:
+    - state: "backlog"
+      location: "stories/backlog/"
+      owner: "FA"
+      transitions_to: "ready-to-refine"
+      trigger: "Initial review complete"
+    
+    - state: "ready-to-refine"
+      location: "stories/ready-to-refine/"
+      owner: "FA (moving), DEV (refining)"
+      transitions_to: "ready-for-development"
+      trigger: "Development refinement complete"
+    
+    - state: "ready-for-development"
+      location: "stories/ready-for-development/"
+      owner: "DEV (ready), SM (assigning)"
+      transitions_to: "sprint-N"
+      trigger: "Sprint commitment"
+    
+    - state: "in-sprint"
+      location: "sprints/sprint-N/"
+      owner: "DEV (implementing)"
+      transitions_to: "completed"
+      trigger: "Story implementation complete"
+    
+    - state: "completed"
+      location: "features/story-ledger.md"
+      owner: "FA (archiving)"
+      action: "Feature Canon updated, story archived"
+
+quality_gates:
+  definition_of_ready:
+    - "Feature link exists in story"
+    - "Feature Canon is current for linked feature"
+    - "Acceptance Criteria are testable"
+    - "Story has been reviewed by FA"
+  
+  definition_of_done:
+    - "Code implementation complete"
+    - "All tests pass"
+    - "Feature Canon updated via FA-AUTO-SYNC"
+    - "Story added to story-ledger.md"
+    - "Related test cases marked Pass"
+    - "Structured commit message created"

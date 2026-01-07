@@ -1,0 +1,277 @@
+Here’s a **detailed, implementation-ready plan** to build a VS Code **Chat Participant** extension (e.g. `@teamspec`) that exposes **many slash commands** (e.g. `/ba`, `/fa`, `/story`, `/adr`, `/qa`, `/sprint`) **without** maintaining separate prompt files per command.
+
+The plan is based on the official VS Code Chat Participant API and how slash commands are contributed via `package.json` and surfaced in `request.command`. ([code.visualstudio.com][1])
+
+---
+
+## 0) Target UX (What you’re building)
+
+Users can do:
+
+* `@teamspec /fa story F-042 ...`
+* `@teamspec /qa bug ...`
+* `@teamspec /sa adr ...`
+* `@teamspec /sm sprintPlan ...`
+* `@teamspec` (no slash command) → “dispatcher mode” that asks what they want / infers intent
+
+Your extension will:
+
+* route `/command` to a **single command library** (YAML/JSON/TS object)
+* stitch together: **Bootstrap + Role Prompt + Command Macro + Workspace context**
+* call the selected model via the chat APIs (either directly or via `@vscode/chat-extension-utils`) ([code.visualstudio.com][1])
+* optionally add buttons, file trees, references, etc. via `ChatResponseStream` ([code.visualstudio.com][1])
+
+---
+
+## 1) Project setup (Extension scaffold)
+
+### 1.1 Generate the extension
+
+Use the official Yeoman generator (same as VS Code tutorial): ([code.visualstudio.com][2])
+
+* TypeScript extension
+* No webpack initially (faster iteration)
+
+### 1.2 Decide your minimum supported VS Code version
+
+Chat APIs require a modern VS Code version; pin `engines.vscode` accordingly (pick a version you’ve validated internally).
+
+---
+
+## 2) Register the Chat Participant + Slash Commands (package.json)
+
+### 2.1 Contribute your participant
+
+In `package.json`:
+
+* `contributes.chatParticipants[]` entry
+* include `id`, `name`, `fullName`, `description`, `isSticky` ([code.visualstudio.com][1])
+
+### 2.2 Add slash commands **in the participant definition**
+
+VS Code supports participant slash commands by adding a `commands` array under the chat participant in `package.json`. ([code.visualstudio.com][3])
+
+Example structure:
+
+* `commands: [{ name: "fa", description: "..."} , ...]`
+
+**Key point:** you are *not* making prompt files. You’re registering commands as **UI entries** in the participant definition, and you’ll handle them in code via `request.command`. ([code.visualstudio.com][1])
+
+### 2.3 Command design recommendation (for TeamSpec)
+
+Keep commands **broad** and route sub-actions yourself:
+
+* `/ba` `/fa` `/sa` `/dev` `/qa` `/des` `/sm` (role entry points)
+* `/story` `/feature` `/adr` `/decision` `/bug` `/testcases` `/uat` `/sprint` (artifact entry points)
+* `/help` `/status` `/context` (meta)
+
+This avoids a command list with 80 items, but still gives discoverability.
+
+---
+
+## 3) Core runtime architecture (How you avoid “one prompt per command”)
+
+### 3.1 Single Source of Truth: “Command Library”
+
+Create a single file in your extension:
+
+* `src/commands.ts` (or load from `resources/commands.yml`)
+
+Each command definition contains:
+
+* `name` (matches package.json `commands[].name`)
+* `intent` (what the command does)
+* `role` (BA/FA/SA/DEV/QA/DES/SM or “dispatcher”)
+* `macro` (instruction block to inject)
+* `outputSchema` (what the agent must produce)
+* `requiredInputs` (IDs needed: F-xxx, S-xxx, etc.)
+* `workspaceContextNeeds` (files/folders to read for context)
+
+So your code can:
+
+1. lookup `request.command`
+2. load command macro + role prompt
+3. build the final prompt
+
+### 3.2 Prompt assembly pipeline
+
+You want deterministic assembly:
+
+**Prompt =**
+
+1. Bootstrap prompt (TeamSpec operating model)
+2. Role prompt (BA/FA/etc.)
+3. Command macro (e.g., “create story delta for F-042”)
+4. Context pack (workspace-derived: relevant files, current selection, metadata)
+
+This is exactly what chat participants are for: you “own conversation” and orchestrate it. ([code.visualstudio.com][1])
+
+---
+
+## 4) Implement the participant (extension.ts)
+
+### 4.1 Register participant in `activate()`
+
+Use `vscode.chat.createChatParticipant(id, handler)` ([code.visualstudio.com][1])
+
+Set icon, optional follow-ups, optional detection.
+
+### 4.2 Implement handler with command routing
+
+In handler:
+
+* `request.command` tells you which slash command was used ([code.visualstudio.com][1])
+* `request.prompt` contains the remainder of the user text
+* `context` gives conversation state
+* `stream` lets you output markdown/progress/buttons/filetree etc. ([code.visualstudio.com][1])
+
+Routing logic:
+
+1. If `request.command` is present → route to that command definition
+2. Else → run “dispatcher mode”
+
+   * lightweight intent inference (rule-based first, LLM second)
+
+### 4.3 Choose your LLM calling strategy
+
+You have two viable patterns:
+
+**Pattern A: Use `@vscode/chat-extension-utils`**
+
+* fastest to implement tool calling / streaming
+* recommended for early iterations ([code.visualstudio.com][1])
+
+**Pattern B: Direct Language Model API**
+
+* more control for strict gating / lint-like validations before sending prompt
+* more code
+
+Start with A, migrate to B only if you must.
+
+---
+
+## 5) Context pack (How your agent becomes “workspace-aware”)
+
+### 5.1 Add minimal context always
+
+* current file path
+* current selection (if any)
+* current workspace root
+* detected project folder (e.g., `/projects/{project-id}`)
+
+### 5.2 Add command-specific context
+
+For example:
+
+* `/story` needs:
+
+  * linked feature file(s)
+  * decision log entries for that feature
+  * ADR link if architecture-impact flag is set
+* `/qa testcases` needs:
+
+  * feature canon sections + BR list
+
+This is where your “command library” becomes powerful: each command declares what it needs.
+
+### 5.3 Keep context bounded
+
+Set a maximum amount of content to inject (summarize or select sections). This prevents token blowups and keeps answers predictable.
+
+---
+
+## 6) Enforce TeamSpec gates inside the extension (optional but powerful)
+
+Before calling the LLM, do fast checks:
+
+* if user asked `/story` but feature file missing → respond with actionable failure
+* if `/sm sprintAdd` but story not “Ready for Development” → block + show why
+* if `/done` but “canon sync” unchecked → block and point to FA
+
+This matches your linting model: don’t ask the LLM to “figure out” missing prerequisites. Let code enforce hard gates.
+
+---
+
+## 7) Output UX: Make it feel like a real tool
+
+Use `ChatResponseStream` features:
+
+* `stream.progress(...)` during multi-step work
+* `stream.button(...)` to create artifacts (“Create Feature File”, “Open ADR Template”)
+* `stream.filetree(...)` to preview proposed folder/file changes ([code.visualstudio.com][1])
+
+This makes TeamSpec feel like an integrated workflow tool, not “just prompting”.
+
+---
+
+## 8) Testing strategy
+
+### 8.1 Unit tests for routing + prompt assembly
+
+Test that:
+
+* `/fa` loads FA prompt + macro
+* `/adr` loads SA prompt + ADR macro
+* commands require correct inputs (F-xxx, S-xxx)
+
+### 8.2 Integration tests in Extension Host
+
+Run VS Code Extension tests:
+
+* verify participant registers
+* verify slash command list appears under `@teamspec`
+* verify `request.command` routing works
+
+---
+
+## 9) Iteration plan (phased delivery)
+
+### Phase 1 (MVP)
+
+* `@teamspec` participant
+* 6–10 slash commands
+* command library in TS
+* simple context pack
+* responses as markdown only
+
+### Phase 2 (Workflow upgrade)
+
+* buttons to scaffold files (feature/story/adr templates)
+* file tree previews for generated artifacts
+* hard gate enforcement in code
+
+### Phase 3 (TeamSpec-native power)
+
+* read repo structure + auto-detect project id
+* deep linking (open feature file from chat)
+* “canon sync assistant” that checks changes and suggests update diffs
+
+---
+
+## 10) Concrete command mapping suggestion for TeamSpec (starter set)
+
+* `/help` — show available commands + examples
+* `/ba` — BA workflows (create project, BA doc, feature outline)
+* `/fa` — stories, ACs, refinement notes
+* `/sa` — ADR create/update, impact check
+* `/dev` — dev plan generator, task breakdown
+* `/qa` — testcases pack, bug report
+* `/sm` — sprint create/plan/status
+* `/des` — design brief and handoff checklist
+
+Each of these can accept a sub-intent in the prompt:
+`@teamspec /fa story F-012 …`
+
+---
+
+If you want, I can turn this plan into:
+
+* a **package.json contributes snippet** tailored to your command list, and
+* a **TypeScript skeleton** for `extension.ts` + `commands.ts` that implements: routing, prompt assembly, and context packing.
+
+Just say whether you want the command library in **TypeScript**, **JSON**, or **YAML**.
+
+[1]: https://code.visualstudio.com/api/extension-guides/ai/chat "Chat Participant API | Visual Studio Code Extension
+API"
+[2]: https://code.visualstudio.com/api/extension-guides/ai/chat-tutorial?utm_source=chatgpt.com "Build a code tutorial chat participant with the Chat API"
+[3]: https://code.visualstudio.com/api/extension-guides/ai/chat?utm_source=chatgpt.com "Chat Participant API"

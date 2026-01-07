@@ -1,0 +1,85 @@
+# Startup / MVP Profile
+
+> **Version:** 2.0  
+> **Applies To:** Startups, MVP development, rapid prototyping
+
+This profile reduces documentation overhead while maintaining Feature Canon integrity.
+
+---
+
+## Profile Characteristics
+
+| Aspect | Configuration |
+|--------|---------------|
+| Governance Level | Minimal |
+| Sign-off Required | No |
+| Audit Trail | No |
+| Change Control Board | No |
+| Documentation | Lean |
+
+---
+
+## Adjusted Checkpoints
+
+### Definition of Ready Simplifications
+
+| Standard Check | Startup Adjustment |
+|----------------|-------------------|
+| Full dev plan required | Task list sufficient |
+| Formal risk assessment | Quick risk note OK |
+| Multiple approvers | Single FA approval |
+
+### Definition of Done Simplifications
+
+| Standard Check | Startup Adjustment |
+|----------------|-------------------|
+| Comprehensive test coverage | Critical path tests OK |
+| Formal code review | Pair programming counts |
+| Full documentation update | README update sufficient |
+
+---
+
+## Feature Canon (Still Required!)
+
+Even in startup mode, Feature Canon is mandatory:
+
+| Aspect | Requirement |
+|--------|-------------|
+| Feature files | Required (can be minimal) |
+| Story-feature links | Required |
+| Delta format | Recommended |
+| Story Ledger | Simplified OK |
+
+> ⚠️ **Feature Canon is NOT optional.** It prevents knowledge loss as the team scales.
+
+---
+
+## Recommended Practices
+
+1. **Time-box documentation** — 15 min max per story
+2. **Living docs** — Update as you code, not after
+3. **Lightweight ADRs** — One-pager decisions
+4. **Skip sprints** — Use Kanban if velocity matters more than planning
+
+---
+
+## When to Graduate
+
+Consider moving to `enterprise` or `regulated` profile when:
+
+- Team grows beyond 5 people
+- First paying customer
+- External audit required
+- Series A funding
+- Compliance requirements emerge
+
+---
+
+## Anti-Patterns to Avoid
+
+| Anti-Pattern | Why It's Bad |
+|--------------|--------------|
+| No Feature Canon | "We'll document later" = never |
+| No story tracking | Can't measure velocity |
+| Skipping tests entirely | Technical debt explodes |
+| One giant feature file | Unmaintainable |
