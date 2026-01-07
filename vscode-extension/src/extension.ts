@@ -54,27 +54,67 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Register action commands for chat participant buttons
     const createProjectCommand = vscode.commands.registerCommand('teamspec.createProject', async () => {
-        // Open chat with /ba-project command
+        const projectId = await vscode.window.showInputBox({
+            prompt: 'Enter project ID (lowercase, hyphen-separated)',
+            placeHolder: 'my-project',
+            validateInput: (value) => {
+                if (!value) return 'Project ID is required';
+                if (!/^[a-z0-9-]+$/.test(value)) return 'Use lowercase letters, numbers, and hyphens only';
+                return null;
+            }
+        });
+        
+        if (!projectId) return;
+        
+        const projectName = await vscode.window.showInputBox({
+            prompt: 'Enter project name',
+            placeHolder: 'My Project'
+        });
+        
+        if (!projectName) return;
+        
+        // Send to chat for confirmation and creation
         vscode.commands.executeCommand('workbench.action.chat.open', {
-            query: '@teamspec /ba-project '
+            query: `@teamspec /ba-project Create project "${projectName}" with ID "${projectId}". Confirm and create the folder structure.`
         });
     });
 
     const createEpicCommand = vscode.commands.registerCommand('teamspec.createEpic', async () => {
+        const epicTitle = await vscode.window.showInputBox({
+            prompt: 'Enter epic title',
+            placeHolder: 'User Authentication'
+        });
+        
+        if (!epicTitle) return;
+        
         vscode.commands.executeCommand('workbench.action.chat.open', {
-            query: '@teamspec /ba-epic '
+            query: `@teamspec /ba-epic Create epic "${epicTitle}"`
         });
     });
 
     const createFeatureCommand = vscode.commands.registerCommand('teamspec.createFeature', async () => {
+        const featureTitle = await vscode.window.showInputBox({
+            prompt: 'Enter feature title',
+            placeHolder: 'User Login'
+        });
+        
+        if (!featureTitle) return;
+        
         vscode.commands.executeCommand('workbench.action.chat.open', {
-            query: '@teamspec /ba-feature '
+            query: `@teamspec /ba-feature Create feature "${featureTitle}"`
         });
     });
 
     const createDecisionCommand = vscode.commands.registerCommand('teamspec.createDecision', async () => {
+        const decisionTitle = await vscode.window.showInputBox({
+            prompt: 'Enter decision title',
+            placeHolder: 'Database Selection'
+        });
+        
+        if (!decisionTitle) return;
+        
         vscode.commands.executeCommand('workbench.action.chat.open', {
-            query: '@teamspec /ba-decision '
+            query: `@teamspec /ba-decision Log decision "${decisionTitle}"`
         });
     });
 
