@@ -1,0 +1,7 @@
+# Project Configuration: teamspec-mvp
+project:
+  id: "teamspec-mvp"
+  name: "Teamspec Mvp"
+  description: |
+    # TODO: Add project description
+  status: active  # active, paused, completed, archived

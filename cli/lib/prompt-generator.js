@@ -10,13 +10,13 @@ const path = require('path');
 
 // Command definitions from agent system
 const COMMANDS = {
-  ba: {
-    name: 'Business Analyst',
-    commands: [
-      {
-        name: 'project',
-        description: 'Create project structure',
-        prompt: `Execute project creation workflow:
+    ba: {
+        name: 'Business Analyst',
+        commands: [
+            {
+                name: 'project',
+                description: 'Create project structure',
+                prompt: `Execute project creation workflow:
 1. Gather project information (name, ID, stakeholders, goals)
 2. Create project folder structure in projects/{id}/
 3. Generate project.yml with metadata
@@ -24,47 +24,47 @@ const COMMANDS = {
 5. Initialize folders: features/, stories/backlog/, stories/ready-to-refine/, stories/ready-for-development/, adr/, decisions/, dev-plans/, qa/test-cases/, epics/, sprints/
 6. Create features-index.md and story-ledger.md
 Wait for user confirmation before creating files.`
-      },
-      {
-        name: 'epic',
-        description: 'Define an epic',
-        prompt: `Execute epic creation workflow:
+            },
+            {
+                name: 'epic',
+                description: 'Define an epic',
+                prompt: `Execute epic creation workflow:
 1. Identify epic scope and goal
 2. Link to project
 3. Break down into candidate features
 4. Create epic file in epics/ folder
 Wait for user confirmation before creating files.`
-      },
-      {
-        name: 'feature',
-        description: 'Create feature file',
-        prompt: `Execute feature creation workflow:
+            },
+            {
+                name: 'feature',
+                description: 'Create feature file',
+                prompt: `Execute feature creation workflow:
 1. Gather feature requirements (purpose, value, scope)
 2. Define personas/actors
 3. Create feature file in features/ folder using F-XXX-name.md format
 4. Update features-index.md
 Ensure feature is implementation-agnostic.
 Wait for user confirmation before creating files.`
-      },
-      {
-        name: 'decision',
-        description: 'Log business decision',
-        prompt: `Log a business decision:
+            },
+            {
+                name: 'decision',
+                description: 'Log business decision',
+                prompt: `Log a business decision:
 1. Capture decision context
 2. Document options considered
 3. Record rationale
 4. Link to affected features
 5. Create decision file in decisions/ folder using DECISION-XXX-name.md format`
-      }
-    ]
-  },
-  fa: {
-    name: 'Functional Analyst',
-    commands: [
-      {
-        name: 'story',
-        description: 'Create a new story',
-        prompt: `Create a story as a DELTA to the Feature Canon:
+            }
+        ]
+    },
+    fa: {
+        name: 'Functional Analyst',
+        commands: [
+            {
+                name: 'story',
+                description: 'Create a new story',
+                prompt: `Create a story as a DELTA to the Feature Canon:
 1. Identify the linked feature (REQUIRED)
 2. Document BEFORE state (reference Canon)
 3. Document AFTER state (the delta)
@@ -72,31 +72,31 @@ Wait for user confirmation before creating files.`
 5. Mark impact type (Adds/Changes/Fixes/Removes)
 6. Create story in stories/backlog/ using S-XXX-name.md format
 NEVER create a story without a feature link.`
-      },
-      {
-        name: 'slice',
-        description: 'Slice feature into stories',
-        prompt: `Slice a feature into implementable stories:
+            },
+            {
+                name: 'slice',
+                description: 'Slice feature into stories',
+                prompt: `Slice a feature into implementable stories:
 1. Read the Feature Canon entry
 2. Identify discrete behavior changes
 3. Create story deltas for each change
 4. Ensure each story is independently deliverable
 5. Link all stories to the feature
 Create files in stories/backlog/`
-      },
-      {
-        name: 'refine',
-        description: 'Move story to ready-to-refine',
-        prompt: `Refine a story for development:
+            },
+            {
+                name: 'refine',
+                description: 'Move story to ready-to-refine',
+                prompt: `Refine a story for development:
 1. Verify feature link exists
 2. Check Before/After delta is clear
 3. Validate ACs are testable
 4. Move file from stories/backlog/ to stories/ready-to-refine/`
-      },
-      {
-        name: 'sync',
-        description: 'Update Feature Canon after story completion',
-        prompt: `CRITICAL: Canon sync workflow:
+            },
+            {
+                name: 'sync',
+                description: 'Update Feature Canon after story completion',
+                prompt: `CRITICAL: Canon sync workflow:
 1. Identify completed story
 2. Check impact type (Adds/Changes Behavior?)
 3. Update Feature Canon sections in features/
@@ -104,141 +104,143 @@ Create files in stories/backlog/`
 5. Update story-ledger.md
 6. Verify DoD checkbox is checked
 A story CANNOT be Done until Canon is synchronized.`
-      }
-    ]
-  },
-  arch: {
-    name: 'Solution Architect',
-    commands: [
-      {
-        name: 'adr',
-        description: 'Create Architecture Decision Record',
-        prompt: `Create an ADR:
+            }
+        ]
+    },
+    arch: {
+        name: 'Solution Architect',
+        commands: [
+            {
+                name: 'adr',
+                description: 'Create Architecture Decision Record',
+                prompt: `Create an ADR:
 1. Identify technical decision
 2. Document context and options
 3. Record decision and rationale
 4. Link to affected features
 5. Create ADR file in adr/ folder using ADR-XXX-name.md format`
-      }
-    ]
-  },
-  dev: {
-    name: 'Developer',
-    commands: [
-      {
-        name: 'plan',
-        description: 'Create development plan',
-        prompt: `Create a development plan:
+            }
+        ]
+    },
+    dev: {
+        name: 'Developer',
+        commands: [
+            {
+                name: 'plan',
+                description: 'Create development plan',
+                prompt: `Create a development plan:
 1. Read the story and linked feature
 2. Break down into implementation tasks
 3. Estimate effort for each task
 4. Identify dependencies and risks
 5. Create dev plan in dev-plans/ using story-XXX-tasks.md format`
-      },
-      {
-        name: 'implement',
-        description: 'Execute implementation',
-        prompt: `Execute implementation:
+            },
+            {
+                name: 'implement',
+                description: 'Execute implementation',
+                prompt: `Execute implementation:
 1. Load dev plan
 2. Work through tasks sequentially
 3. Update task completion status
 4. Create/modify code files
 5. Track actual vs estimated effort`
-      },
-      {
-        name: 'ready',
-        description: 'Move story to ready-for-development',
-        prompt: `Move story to ready-for-development:
+            },
+            {
+                name: 'ready',
+                description: 'Move story to ready-for-development',
+                prompt: `Move story to ready-for-development:
 1. Verify dev plan exists
 2. Check DoR criteria
 3. Move file from stories/ready-to-refine/ to stories/ready-for-development/`
-      }
-    ]
-  },
-  qa: {
-    name: 'QA Engineer',
-    commands: [
-      {
-        name: 'test',
-        description: 'Design test cases',
-        prompt: `Design test cases:
+            }
+        ]
+    },
+    qa: {
+        name: 'QA Engineer',
+        commands: [
+            {
+                name: 'test',
+                description: 'Design test cases',
+                prompt: `Design test cases:
 1. Read feature specification
 2. Identify test scenarios
 3. Write test cases with steps and expected results
 4. Create test file in qa/test-cases/ using F-XXX-test-cases.md format`
-      },
-      {
-        name: 'bug',
-        description: 'File bug report',
-        prompt: `File a bug report:
+            },
+            {
+                name: 'bug',
+                description: 'File bug report',
+                prompt: `File a bug report:
 1. Capture bug details
 2. Document reproduction steps
 3. Classify severity
 4. Link to affected feature
 5. Create bug file in bugs/ folder`
-      },
-      {
-        name: 'dor-check',
-        description: 'Validate Definition of Ready',
-        prompt: `Check Definition of Ready:
+            },
+            {
+                name: 'dor-check',
+                description: 'Validate Definition of Ready',
+                prompt: `Check Definition of Ready:
 1. Verify feature link exists
 2. Check Before/After delta is clear
 3. Validate ACs are testable
 4. Confirm no TBD/placeholder content
 5. Check estimate is assigned
 Report any gaps.`
-      }
-    ]
-  },
-  sm: {
-    name: 'Scrum Master',
-    commands: [
-      {
-        name: 'sprint-create',
-        description: 'Create new sprint',
-        prompt: `Create new sprint:
+            }
+        ]
+    },
+    sm: {
+        name: 'Scrum Master',
+        commands: [
+            {
+                name: 'sprint-create',
+                description: 'Create new sprint',
+                prompt: `Create new sprint:
 1. Determine sprint number
 2. Create sprint folder: sprints/sprint-N/
 3. Create sprint-goal.md
 4. Update active-sprint.md`
-      },
-      {
-        name: 'sprint-plan',
-        description: 'Plan sprint backlog',
-        prompt: `Plan sprint backlog:
+            },
+            {
+                name: 'sprint-plan',
+                description: 'Plan sprint backlog',
+                prompt: `Plan sprint backlog:
 1. Review ready-for-development stories
 2. Calculate team capacity
 3. Select stories for sprint
 4. Move story files to sprints/sprint-N/
 5. Update sprint-goal.md`
-      },
-      {
-        name: 'sprint-status',
-        description: 'Sprint status report',
-        prompt: `Generate sprint status:
+            },
+            {
+                name: 'sprint-status',
+                description: 'Sprint status report',
+                prompt: `Generate sprint status:
 1. Count stories by status
 2. Calculate burndown
 3. Identify blockers
 4. Report health metrics`
-      }
-    ]
-  }
+            }
+        ]
+    }
 };
 
 /**
- * Generate GitHub Copilot prompt file
+ * Generate GitHub Copilot prompt file in VS Code format
+ * Uses YAML frontmatter with name, description, and agent fields
  */
 function generatePromptFile(role, command, outputDir) {
-  const filename = `${role}-${command.name}.prompt.md`;
-  const filepath = path.join(outputDir, filename);
-  
-  const content = `# TeamSpec: ${COMMANDS[role].name} - ${command.description}
+    const filename = `${role}-${command.name}.prompt.md`;
+    const filepath = path.join(outputDir, filename);
+    const commandName = `ts:${role}-${command.name}`;
 
-**Command:** \`ts:${role}-${command.name}\`
-
+    const content = `---
+name: "${commandName}"
+description: "TeamSpec ${COMMANDS[role].name}: ${command.description}"
+agent: "agent"
 ---
 
-## Role Context
+# ${COMMANDS[role].name}: ${command.description}
 
 You are acting as a **${COMMANDS[role].name}** in the TeamSpec Feature Canon operating model.
 
@@ -249,80 +251,74 @@ ${command.prompt}
 ## Quality Gates
 
 - Follow TeamSpec naming conventions (F-XXX, S-XXX, ADR-XXX, etc.)
-- Use templates from \`.teamspec/templates/\`
+- Use templates from \`templates/\` folder
 - Link to Feature Canon where applicable
 - Wait for user confirmation before creating files
 - Validate against Definition of Ready/Done
 
 ## Related Files
 
-- Templates: \`.teamspec/templates/\`
+- Templates: \`templates/\`
 - Project Structure: \`PROJECT_STRUCTURE.yml\`
 - Role Definition: \`roles/ROLES_AND_RESPONSIBILITIES.md\`
 - Agent Prompt: \`agents/AGENT_${role.toUpperCase()}.md\`
-
----
-
-*Generated by TeamSpec CLI v3.0*
 `;
 
-  fs.writeFileSync(filepath, content, 'utf-8');
-  return filename;
+    fs.writeFileSync(filepath, content, 'utf-8');
+    return filename;
 }
 
 /**
  * Generate all prompt files
  */
 function generateAllPrompts(targetDir = process.cwd()) {
-  const outputDir = path.join(targetDir, '.github', 'copilot-prompts');
-  
-  // Create output directory
-  if (!fs.existsSync(outputDir)) {
-    fs.mkdirSync(outputDir, { recursive: true });
-  }
+    const outputDir = path.join(targetDir, '.github', 'prompts');
 
-  console.log('🚀 Generating GitHub Copilot prompt files...\n');
-  
-  const generated = [];
-  
-  // Generate prompts for each role and command
-  for (const [role, config] of Object.entries(COMMANDS)) {
-    console.log(`📋 ${config.name}:`);
-    for (const command of config.commands) {
-      const filename = generatePromptFile(role, command, outputDir);
-      generated.push(filename);
-      console.log(`   ✓ ${filename}`);
+    // Create output directory
+    if (!fs.existsSync(outputDir)) {
+        fs.mkdirSync(outputDir, { recursive: true });
     }
-  }
-  
-  // Generate index file
-  const indexContent = `# TeamSpec Copilot Prompts
 
-These prompt files provide structured guidance for TeamSpec commands in GitHub Copilot.
+    console.log('🚀 Generating GitHub Copilot prompt files...\n');
+
+    const generated = [];
+
+    // Generate prompts for each role and command
+    for (const [role, config] of Object.entries(COMMANDS)) {
+        console.log(`📋 ${config.name}:`);
+        for (const command of config.commands) {
+            const filename = generatePromptFile(role, command, outputDir);
+            generated.push(filename);
+            console.log(`   ✓ ${filename}`);
+        }
+    }
+
+    // Generate index file
+    const indexContent = `# TeamSpec Copilot Prompts
+
+These prompt files provide structured guidance for TeamSpec commands in GitHub Copilot Chat.
 
 ## Usage
 
-In GitHub Copilot Chat, use the \`ts:\` prefix followed by role and command:
+In VS Code, type \`/\` in Copilot Chat to see available prompts. Look for prompts starting with \`ts:\`.
 
-\`\`\`
-ts:ba-project        # Create project structure
-ts:fa-story         # Create delta-based story
-ts:dev-plan         # Create development plan
-ts:qa-test          # Design test cases
-\`\`\`
+Alternatively, run any prompt directly:
+- Press \`Ctrl+Shift+P\` (or \`Cmd+Shift+P\` on Mac)
+- Type "Chat: Run Prompt"
+- Select a TeamSpec prompt
 
 ## Available Commands
 
 ${Object.entries(COMMANDS).map(([role, config]) => `
-### ${config.name} (\`ts:${role}-*\`)
+### ${config.name}
 
-${config.commands.map(cmd => `- \`ts:${role}-${cmd.name}\` - ${cmd.description}`).join('\n')}
+${config.commands.map(cmd => `- \`/ts:${role}-${cmd.name}\` - ${cmd.description}`).join('\n')}
 `).join('\n')}
 
 ## How It Works
 
-1. Type \`ts:role-command\` in Copilot Chat
-2. Copilot loads the corresponding prompt file
+1. Type \`/\` in Copilot Chat to see prompts
+2. Select a \`ts:\` prefixed prompt
 3. Copilot provides role-specific guidance
 4. Follow the workflow to create artifacts
 
@@ -331,22 +327,23 @@ ${config.commands.map(cmd => `- \`ts:${role}-${cmd.name}\` - ${cmd.description}`
 *Generated by TeamSpec CLI v${require('../package.json').version}*
 `;
 
-  fs.writeFileSync(path.join(outputDir, 'README.md'), indexContent, 'utf-8');
-  generated.push('README.md');
-  
-  console.log(`\n✅ Generated ${generated.length} files in ${outputDir}`);
-  console.log('\n📖 See .github/copilot-prompts/README.md for usage instructions');
-  
-  return generated;
+    fs.writeFileSync(path.join(outputDir, 'README.md'), indexContent, 'utf-8');
+    generated.push('README.md');
+
+    console.log(`\n✅ Generated ${generated.length} files in ${outputDir}`);
+    console.log('\n📖 See .github/prompts/README.md for usage instructions');
+    console.log('💡 In Copilot Chat, type "/" to see available prompts');
+
+    return generated;
 }
 
 module.exports = {
-  generateAllPrompts,
-  COMMANDS
+    generateAllPrompts,
+    COMMANDS
 };
 
 // CLI execution
 if (require.main === module) {
-  const targetDir = process.argv[2] || process.cwd();
-  generateAllPrompts(targetDir);
+    const targetDir = process.argv[2] || process.cwd();
+    generateAllPrompts(targetDir);
 }
