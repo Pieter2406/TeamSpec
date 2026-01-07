@@ -52,23 +52,23 @@ The CLI guides you through:
 3. Development cadence setup (scrum, kanban, scrumban)
 4. Initial project creation
 
-### Option 2: VS Code Extension
+### Option 2: GitHub Copilot Integration
 
-Install the **@teamspec** chat participant for GitHub Copilot:
+TeamSpec works natively with GitHub Copilot through instruction files:
 
-```bash
-# From the vscode-extension folder
-npm install
-npm run package
-# Install the generated .vsix file
+1. **Clone or initialize** TeamSpec in your repository
+2. **Ensure GitHub Copilot is active** in your editor
+3. **Use TeamSpec commands** in Copilot Chat:
+
+```
+ts:ba project          # Create project structure
+ts:fa story           # Create delta-based story
+ts:dev plan           # Create implementation plan
+ts:qa test            # Design test cases
+ts:status             # Project health overview
 ```
 
-Then use natural language commands:
-```
-@teamspec /fa story F-042 Add password reset functionality
-@teamspec /dev plan S-001
-@teamspec /qa test F-042
-```
+GitHub Copilot reads `.github/copilot-instructions.md` and `/agents/` to provide role-based assistance.
 
 ### Option 3: Manual Setup
 
@@ -164,17 +164,25 @@ your-repo/
 
 ## AI Agent Integration
 
-### VS Code / GitHub Copilot
+### GitHub Copilot (Recommended)
 
-The `@teamspec` chat participant understands your project context:
+TeamSpec provides native GitHub Copilot integration through instruction files:
 
+**In Copilot Chat:**
 ```
-@teamspec /help                    # Show all commands
-@teamspec /status                  # Project overview
-@teamspec /fa story F-042 ...      # Create a story
-@teamspec /dev plan S-001          # Plan implementation
-@teamspec /feedback                # Report issues
+ts:ba project                  # Create project structure
+ts:fa story F-042 ...         # Create delta-based story
+ts:dev plan S-001             # Create implementation plan
+ts:qa test F-042              # Design test cases
+ts:status                     # Project health overview
+ts:agent fix                  # Auto-fix lint errors
 ```
+
+**How it works:**
+1. GitHub Copilot reads `.github/copilot-instructions.md`
+2. Loads role-specific agents from `/agents/` on demand
+3. Applies team context from `.teamspec/context/team.yml`
+4. Provides role-aware assistance with quality gates
 
 ### Other AI Assistants (Claude, ChatGPT, Cursor)
 
@@ -210,20 +218,20 @@ teamspec lint --project X # Lint specific project
 teamspec update           # Update TeamSpec core files
 ```
 
-### Copilot Commands (with @teamspec)
+### Copilot Commands (with GitHub Copilot Chat)
 
 | Command | Description |
 |---------|-------------|
-| `/ba project` | Create/manage projects |
-| `/ba feature` | Extract features from requirements |
-| `/fa story` | Create delta-based stories |
-| `/fa slice` | Slice requirements into stories |
-| `/arch adr` | Create architecture decisions |
-| `/dev plan` | Create implementation plans |
-| `/qa test` | Design test cases |
-| `/sm sprint` | Sprint management |
-| `/status` | Project health overview |
-| `/feedback` | Report bugs or suggestions |
+| `ts:ba project` | Create/manage projects |
+| `ts:ba feature` | Extract features from requirements |
+| `ts:fa story` | Create delta-based stories |
+| `ts:fa slice` | Slice requirements into stories |
+| `ts:arch adr` | Create architecture decisions |
+| `ts:dev plan` | Create implementation plans |
+| `ts:qa test` | Design test cases |
+| `ts:sm sprint` | Sprint management |
+| `ts:status` | Project health overview |
+| `ts:agent fix` | Auto-fix lint errors |
 
 ---
 
