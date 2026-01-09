@@ -1,18 +1,22 @@
-# TeamSpec 2.0 Agent Prompts
+# TeamSpec 4.0 Agent Prompts
 
-> **Version:** 2.0  
+> **Version:** 4.0  
 > **Purpose:** Predefined AI agents for TeamSpec-driven software delivery  
-> **Last Updated:** 2026-01-07
+> **Last Updated:** 2026-01-09
 
 ---
 
 ## Overview
 
-This folder contains agent prompt definitions for creating AI assistants that operate within the TeamSpec 2.0 framework. These agents can be loaded into platforms like GitHub Copilot, Claude, ChatGPT, or other AI assistants.
+This folder contains agent prompt definitions for creating AI assistants that operate within the TeamSpec 4.0 Product-Canon framework. These agents can be loaded into platforms like GitHub Copilot, Claude, ChatGPT, or other AI assistants.
+
+TeamSpec 4.0 introduces the **Product-Canon** operating model, which separates:
+- **Products** — Long-lived, production-truth documentation (AS-IS state)
+- **Projects** — Time-bound change initiatives that propose modifications to products (TO-BE state)
 
 Each agent:
 - Understands their role boundaries
-- Enforces the Feature Canon model
+- Enforces the Product-Canon model
 - Knows when to refuse (and why)
 - Can escalate to appropriate roles
 - Follows quality gates
@@ -25,6 +29,7 @@ Each agent:
 flowchart TD
     BOOT[AGENT_BOOTSTRAP.md<br/>Core Operating Model]
     
+    BOOT --> PO[AGENT_PO.md<br/>Product Owner]
     BOOT --> BA[AGENT_BA.md<br/>Business Analyst]
     BOOT --> FA[AGENT_FA.md<br/>Functional Analyst]
     BOOT --> SA[AGENT_SA.md<br/>Solution Architect]
@@ -34,6 +39,7 @@ flowchart TD
     BOOT --> DES[AGENT_DES.md<br/>Designer]
     
     style BOOT fill:#ffd43b,stroke:#fab005,stroke-width:3px
+    style PO fill:#f8d7da,stroke:#dc3545,stroke-width:2px
     style BA fill:#e7f5ff,stroke:#1971c2
     style FA fill:#e7f5ff,stroke:#1971c2
     style SA fill:#e7f5ff,stroke:#1971c2
@@ -44,7 +50,7 @@ flowchart TD
 ```
 
 All agents inherit from **AGENT_BOOTSTRAP.md** which defines:
-- Feature Canon model
+- Product-Canon model
 - Role boundary philosophy
 - Escalation principles
 - Quality gates
@@ -56,12 +62,13 @@ All agents inherit from **AGENT_BOOTSTRAP.md** which defines:
 | Agent | Role | Primary Responsibility | Key Commands |
 |-------|------|------------------------|--------------|
 | [AGENT_BOOTSTRAP](./AGENT_BOOTSTRAP.md) | Core | Operating model foundation | — |
-| [AGENT_BA](./AGENT_BA.md) | Business Analyst | Problems, goals, scope, business value | `ts:ba` |
-| [AGENT_FA](./AGENT_FA.md) | Functional Analyst | Feature Canon, story slicing, behavior | `ts:fa` |
-| [AGENT_SA](./AGENT_SA.md) | Solution Architect | Technical design, ADRs | `ts:arch` |
+| [AGENT_PO](./AGENT_PO.md) | Product Owner | Products, Product Canon, Deployment gates | `ts:po` |
+| [AGENT_BA](./AGENT_BA.md) | Business Analyst | Projects, Feature-Increments (purpose), Decisions | `ts:ba` |
+| [AGENT_FA](./AGENT_FA.md) | Functional Analyst | Stories, Epic behavior, Feature-Increment behavior | `ts:fa` |
+| [AGENT_SA](./AGENT_SA.md) | Solution Architect | Technical design, ADRs | `ts:sa` |
 | [AGENT_DEV](./AGENT_DEV.md) | Developer | Implementation, dev plans | `ts:dev` |
 | [AGENT_QA](./AGENT_QA.md) | QA Engineer | Testing, validation, bug classification | `ts:qa` |
-| [AGENT_SM](./AGENT_SM.md) | Scrum Master | Sprint operations, ceremonies | `ts:sm` |
+| [AGENT_SM](./AGENT_SM.md) | Scrum Master | Sprint operations, ceremonies, deployment gates | `ts:sm` |
 | [AGENT_DES](./AGENT_DES.md) | Designer | UX design, design artifacts | `ts:des` |
 
 ---
@@ -72,36 +79,47 @@ All agents inherit from **AGENT_BOOTSTRAP.md** which defines:
 
 | If you're asking about... | Use Agent |
 |---------------------------|-----------|
+| "How do I create a new product?" | PO |
+| "What's in production now?" | PO |
 | "Why are we building this?" | BA |
 | "What should the system do?" | FA |
 | "How should we build this?" | SA |
 | "How do I implement this?" | DEV |
 | "Does this work correctly?" | QA |
 | "What's in this sprint?" | SM |
+| "Is the deployment ready?" | SM |
 | "What should this look like?" | DES |
 
 ### By Activity
 
 | Activity | Agent |
 |----------|-------|
-| Starting a new project/epic/feature | BA |
+| Creating a new product | PO |
+| Approving deployment to production | PO |
+| Syncing project changes to Product Canon | PO |
+| Starting a new project | BA |
+| Creating Feature-Increments (purpose/scope) | BA |
+| Creating Epics | FA |
 | Writing user stories | FA |
 | Creating ADRs | SA |
 | Planning implementation | DEV |
 | Writing test cases | QA |
 | Running sprint planning | SM |
+| Managing deployment checklists | SM |
 | Creating wireframes/flows | DES |
 
 ### By Artifact
 
 | If you're creating... | Use Agent |
 |-----------------------|-----------|
-| BA docs, epics, features (structure) | BA |
-| Feature Canon files, stories | FA |
-| ADRs, architecture docs | SA |
-| Dev plans, code | DEV |
+| Products, product.yml | PO |
+| Product Features (f-PRX-XXX) | PO |
+| Projects, Feature-Increments (fi-PRX-XXX) | BA |
+| Epics (epic-PRX-XXX), stories (s-eXXX-YYY) | FA |
+| ADRs (ta-PRX-XXX, tai-PRX-XXX) | SA |
+| Dev plans (dp-eXXX-sYYY), code | DEV |
 | Test cases, bug reports | QA |
-| Sprint goals, retros | SM |
+| Sprint goals, deployment checklists, retros | SM |
 | Designs, prototypes | DES |
 
 ---
@@ -144,69 +162,69 @@ All agents inherit from **AGENT_BOOTSTRAP.md** which defines:
 ### AGENT_BOOTSTRAP (Foundation)
 
 **What it provides:**
-- Feature Canon model explanation
-- Feature Canon Ownership Model (BA owns purpose/scope, FA owns behavior)
-- Canon rules (CANON-001 to CANON-006)
+- Product-Canon model explanation (Products vs Projects)
+- Canon rules (CANON-001 to CANON-009)
 - Story-as-delta philosophy
 - Role boundaries
 - Escalation principles (including Read-Only Mode)
 - When to Ask Questions vs Refuse decision table
 - Minimal Output Bias rule
-- Quality gates
+- Quality gates (including Deployment Gate)
 - Command structure
+
+### AGENT_PO (Product Owner) — NEW in 4.0
+
+**Owns:** Products, Product Canon (AS-IS state), Deployment gates  
+**Creates:** Products, product.yml, Product Features (f-PRX-XXX)  
+**Enforces:** Product Canon integrity, deployment approval, sync after deployment  
+**Refuses:** Writing stories, defining project scope, modifying Canon during projects
 
 ### AGENT_BA (Business Analyst)
 
-**Owns:** Problems, goals, purpose, business value, scope  
-**Creates:** BA docs, project/epic/feature structures  
-**Enforces:** Business rationale, value justification  
-**Refuses:** Technical decisions, implementation details  
-**New:** Approves all Feature Canon purpose/scope changes (even if FA edits text)
+**Owns:** Projects, Feature-Increments (purpose/scope), Project Decisions  
+**Creates:** Projects, BA Increments (bai-PRX-XXX), Feature-Increments (fi-PRX-XXX), SD Increments  
+**Enforces:** Business rationale, value justification, product targeting  
+**Refuses:** Writing stories, modifying Product Canon, creating Products
 
 ### AGENT_FA (Functional Analyst)
 
-**Owns:** Feature Canon, story slicing, current behavior  
-**Creates:** Feature files, user stories, Canon updates  
-**Enforces:** Delta stories, Canon sync (most critical!)  
-**Refuses:** Story creation without feature link  
-**New:** May delegate Canon updates but remains accountable for correctness
+**Owns:** Stories, Epic behavior, Feature-Increment behavior, Canon sync proposals  
+**Creates:** Epics (epic-PRX-XXX), Stories (s-eXXX-YYY), Canon sync proposals  
+**Enforces:** Delta stories, Epic linking (mandatory), Canon sync preparation  
+**Refuses:** Story creation without Epic link, direct Product Canon modification
 
 ### AGENT_SA (Solution Architect)
 
-**Owns:** Technical design, technology choices  
-**Creates:** ADRs, architecture docs  
+**Owns:** Technical design, technology choices, ADRs  
+**Creates:** Product Tech Architecture (ta-PRX-XXX), Project ADRs (tai-PRX-XXX)  
 **Enforces:** Design alignment, ADR before coding  
-**Refuses:** Implementation without ADR for significant changes  
-**New:** Does NOT update Feature Canon directly - ADRs inform FA
+**Refuses:** Implementation without ADR for significant changes
 
 ### AGENT_DEV (Developer)
 
 **Owns:** Implementation, task breakdown  
-**Creates:** Dev plans, code, commits  
+**Creates:** Dev plans (dp-eXXX-sYYY), code, commits  
 **Enforces:** Plan before code, tests with implementation  
-**Refuses:** Coding without dev plan, changing scope  
-**New:** May PROPOSE Feature Canon wording, FA must APPROVE
+**Refuses:** Coding without dev plan, changing scope
 
 ### AGENT_QA (QA Engineer)
 
 **Owns:** Testing, validation, quality  
 **Creates:** Test cases, bug reports, UAT scripts  
-**Enforces:** Bug classification, Definition of Done  
-**Refuses:** Signing off without Canon alignment
+**Enforces:** Bug classification, Definition of Done, tests against TO-BE state  
+**Refuses:** Signing off without Canon alignment, deployment without verification
 
 ### AGENT_SM (Scrum Master)
 
-**Owns:** Sprint operations, process facilitation  
-**Creates:** Sprint artifacts, metrics, retro outputs  
-**Enforces:** Sprint integrity, neutrality, process  
-**Refuses:** Making priority decisions (facilitates, doesn't decide)  
-**New:** Enforces gates by ESCALATION, not by unilateral blocking
+**Owns:** Sprint operations, process facilitation, deployment gate checklist  
+**Creates:** Sprint artifacts, metrics, retro outputs, deployment checklists  
+**Enforces:** Sprint integrity, neutrality, process, deployment readiness  
+**Refuses:** Making priority decisions (facilitates, doesn't decide)
 
 ### AGENT_DES (Designer)
 
 **Owns:** UX design, design artifacts  
 **Creates:** Feature-level designs, flows, specs  
-**New:** Design decisions affecting behavior MUST go through FA  
 **Enforces:** Design at feature level (not story)  
 **Refuses:** Designing without clear scope or personas
 
@@ -214,45 +232,52 @@ All agents inherit from **AGENT_BOOTSTRAP.md** which defines:
 
 ## Key Principles
 
-### 1. Feature Canon is Truth
+### 1. Product-Canon is Truth (AS-IS)
 
-The Feature Canon (`/features/`) is the authoritative source for system behavior. All agents reference it, and FA is responsible for keeping it updated.
+The Product Canon (`/products/*/features/`) is the authoritative source for production system behavior. Products represent the AS-IS state — what is currently deployed and running.
 
-### 2. Feature Canon Ownership Model
+### 2. Projects Propose Changes (TO-BE)
+
+Projects contain Feature-Increments (`/projects/*/feature-increments/`) that propose changes to products. These represent the TO-BE state — what will be after deployment.
+
+### 3. Products and Projects are Separate
 
 ```
-BA owns: PURPOSE, VALUE, and SCOPE sections
-FA owns: BEHAVIOR, FLOW, and BUSINESS RULES sections
-Conflicts: Resolved by BA decision, logged in /decisions/
+Products (AS-IS)                      Projects (TO-BE)
+├── products/{product-id}/            ├── projects/{project-id}/
+│   ├── product.yml (includes PRX)    │   ├── project.yml
+│   ├── features/                     │   ├── feature-increments/
+│   │   └── f-PRX-XXX-*.md            │   │   └── fi-PRX-XXX-*.md
+│   └── ...                           │   └── ...
 ```
 
-This prevents both scope drift and ownership confusion.
+This prevents "time pollution" where project artifacts contaminate production documentation.
 
-### 3. Stories are Deltas
+### 4. Canon Sync Only After Deployment
 
-Stories describe CHANGES to behavior, not complete behavior. They must link to features and say "Feature F-XXX currently does X, this story changes it to Y."
+Product Canon is updated ONLY after successful deployment via `ts:po sync`. FA prepares sync proposals; PO executes them.
 
-### 4. Strict Role Boundaries
+### 5. Stories Link to Epics (Mandatory)
 
-Each agent stays in their lane. They know what they own, what they don't, and when to escalate. This prevents scope creep and maintains quality.
+Story filenames MUST include Epic ID: `s-eXXX-YYY-description.md`. This replaces the 2.0 feature link requirement.
 
-### 5. Quality Gates
+### 6. Product Prefix (PRX)
 
-Agents enforce Definition of Ready (before development) and Definition of Done (after completion). No shortcuts allowed.
+Every product has a unique 3-4 character prefix (e.g., `DIT` for "DnD Initiative Tracker"). All artifact filenames include this prefix for traceability.
 
-### 6. Escalation Over Assumption
+### 7. Strict Role Boundaries
+
+Each agent stays in their lane. They know what they own, what they don't, and when to escalate. PO owns Products; BA owns Projects; FA owns Stories.
+
+### 8. Quality Gates
+
+Agents enforce Definition of Ready (before development), Definition of Done (after completion), and Deployment Gate (before Canon sync).
+
+### 9. Escalation Over Assumption
 
 When an agent encounters something outside their domain, they escalate to the appropriate role rather than guessing.
 
-### 7. Escalation, Not Blocking
-
-SM and other roles enforce gates by **escalation**, not by unilateral blocking. The correct role decides resolution; SM tracks and reports.
-
-### 8. Read-Only Mode
-
-Agents can explain, review, and summarize without triggering execution workflows. Questions about process don't require creating artifacts.
-
-### 9. Minimal Output Bias
+### 10. Minimal Output Bias
 
 Default to the minimum output needed to progress to the next gate. Don't over-document.
 
@@ -260,45 +285,55 @@ Default to the minimum output needed to progress to the next gate. Don't over-do
 
 ## Command Reference
 
+### PO Commands (`ts:po`) — NEW in 4.0
+
+| Command | Description |
+|---------|-------------|
+| `ts:po product` | Create new product with PRX |
+| `ts:po project` | Create project targeting product(s) |
+| `ts:po status` | Product status overview |
+| `ts:po approve` | Approve deployment readiness |
+| `ts:po sync` | Sync project changes to Product Canon |
+| `ts:po deprecate` | Mark product as deprecated |
+
 ### BA Commands (`ts:ba`)
 
 | Command | Description |
 |---------|-------------|
-| `ts:ba create` | Draft BA document |
+| `ts:ba analysis` | Create business analysis document |
+| `ts:ba ba-increment` | Create BA increment (bai-PRX-XXX) |
+| `ts:ba decision` | Log project decision |
 | `ts:ba review` | Review BA document |
-| `ts:ba project` | Create/manage project |
-| `ts:ba epic` | Create/manage epic |
-| `ts:ba feature` | Create/manage feature |
-| `ts:ba sync` | Validate business attributes |
 
 ### FA Commands (`ts:fa`)
 
 | Command | Description |
 |---------|-------------|
-| `ts:fa create` | Draft functional spec |
-| `ts:fa slice` | Break into stories |
-| `ts:fa story` | Create story in backlog |
-| `ts:fa story refine <id>` | Move story to ready-to-refine |
-| `ts:fa sync` | Update Feature Canon |
+| `ts:fa feature-increment` | Create Feature-Increment (fi-PRX-XXX) |
+| `ts:fa epic` | Create Epic (epic-PRX-XXX) |
+| `ts:fa story` | Create story linked to Epic (s-eXXX-YYY) |
+| `ts:fa slice` | Slice Epic into stories |
+| `ts:fa sync-prepare` | Prepare Canon sync proposal for PO |
+| `ts:fa behavior` | Update Feature-Increment behavior |
 | `ts:fa storymap` | Story mapping workshop |
 
-### ARCH Commands (`ts:arch`)
+### SA Commands (`ts:sa`)
 
 | Command | Description |
 |---------|-------------|
-| `ts:arch adr` | Draft ADR |
-| `ts:arch review` | Review technical design |
-| `ts:arch sync` | Sync design to stories |
+| `ts:sa adr` | Create ADR (ta-PRX-XXX or tai-PRX-XXX) |
+| `ts:sa review` | Review technical design |
+| `ts:sa sync` | Sync design to stories |
 
 ### DEV Commands (`ts:dev`)
 
 | Command | Description |
 |---------|-------------|
-| `ts:dev plan` | Create task breakdown |
+| `ts:dev plan` | Create task breakdown (dp-eXXX-sYYY) |
 | `ts:dev implement <id>` | Execute implementation |
 | `ts:dev commit` | Generate commit message |
 | `ts:dev branch <id>` | Create branch |
-| `ts:dev story ready <id>` | Move to ready-for-dev |
+| `ts:dev ready <id>` | Move to ready-for-dev |
 
 ### QA Commands (`ts:qa`)
 
@@ -308,6 +343,7 @@ Default to the minimum output needed to progress to the next gate. Don't over-do
 | `ts:qa bug` | File bug report |
 | `ts:qa uat` | Create UAT instructions |
 | `ts:qa dor-check <id>` | DoR checklist |
+| `ts:qa dod-check <id>` | DoD checklist |
 | `ts:qa execute` | Execute test run |
 
 ### SM Commands (`ts:sm`)
@@ -320,8 +356,20 @@ Default to the minimum output needed to progress to the next gate. Don't over-do
 | `ts:sm sprint add <id>` | Add story to sprint |
 | `ts:sm sprint status` | Sprint status |
 | `ts:sm sprint close` | Close sprint |
+| `ts:sm deploy-checklist` | Generate deployment checklist |
 | `ts:sm standup` | Standup agenda |
 | `ts:sm retro` | Retrospective |
+
+### Universal Commands
+
+| Command | Description |
+|---------|-------------|
+| `ts:status` | Project/product status overview |
+| `ts:lint` | Run linter (includes TS-PROD-*, TS-FI-*, TS-EPIC-*) |
+| `ts:context` | Show/validate team context |
+| `ts:deploy` | Execute deployment workflow |
+| `ts:migrate` | Migrate from TeamSpec 2.0 to 4.0 |
+| `ts:agent <role>` | Load role-specific agent |
 
 ---
 
@@ -331,14 +379,17 @@ Agents enforce these linter rules:
 
 | Category | Rules | Agent |
 |----------|-------|-------|
-| TS-PROJ-* | Project validation | BA |
-| TS-FEAT-* | Feature validation | FA |
-| TS-STORY-* | Story validation | FA, DEV |
-| TS-ADR-* | ADR validation | SA |
-| TS-DEVPLAN-* | Dev plan validation | DEV |
+| TS-PROD-* | Product validation (product.yml, PRX) | PO |
+| TS-FI-* | Feature-Increment validation | BA, FA |
+| TS-EPIC-* | Epic validation | FA |
+| TS-PROJ-* | Project validation (product targeting) | BA |
+| TS-STORY-* | Story validation (Epic linking) | FA, DEV |
+| TS-ADR-* | ADR validation (ta-PRX, tai-PRX) | SA |
+| TS-DEVPLAN-* | Dev plan validation (dp-eXXX-sYYY) | DEV |
 | TS-QA-* | Test case validation | QA |
 | TS-UAT-* | UAT validation | QA |
-| TS-DOD-* | Definition of Done | All |
+| TS-NAMING-* | Naming conventions (PRX patterns) | All |
+| TS-DOD-* | Definition of Done (incl. Deployment Gate) | All |
 
 ---
 
@@ -370,6 +421,7 @@ Agents enforce these linter rules:
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 4.0 | 2026-01-09 | Product-Canon model: Products vs Projects separation, new PO role, PRX naming, Epic-mandatory stories, deployment gates |
 | 2.0.1 | 2026-01-07 | Added: Feature Canon Ownership Model, delegation authority for FA, escalation-vs-blocking clarification, read-only mode, minimal output bias, cross-role contribution rights |
 | 2.0 | 2026-01-07 | Initial TeamSpec 2.0 agents |
 
