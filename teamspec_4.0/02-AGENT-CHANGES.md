@@ -399,19 +399,24 @@ Add to Section 6.2 (Master Gate List):
 
 | Command | Purpose | Output |
 |---------|---------|--------|
-| `ts:ba project` | Create project structure | Project folder + files |
-| `ts:ba epic` | Define an epic | `epic-PRX-XXX-*.md` |
-| `ts:ba feature-increment` | Create feature-increment | `fi-PRX-XXX-*.md` |
+| `ts:ba analysis` | Create business analysis | `ba-PRX-*.md` |
 | `ts:ba ba-increment` | Create BA increment | `bai-PRX-XXX-*.md` |
-| `ts:ba decision` | Log project decision | `dec-XXX-*.md` |
-| `ts:ba link-product` | Link project to product | Updated project.yml |
+| `ts:ba review` | Review BA document | Review feedback |
 
-### 5.2 Command: `ts:ba project` (Updated)
+**Note:** Projects and Epics moved to PO and FA respectively:
+- `ts:po project` - PO creates projects
+- `ts:fa epic` - FA defines epics
 
-**Purpose:** Create a new project with proper structure.
+### 5.2 Command: `ts:ba analysis` (Updated)
+
+**Purpose:** Create a business analysis document for a product or project.
 
 **Flow:**
-1. Gather project information (name, ID, stakeholders, goals)
+1. Determine target (product or project)
+2. Gather business process information
+3. Document domain knowledge
+4. Create BA document with template
+5. Register in appropriate index
 2. **Identify target products** (required)
 3. Create project folder structure (including all increment folders)
 4. Generate `project.yml` with metadata and product links
@@ -450,26 +455,10 @@ projects/{project-id}/
 └── sprints/
 ```
 
-### 5.3 Command: `ts:ba feature-increment` (NEW)
+### 5.3 Note: Feature-Increments moved to FA
 
-**Purpose:** Create a new Feature-Increment proposing changes to a product feature.
-
-**Flow:**
-1. Verify project exists
-2. Verify target product exists and get its PRX
-3. Verify target feature exists in product (f-PRX-XXX)
-4. Generate next Feature-Increment ID (fi-PRX-XXX)
-5. Create FI file from template
-6. Register in `increments-index.md`
-
-**Required Inputs:**
-- Target product ID (auto-resolves PRX)
-- Target feature ID (f-PRX-XXX)
-- Increment name
-- AS-IS reference (auto-populated from product feature)
-- TO-BE description (proposed changes)
-
-**Output:** `feature-increments/fi-PRX-XXX-{name}.md`
+> Feature-Increments are functional artifacts owned by FA, not BA.
+> See AGENT_FA.md section 6.3 for the `ts:fa feature-increment` command.
 ```
 
 ---

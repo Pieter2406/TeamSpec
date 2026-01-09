@@ -12,8 +12,8 @@
 
 | Status | Count | Commands |
 |--------|-------|----------|
-| **NEW** | 7 | `ts:po *`, `ts:ba feature-increment`, `ts:sm deploy-checklist`, `ts:deploy`, `ts:migrate` |
-| **ALTERED** | 7 | `ts:ba project`, `ts:ba epic`, `ts:fa story`, `ts:fa slice`, `ts:status`, `ts:lint`, `ts:context` |
+| **NEW** | 7 | `ts:po *`, `ts:fa feature-increment`, `ts:sm deploy-checklist`, `ts:deploy`, `ts:migrate` |
+| **ALTERED** | 7 | `ts:po project`, `ts:fa epic`, `ts:fa story`, `ts:fa slice`, `ts:status`, `ts:lint`, `ts:context` |
 | **REMOVED** | 3 | `ts:ba feature`, `ts:fa sync`, `ts:ba link-product` (implicit in feature-increment) |
 | **UNCHANGED** | 12 | `ts:dev *`, `ts:qa *`, `ts:sa adr`, `ts:ba decision`, etc. |
 
@@ -159,17 +159,17 @@ ts:po deprecate <product-id> --reason <reason>
 
 ---
 
-### 2.2 Business Analyst Commands (New)
+### 2.2 Functional Analyst Commands (New)
 
-#### `ts:ba feature-increment`
+#### `ts:fa feature-increment`
 
 **Purpose:** Create a Feature-Increment proposing changes to a product feature.
 
-**Owner:** BA
+**Owner:** FA
 
 **Syntax:**
 ```
-ts:ba feature-increment <product-id> <feature-id>
+ts:fa feature-increment <product-id> <feature-id>
 ```
 
 **Flow:**
@@ -191,7 +191,7 @@ projects/{project-id}/feature-increments/fi-PRX-XXX-{name}.md
 
 **Example:**
 ```
-ts:ba feature-increment dnd-initiative-tracker f-DIT-001-combat
+ts:fa feature-increment dnd-initiative-tracker f-DIT-001-combat
 # Creates: fi-DIT-001-combat-v2.md
 ```
 
@@ -274,7 +274,7 @@ See [07-MIGRATION-GUIDE.md](./07-MIGRATION-GUIDE.md)
 
 ## 3. Altered Commands
 
-### 3.1 `ts:ba project` (Altered)
+### 3.1 `ts:po project` (Altered)
 
 **Change:** Now requires target product(s).
 
@@ -296,7 +296,7 @@ See [07-MIGRATION-GUIDE.md](./07-MIGRATION-GUIDE.md)
 
 ---
 
-### 3.2 `ts:ba epic` (Altered)
+### 3.2 `ts:fa epic` (Altered)
 
 **Change:** Epics are now mandatory increment containers with PRX in filename.
 
@@ -318,7 +318,7 @@ See [07-MIGRATION-GUIDE.md](./07-MIGRATION-GUIDE.md)
 
 **Example:**
 ```
-ts:ba epic dnd-initiative-tracker "Combat Redesign"
+ts:fa epic dnd-initiative-tracker "Combat Redesign"
 # Creates: epic-DIT-001-combat-redesign.md
 ```
 
@@ -436,8 +436,8 @@ ts:fa slice epic-DIT-001-combat
 | Use Case | New Command |
 |----------|-------------|
 | Create product feature | `ts:po product` (initial) + manual edit |
-| Propose feature change | `ts:ba feature-increment` |
-| Create new capability | `ts:ba feature-increment` with "New Feature" type |
+| Propose feature change | `ts:fa feature-increment` |
+| Create new capability | `ts:fa feature-increment` with "New Feature" type |
 
 **Migration:**
 - Existing features in projects are migrated to products
@@ -468,7 +468,7 @@ ts:fa slice epic-DIT-001-combat
 **Reason:** Product linking is implicit when creating feature-increments.
 
 **Replacement:**
-- Product linking happens automatically when running `ts:ba feature-increment`
+- Product linking happens automatically when running `ts:fa feature-increment`
 - No explicit linking command needed
 
 ---
@@ -509,13 +509,13 @@ ts:fa slice epic-DIT-001-combat
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                          PROJECT LIFECYCLE                              │
 │                                                                         │
-│  ts:ba project ──────→ Project Created (with product link)             │
+│  ts:po project ──────→ Project Created (with product link)             │
 │        │                                                                │
 │        ▼                                                                │
-│  ts:ba feature-increment ──→ fi-PRX-XXX Created (auto-links product)   │
+│  ts:fa feature-increment ──→ fi-PRX-XXX Created (auto-links product)   │
 │        │                                                                │
 │        ▼                                                                │
-│  ts:ba epic ──────────────→ epic-PRX-XXX Created (links to FIs)        │
+│  ts:fa epic ────────────→ epic-PRX-XXX Created (links to FIs)        │
 │        │                                                                │
 │        ▼                                                                │
 │  ts:fa slice ─────────────→ s-eXXX-YYY-*.md Created (link to Epic)     │
@@ -562,9 +562,9 @@ ts:fa slice epic-DIT-001-combat
 
 | Role | Commands | Output Pattern |
 |------|----------|----------------|
-| **PO** | `ts:po product`, `ts:po status`, `ts:po approve`, `ts:po sync`, `ts:po deprecate` | Products with PRX |
-| **BA** | `ts:ba project`, `ts:ba epic`, `ts:ba feature-increment`, `ts:ba ba-increment`, `ts:ba decision` | `epic-PRX-XXX`, `fi-PRX-XXX`, `bai-PRX-XXX` |
-| **FA** | `ts:fa story`, `ts:fa slice`, `ts:fa storymap` | `s-eXXX-YYY-*.md` |
+| **PO** | `ts:po product`, `ts:po project`, `ts:po status`, `ts:po approve`, `ts:po sync`, `ts:po deprecate` | Products with PRX |
+| **BA** | `ts:ba ba-increment`, `ts:ba decision` | `bai-PRX-XXX` |
+| **FA** | `ts:fa feature-increment`, `ts:fa epic`, `ts:fa story`, `ts:fa slice`, `ts:fa storymap` | `fi-PRX-XXX`, `epic-PRX-XXX`, `s-eXXX-YYY-*.md` |
 | **SA** | `ts:sa adr` | `ta-PRX-XXX`, `tai-PRX-XXX` |
 | **DEV** | `ts:dev plan`, `ts:dev implement`, `ts:dev ready` | `dp-eXXX-sYYY-*.md` |
 | **QA** | `ts:qa test`, `ts:qa dor-check`, `ts:qa dod-check` | Test cases |
@@ -576,8 +576,8 @@ ts:fa slice epic-DIT-001-combat
 | Phase | Commands |
 |-------|----------|
 | **Product Setup** | `ts:po product` |
-| **Project Setup** | `ts:ba project`, `ts:ba link-product` |
-| **Planning** | `ts:ba feature-increment`, `ts:ba epic`, `ts:fa slice` |
+| **Project Setup** | `ts:po project` |
+| **Planning** | `ts:fa feature-increment`, `ts:ba epic`, `ts:fa slice` |
 | **Refinement** | `ts:fa story`, `ts:dev plan`, `ts:qa test` |
 | **Execution** | `ts:sm sprint plan`, `ts:dev implement` |
 | **Completion** | `ts:sm sprint close` |

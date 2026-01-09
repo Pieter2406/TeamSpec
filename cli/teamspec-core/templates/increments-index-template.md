@@ -44,7 +44,7 @@ fi-PRX-XXX-description.md
 
 ## Creating Feature Increments
 
-Use Copilot: `ts:ba feature-increment <product-id> <feature-id>`
+Use Copilot: `ts:fa feature-increment <product-id> <feature-id>`
 
 This command:
 1. Loads the AS-IS from the Product Feature

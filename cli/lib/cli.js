@@ -1027,7 +1027,7 @@ project:
     # TODO: Add project description - what CHANGES will this project deliver?
   status: active  # active, paused, completed, archived
   
-  # Products this project modifies (populated via ts:ba feature-increment)
+  # Products this project modifies (populated via ts:fa feature-increment)
   target_products: ${targetProducts.length > 0 ? '\n    - ' + targetProducts.join('\n    - ') : '[]'}
 `;
   fs.writeFileSync(path.join(projectDir, 'project.yml'), projectYml, 'utf-8');
@@ -1053,7 +1053,7 @@ They are NOT the source of truth - the Product Canon is.
 
 ---
 
-> **To add feature-increments:** Run \`ts:ba feature-increment <product-id> <feature-id>\`
+> **To add feature-increments:** Run \`ts:fa feature-increment <product-id> <feature-id>\`
 `, 'utf-8');
   console.log(`  ✓ Created projects/${projectId}/feature-increments/`);
 

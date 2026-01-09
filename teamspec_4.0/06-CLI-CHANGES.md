@@ -298,7 +298,7 @@ This index tracks proposed changes to product features.
 
 ## Next Available ID: **FI-001**
 
-> **To add increments:** Run \`ts:ba feature-increment\`
+> **To add increments:** Run \`ts:fa feature-increment\`
 `, 'utf-8');
   console.log(`  ✓ Created projects/${projectId}/feature-increments/`);
 

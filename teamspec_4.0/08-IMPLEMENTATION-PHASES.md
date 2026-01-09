@@ -138,32 +138,33 @@ Commands to implement (in agents, CLI handles structure only):
 | `ts:po status` | AGENT_PO.md | P1 |
 | `ts:po approve` | AGENT_PO.md | P1 |
 | `ts:po sync` | AGENT_PO.md | P0 |
-| `ts:ba feature-increment` | AGENT_BA.md | P0 |
-| `ts:ba link-product` | AGENT_BA.md | P1 |
-| `ts:fa sync-prepare` | AGENT_FA.md | P0 |
+| `ts:fa feature-increment` | AGENT_FA.md | P0 |
+| `ts:fa sync-proposal` | AGENT_FA.md | P0 |
 | `ts:sm deploy-checklist` | AGENT_SM.md | P1 |
 | `ts:deploy` | Universal | P1 |
 
 ### 4.3 Tasks
 
 ```
-[ ] 3.1 Document ts:po product command flow
-[ ] 3.2 Document ts:po sync command flow
-[ ] 3.3 Document ts:ba feature-increment command flow
-[ ] 3.4 Document ts:fa sync-prepare command flow
-[ ] 3.5 Update ts:ba project for target_products
-[ ] 3.6 Update ts:ba epic for FI linking
-[ ] 3.7 Update ts:fa story for Epic linking
-[ ] 3.8 Update ts:fa slice for Epic-based slicing
-[ ] 3.9 Document ts:sm deploy-checklist
-[ ] 3.10 Document ts:deploy workflow
+[x] 3.1 Document ts:po product command flow
+[x] 3.2 Document ts:po sync command flow
+[x] 3.3 Document ts:fa feature-increment command flow
+[x] 3.4 Document ts:fa sync-proposal command flow
+[x] 3.5 Update ts:po project for target_products
+[x] 3.6 Update ts:fa epic for FI linking
+[x] 3.7 Update ts:fa story for Epic linking
+[x] 3.8 Update ts:fa slice for Epic-based slicing
+[x] 3.9 Document ts:sm deploy-checklist
+[x] 3.10 Document ts:deploy workflow
 ```
 
 ### 4.4 Validation
 
-- [ ] All commands documented with flow diagrams
-- [ ] Gate checks defined for each command
-- [ ] Error handling documented
+- [x] All commands documented with flow diagrams
+- [x] Gate checks defined for each command
+- [x] Error handling documented
+
+**✅ Phase 3 Complete** (2026-01-09)
 
 ---
 
