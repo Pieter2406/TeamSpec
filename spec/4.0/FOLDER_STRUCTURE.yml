@@ -1,7 +1,7 @@
-# TeamSpec 4.0 Project Structure Encoding - YAML Reference
+# TeamSpec 4.0 Folder Structure Encoding - YAML Reference
 # This file encodes the Product/Project folder structure for use in AI prompts and automation
 # Version: 4.0
-# Last Updated: 2026-01-09
+# Last Updated: 2026-01-11
 
 # =============================================================================
 # CORE CONCEPT: Products vs Projects
