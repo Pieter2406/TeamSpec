@@ -111,6 +111,8 @@ function parseArgs(args) {
     version: false,
     force: false,
     fix: false,
+    rule: null,
+    verbose: false,
   };
 
   let i = 0;
@@ -169,6 +171,12 @@ function parseArgs(args) {
         break;
       case '--fix':
         options.fix = true;
+        break;
+      case '--rule':
+        options.rule = args[++i];
+        break;
+      case '--verbose':
+        options.verbose = true;
         break;
     }
   }
@@ -1435,27 +1443,16 @@ async function run(args) {
 
   // Handle lint command
   if (options.command === 'lint') {
-    const { Linter, SEVERITY } = require('./linter');
+    const { runLint } = require('./linter');
     const targetDir = path.resolve(options.target);
 
-    console.log(`\n${colored('TeamSpec Linter', colors.bold + colors.cyan)} `);
-    console.log(`${colored('Scanning:', colors.bold)} ${targetDir} `);
+    const exitCode = runLint(targetDir, {
+      project: options.project,
+      rule: options.rule,
+      verbose: options.verbose
+    });
 
-    if (options.project) {
-      console.log(`${colored('Project:', colors.bold)} ${options.project} `);
-    }
-
-    const linter = new Linter(targetDir);
-    const results = await linter.run({ project: options.project });
-
-    console.log(linter.formatResults(results));
-
-    // Exit with error code if there are errors or blockers
-    const hasErrors = results.some(r => r.severity === SEVERITY.ERROR || r.severity === SEVERITY.BLOCKER);
-    if (hasErrors) {
-      process.exit(1);
-    }
-    return;
+    process.exit(exitCode);
   }
 
   // Handle migrate command

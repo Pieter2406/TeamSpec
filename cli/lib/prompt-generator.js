@@ -1,321 +1,480 @@
 /**
- * TeamSpec Copilot Command Generator
+ * TeamSpec Copilot Prompt Generator
  * 
  * Generates GitHub Copilot prompt files for all TeamSpec commands.
+ * Commands are loaded from registry.yml to ensure consistency.
+ * 
  * Usage: teamspec generate-prompts
+ * Version: 4.0
  */
 
 const fs = require('fs');
 const path = require('path');
+const { loadRegistry, getCommandsFromRegistry } = require('./structure-loader');
 
-// Command definitions from agent system
-const COMMANDS = {
-    ba: {
+// =============================================================================
+// ROLE DEFINITIONS (from registry.yml)
+// =============================================================================
+
+const ROLES = {
+    PO: {
+        name: 'Product Owner',
+        agent: 'AGENT_PO',
+        description: 'Product ownership, PRX assignment, deployment approval, canon sync'
+    },
+    BA: {
         name: 'Business Analyst',
-        commands: [
-            {
-                name: 'project',
-                description: 'Create project structure',
-                prompt: `Execute project creation workflow:
-1. Gather project information (name, ID, stakeholders, goals)
-2. Create project folder structure in projects/{id}/
-3. Generate project.yml with metadata
-4. Create README.md
-5. Initialize folders: features/, stories/backlog/, stories/ready-to-refine/, stories/ready-for-development/, technical-architecture-increments/, decisions/, dev-plans/, qa/test-cases/, epics/, sprints/
-6. Create features-index.md and story-ledger.md
-Wait for user confirmation before creating files.`
-            },
-            {
-                name: 'epic',
-                description: 'Define an epic',
-                prompt: `Execute epic creation workflow:
-1. Identify epic scope and goal
-2. Link to project
-3. Break down into candidate features
-4. Create epic file in epics/ folder
-Wait for user confirmation before creating files.`
-            },
-            {
-                name: 'feature',
-                description: 'Create feature file',
-                prompt: `Execute feature creation workflow:
-1. Gather feature requirements (purpose, value, scope)
-2. Define personas/actors
-3. Create feature file in features/ folder using F-XXX-name.md format
-4. Update features-index.md
-Ensure feature is implementation-agnostic.
-Wait for user confirmation before creating files.`
-            },
-            {
-                name: 'decision',
-                description: 'Log business decision',
-                prompt: `Log a business decision:
-1. Capture decision context
-2. Document options considered
-3. Record rationale
-4. Link to affected features
-5. Create decision file in decisions/ folder using DECISION-XXX-name.md format`
-            },
-            {
-                name: 'analysis',
-                description: 'Create business analysis document',
-                prompt: `Create a business analysis document to describe business processes:
-
-1. **Understand the business domain** - Ask about:
-   - What business problem needs to be analyzed?
-   - Who are the stakeholders?
-   - What business processes are involved?
-
-2. **Document Current State (As-Is)**
-   - How do users solve the problem today?
-   - What are the pain points?
-   - What processes exist?
-
-3. **Define Future State (To-Be)**
-   - What will the improved workflow look like?
-   - What business rules apply?
-   - What are the success metrics?
-
-4. **Create business analysis document** using templates/business-analysis-template.md
-   - Place in analysis/ folder (create if needed)
-   - Name format: BA-XXX-description.md
-
-5. **Link to related artifacts**
-   - Identify candidate features that will come from this analysis
-   - Note decisions that need to be made
-   - Identify risks and constraints
-
-⚠️ This is a PLANNING artifact - Feature Canon becomes Source of Truth after features are created.`
-            }
-        ]
+        agent: 'AGENT_BA',
+        description: 'Business analysis, domain knowledge, process documentation'
     },
-    fa: {
+    FA: {
         name: 'Functional Analyst',
-        commands: [
-            {
-                name: 'story',
-                description: 'Create a new story',
-                prompt: `Create a story as a DELTA to the Feature Canon:
-1. Identify the linked feature (REQUIRED)
-2. Document BEFORE state (reference Canon)
-3. Document AFTER state (the delta)
-4. Write testable Acceptance Criteria
-5. Mark impact type (Adds/Changes/Fixes/Removes)
-6. Create story in stories/backlog/ using S-XXX-name.md format
-NEVER create a story without a feature link.`
-            },
-            {
-                name: 'slice',
-                description: 'Slice feature into stories',
-                prompt: `Slice a feature into implementable stories:
-1. Read the Feature Canon entry
-2. Identify discrete behavior changes
-3. Create story deltas for each change
-4. Ensure each story is independently deliverable
-5. Link all stories to the feature
-Create files in stories/backlog/`
-            },
-            {
-                name: 'refine',
-                description: 'Move story to ready-to-refine',
-                prompt: `Refine a story for development:
-1. Verify feature link exists
-2. Check Before/After delta is clear
-3. Validate ACs are testable
-4. Move file from stories/backlog/ to stories/ready-to-refine/`
-            },
-            {
-                name: 'sync',
-                description: 'Update Feature Canon after story completion',
-                prompt: `CRITICAL: Canon sync workflow:
-1. Identify completed story
-2. Check impact type (Adds/Changes Behavior?)
-3. Update Feature Canon sections in features/
-4. Add Change Log entry with story reference
-5. Update story-ledger.md
-6. Verify DoD checkbox is checked
-A story CANNOT be Done until Canon is synchronized.`
-            }
-        ]
+        agent: 'AGENT_FA',
+        description: 'Features, Feature-Increments, Epics, Stories'
     },
-    sa: {
+    SA: {
         name: 'Solution Architect',
-        commands: [
-            {
-                name: 'ta',
-                description: 'Create Technical Architecture document',
-                prompt: `Create a Technical Architecture document:
-1. Identify technical decision
-2. Document context and options
-3. Record decision and rationale
-4. Link to affected features
-5. Create TA file in technical-architecture-increments/ folder using tai-PRX-NNN-name.md format`
-            }
-        ]
+        agent: 'AGENT_SA',
+        description: 'Technical architecture, solution designs'
     },
-    dev: {
+    DEV: {
         name: 'Developer',
-        commands: [
-            {
-                name: 'plan',
-                description: 'Create development plan',
-                prompt: `Create a development plan:
-1. Read the story and linked feature
-2. Break down into implementation tasks
-3. Estimate effort for each task
-4. Identify dependencies and risks
-5. Create dev plan in dev-plans/ using story-XXX-tasks.md format`
-            },
-            {
-                name: 'implement',
-                description: 'Execute implementation',
-                prompt: `Execute implementation:
-1. Load dev plan
-2. Work through tasks sequentially
-3. Update task completion status
-4. Create/modify code files
-5. Track actual vs estimated effort`
-            },
-            {
-                name: 'ready',
-                description: 'Move story to ready-for-development',
-                prompt: `Move story to ready-for-development:
-1. Verify dev plan exists
-2. Check DoR criteria
-3. Move file from stories/ready-to-refine/ to stories/ready-for-development/`
-            }
-        ]
+        agent: 'AGENT_DEV',
+        description: 'Development plans, implementation'
     },
-    qa: {
+    QA: {
         name: 'QA Engineer',
-        commands: [
-            {
-                name: 'test',
-                description: 'Design test cases',
-                prompt: `Design test cases:
-1. Read feature specification
-2. Identify test scenarios
-3. Write test cases with steps and expected results
-4. Create test file in qa/test-cases/ using F-XXX-test-cases.md format`
-            },
-            {
-                name: 'bug',
-                description: 'File bug report',
-                prompt: `File a bug report:
-1. Capture bug details
-2. Document reproduction steps
-3. Classify severity
-4. Link to affected feature
-5. Create bug file in bugs/ folder`
-            },
-            {
-                name: 'dor-check',
-                description: 'Validate Definition of Ready',
-                prompt: `Check Definition of Ready:
-1. Verify feature link exists
-2. Check Before/After delta is clear
-3. Validate ACs are testable
-4. Confirm no TBD/placeholder content
-5. Check estimate is assigned
-Report any gaps.`
-            }
-        ]
+        agent: 'AGENT_QA',
+        description: 'Test cases, regression tests, bug reports, verification'
     },
-    sm: {
+    SM: {
         name: 'Scrum Master',
-        commands: [
-            {
-                name: 'sprint-create',
-                description: 'Create new sprint',
-                prompt: `Create new sprint:
-1. Determine sprint number
-2. Create sprint folder: sprints/sprint-N/
-3. Create sprint-goal.md
-4. Update active-sprint.md`
-            },
-            {
-                name: 'sprint-plan',
-                description: 'Plan sprint backlog',
-                prompt: `Plan sprint backlog:
-1. Review ready-for-development stories
-2. Calculate team capacity
-3. Select stories for sprint
-4. Move story files to sprints/sprint-N/
-5. Update sprint-goal.md`
-            },
-            {
-                name: 'sprint-status',
-                description: 'Sprint status report',
-                prompt: `Generate sprint status:
-1. Count stories by status
-2. Calculate burndown
-3. Identify blockers
-4. Report health metrics`
-            }
-        ]
+        agent: 'AGENT_SM',
+        description: 'Sprint management, deployment checklist, facilitation'
     },
-    utility: {
-        name: 'Utility',
-        commands: [
-            {
-                name: 'fix',
-                description: 'Auto-fix linter errors',
-                prompt: `Auto-fix TeamSpec linter errors:
-1. Run \`teamspec lint\` to identify errors
-2. Review the linter output
-3. Apply fixes for each error category
-4. Re-run linter to verify fixes
-
-Supports: TS-PROJ, TS-FEAT, TS-STORY, TS-TA, TS-DEVPLAN, TS-DOD, TS-NAMING rules.`
-            }
-        ]
+    DES: {
+        name: 'Designer',
+        agent: 'AGENT_DES',
+        description: 'UX/UI design artifacts'
     }
 };
 
-/**
- * Map role codes to agent file names
- */
-const ROLE_TO_AGENT = {
-    ba: 'AGENT_BA',
-    fa: 'AGENT_FA',
-    sa: 'AGENT_SA',  // Solution Architect
-    dev: 'AGENT_DEV',
-    qa: 'AGENT_QA',
-    sm: 'AGENT_SM',
-    utility: 'AGENT_FIX'
+// =============================================================================
+// COMMAND PROMPTS (detailed workflow guidance)
+// =============================================================================
+
+const COMMAND_PROMPTS = {
+    // PO Commands
+    'po.product': {
+        workflow: `Create a new Product:
+1. Gather product information (name, description)
+2. Generate unique 3-4 char PRX prefix
+3. Create products/{id}/ folder structure
+4. Generate product.yml with metadata
+5. Create subfolders: business-analysis/, features/, solution-designs/, technical-architecture/, decisions/, qa/regression-tests/
+6. Update products-index.md`,
+        template: 'product-template.yml',
+        output: 'products/{id}/ structure'
+    },
+    'po.project': {
+        workflow: `Create a new Project:
+1. Gather project information (name, target products)
+2. Create projects/{id}/ folder structure
+3. Generate project.yml with target_products
+4. Create subfolders per FOLDER_STRUCTURE.yml
+5. Initialize index files`,
+        template: 'project-template.yml',
+        output: 'projects/{id}/ structure'
+    },
+    'po.sync': {
+        workflow: `Sync Product Canon (post-deployment ONLY):
+1. Verify Deployment Verification gate passed
+2. For each Feature-Increment in project:
+   - Merge TO-BE content into Product Feature
+   - Update Feature Change Log
+3. Update story-ledger.md
+4. Set canon_synced in project.yml
+5. Archive or close project`,
+        precondition: 'Deployment Verification gate passed',
+        output: 'Updated Product Canon'
+    },
+    'po.status': {
+        workflow: `Generate business/management status report:
+1. Count products and projects
+2. Show project health (stories by status)
+3. List Feature-Increment states
+4. Show QA coverage status
+5. Display gate readiness
+6. Show sync readiness`,
+        output: 'Status report (read-only)'
+    },
+
+    // BA Commands
+    'ba.analysis': {
+        workflow: `Create Business Analysis document:
+1. Understand the business domain and problem
+2. Document Current State (As-Is) - how users solve problem today
+3. Define Future State (To-Be) - improved workflow
+4. Identify business rules and success metrics
+5. Create ba-PRX-NNN-description.md using template
+6. Link to candidate features`,
+        template: 'business-analysis-template.md',
+        output: 'products/{id}/business-analysis/ba-PRX-*.md'
+    },
+    'ba.ba-increment': {
+        workflow: `Create BA Increment for project:
+1. Identify product BA document being modified
+2. Document proposed changes
+3. Create bai-PRX-NNN-description.md using template
+4. Link to affected features`,
+        template: 'bai-template.md',
+        output: 'projects/{id}/business-analysis-increments/bai-PRX-*.md'
+    },
+    'ba.review': {
+        workflow: `Review artifacts for business intent:
+1. Read specified artifact
+2. Check business requirements alignment
+3. Verify domain terminology
+4. Provide feedback`,
+        output: 'Review comments'
+    },
+
+    // FA Commands
+    'fa.feature': {
+        workflow: `Create Feature in Product Canon:
+1. Gather feature requirements (purpose, value, scope)
+2. Define personas/actors
+3. Write behavior specification (implementation-agnostic)
+4. Create f-PRX-NNN-description.md using template
+5. Update features-index.md`,
+        template: 'feature-template.md',
+        output: 'products/{id}/features/f-PRX-*.md'
+    },
+    'fa.feature-increment': {
+        workflow: `Create Feature-Increment (TO-BE change):
+1. Identify target Product Feature (f-PRX-NNN)
+2. Document AS-IS (copy from Canon)
+3. Document TO-BE (proposed changes)
+4. Write Acceptance Criteria
+5. Create fi-PRX-NNN-description.md using template
+6. Update increments-index.md`,
+        template: 'feature-increment-template.md',
+        output: 'projects/{id}/feature-increments/fi-PRX-*.md'
+    },
+    'fa.epic': {
+        workflow: `Create Epic (story container):
+1. Define epic goal and scope
+2. Link to Feature-Increment(s)
+3. Identify candidate stories
+4. Create epic-PRX-NNN-description.md using template
+5. Update epics-index.md`,
+        template: 'epic-template.md',
+        output: 'projects/{id}/epics/epic-PRX-*.md'
+    },
+    'fa.story': {
+        workflow: `Create Story (delta to Feature):
+1. Identify linked Epic (REQUIRED)
+2. Reference Feature-Increment
+3. Write testable Acceptance Criteria
+4. Mark impact type (Adds/Changes/Fixes/Removes)
+5. Create s-eXXX-YYY-description.md in stories/backlog/
+NEVER create a story without an epic link`,
+        template: 'story-template.md',
+        output: 'projects/{id}/stories/backlog/s-eXXX-YYY-*.md'
+    },
+    'fa.sync-proposal': {
+        workflow: `Prepare sync proposal for PO:
+1. List all completed Feature-Increments
+2. Document changes to Product Canon
+3. Verify all DoD criteria met
+4. Create sync proposal document`,
+        output: 'Sync proposal document'
+    },
+    'fa.slice': {
+        workflow: `Slice Feature into Stories:
+1. Read Feature Canon entry
+2. Identify discrete behavior changes
+3. Create story deltas for each change
+4. Ensure each story is independently deliverable
+5. Link all stories to epic`,
+        output: 'Multiple story files'
+    },
+
+    // SA Commands
+    'sa.ta': {
+        workflow: `Create Technical Architecture document:
+1. Identify technical decision context
+2. Document options considered
+3. Record decision and rationale
+4. Create ta-PRX-NNN-description.md using template`,
+        template: 'ta-template.md',
+        output: 'products/{id}/technical-architecture/ta-PRX-*.md'
+    },
+    'sa.ta-increment': {
+        workflow: `Create TA Increment for project:
+1. Identify technical changes needed
+2. Document architecture delta
+3. Create tai-PRX-NNN-description.md using template`,
+        template: 'tai-template.md',
+        output: 'projects/{id}/technical-architecture-increments/tai-PRX-*.md'
+    },
+    'sa.sd': {
+        workflow: `Create Solution Design document:
+1. Define solution scope
+2. Document high-level design
+3. Create sd-PRX-NNN-description.md using template`,
+        template: 'sd-template.md',
+        output: 'products/{id}/solution-designs/sd-PRX-*.md'
+    },
+    'sa.sd-increment': {
+        workflow: `Create SD Increment for project:
+1. Identify design changes
+2. Document solution delta
+3. Create sdi-PRX-NNN-description.md using template`,
+        template: 'sdi-template.md',
+        output: 'projects/{id}/solution-design-increments/sdi-PRX-*.md'
+    },
+    'sa.review': {
+        workflow: `Review technical approach:
+1. Read specified artifact
+2. Assess technical feasibility
+3. Check architecture alignment
+4. Provide technical feedback`,
+        output: 'Technical assessment'
+    },
+
+    // DEV Commands
+    'dev.plan': {
+        workflow: `Create Development Plan:
+1. Read story and linked Feature-Increment
+2. Break down into implementation tasks
+3. Estimate effort for each task
+4. Identify dependencies and risks
+5. Create dp-eXXX-sYYY-description.md using template`,
+        template: 'dev-plan-template.md',
+        output: 'projects/{id}/dev-plans/dp-eXXX-sYYY-*.md'
+    },
+    'dev.implement': {
+        workflow: `Execute Implementation:
+1. Load dev plan
+2. Work through tasks sequentially
+3. Update task completion status (✅)
+4. Create/modify code files
+5. Track actual vs estimated effort`,
+        output: 'Code changes'
+    },
+
+    // QA Commands
+    'qa.test': {
+        workflow: `Create Test Cases for Feature-Increment:
+1. Read Feature-Increment and linked stories
+2. Identify test scenarios
+3. Write test cases with steps and expected results
+4. Create tc-fi-PRX-NNN-description.md using template`,
+        template: 'tc-template.md',
+        output: 'projects/{id}/qa/test-cases/tc-fi-PRX-*.md'
+    },
+    'qa.verify': {
+        workflow: `Validate DoD Compliance:
+1. Check all AC verified
+2. Verify code reviewed and merged
+3. Confirm tests passing
+4. Check Feature-Increment TO-BE complete
+5. Report verification status`,
+        output: 'Verification report'
+    },
+    'qa.regression': {
+        workflow: `Update Product Regression Tests:
+1. Identify Feature being modified
+2. Create/update regression test documentation
+3. Create rt-f-PRX-NNN-description.md using template
+4. Link to Product Feature`,
+        template: 'rt-template.md',
+        output: 'products/{id}/qa/regression-tests/rt-f-PRX-*.md'
+    },
+    'qa.bug': {
+        workflow: `Create Bug Report:
+1. Capture bug details and reproduction steps
+2. Classify severity
+3. Link to affected Feature/Story
+4. Create bug-{project}-NNN-description.md using template`,
+        template: 'bug-report-template.md',
+        output: 'projects/{id}/qa/bug-reports/bug-*.md'
+    },
+    'qa.uat': {
+        workflow: `Create UAT Test Pack:
+1. Gather acceptance criteria from stories
+2. Create UAT scenarios
+3. Prepare test data requirements
+4. Create UAT pack using template`,
+        template: 'uat-pack-template.md',
+        output: 'UAT artifacts'
+    },
+
+    // SM Commands
+    'sm.sprint': {
+        workflow: `Create/Manage Sprint:
+1. Determine sprint number
+2. Create sprint folder: sprints/sprint-N/
+3. Create sprint-goal.md using template
+4. Update active-sprint.md
+5. Initialize committed-stories.md`,
+        template: 'sprint-template.md',
+        output: 'projects/{id}/sprints/sprint-N/*'
+    },
+    'sm.deploy-checklist': {
+        workflow: `Run Deployment Readiness Checklist:
+1. Verify all sprint stories in terminal state
+2. Check Feature-Increments reviewed
+3. Confirm code deployed
+4. Verify feature toggles enabled
+5. Confirm smoke tests passed
+6. Check regression impact recorded
+7. Get QA sign-off
+8. Get PO approval`,
+        output: 'Deployment checklist'
+    },
+    'sm.planning': {
+        workflow: `Facilitate Sprint Planning:
+1. Review ready-for-development stories
+2. Calculate team capacity
+3. Select stories for sprint
+4. Move story files to sprint folder
+5. Update sprint-goal.md`,
+        output: 'Sprint plan artifacts'
+    },
+    'sm.standup': {
+        workflow: `Facilitate Daily Standup:
+1. Review yesterday's progress
+2. Identify blockers
+3. Plan today's work
+4. Update sprint board`,
+        output: 'Standup notes'
+    },
+    'sm.retro': {
+        workflow: `Facilitate Retrospective:
+1. Gather what went well
+2. Identify improvements
+3. Create action items
+4. Document retrospective`,
+        output: 'Retrospective notes'
+    },
+    'sm.sync': {
+        workflow: `Facilitate Cross-Team Sync:
+1. Share team progress
+2. Identify dependencies
+3. Coordinate on blockers
+4. Align on priorities`,
+        output: 'Sync notes'
+    },
+
+    // Universal Commands
+    'lint': {
+        workflow: `Run TeamSpec Linter:
+1. Scan products/ and projects/ folders
+2. Check naming conventions
+3. Validate required fields
+4. Check cross-references
+5. Report errors and warnings`,
+        output: 'Lint report'
+    },
+    'fix': {
+        workflow: `Auto-Fix Linter Errors:
+1. Run linter to identify errors
+2. Apply automatic fixes where possible
+3. Report manual fixes needed
+4. Re-run linter to verify`,
+        output: 'Fixed files'
+    }
 };
 
-/**
- * Generate GitHub Copilot prompt file in VS Code format
- * Creates minimal prompts that link to the full agent files
- * VS Code automatically includes linked Markdown files as context
- */
-function generatePromptFile(role, command, outputDir) {
-    // Utility commands use just the command name (e.g., fix.prompt.md, ts:fix)
-    // Other roles use role-command pattern (e.g., ba-project.prompt.md, ts:ba-project)
-    const isUtility = role === 'utility';
-    const filename = isUtility ? `${command.name}.prompt.md` : `${role}-${command.name}.prompt.md`;
-    const filepath = path.join(outputDir, filename);
-    const commandName = isUtility ? `ts:${command.name}` : `ts:${role}-${command.name}`;
-    const agentFile = ROLE_TO_AGENT[role] || `AGENT_${role.toUpperCase()}`;
+// =============================================================================
+// PROMPT FILE GENERATION
+// =============================================================================
 
-    // Create minimal prompt that links to the agent file
-    // VS Code will include the linked file as context automatically
+/**
+ * Sanitize a string for use in filenames
+ * Removes or replaces invalid characters
+ */
+function sanitizeFilename(str) {
+    return str
+        .replace(/<[^>]+>/g, '')  // Remove angle bracket patterns like <role>
+        .replace(/[\\/:*?"<>|]/g, '') // Remove Windows-invalid chars
+        .replace(/\s+/g, '-')     // Replace spaces with dashes
+        .replace(/-+/g, '-')      // Collapse multiple dashes
+        .replace(/^-|-$/g, '');   // Remove leading/trailing dashes
+}
+
+/**
+ * Generate GitHub Copilot prompt file
+ */
+function generatePromptFile(command, outputDir, registry) {
+    // Parse command invocation (e.g., "ts:po product" -> role="po", action="product")
+    const match = command.invocation.match(/^ts:(\w+)(?:\s+(.+))?$/);
+    if (!match) return null;
+
+    const [, roleOrCmd, action] = match;
+
+    // Skip commands with placeholders in action (e.g., ts:agent <role>)
+    if (action && action.includes('<')) {
+        return null;
+    }
+
+    // Determine filename and command name
+    let filename, commandName;
+    if (action) {
+        // Role-specific command (e.g., ts:po product)
+        const sanitizedAction = sanitizeFilename(action);
+        filename = `${roleOrCmd}-${sanitizedAction}.prompt.md`;
+        commandName = `ts:${roleOrCmd}-${sanitizedAction}`;
+    } else {
+        // Universal command (e.g., ts:lint)
+        filename = `${roleOrCmd}.prompt.md`;
+        commandName = `ts:${roleOrCmd}`;
+    }
+
+    const filepath = path.join(outputDir, filename);
+
+    // Get role info
+    const roleKey = roleOrCmd.toUpperCase();
+    const role = ROLES[roleKey] || { name: 'TeamSpec', agent: 'AGENT_BOOTSTRAP', description: 'Universal command' };
+
+    // Get command prompt details
+    const promptKey = command.id || `${roleOrCmd}.${action || roleOrCmd}`;
+    const promptDetails = COMMAND_PROMPTS[promptKey] || {};
+
+    // Build prompt content
     const content = `---
 name: "${commandName}"
-description: "TeamSpec ${COMMANDS[role].name}: ${command.description}"
+description: "TeamSpec ${role.name}: ${command.purpose || action || roleOrCmd}"
 agent: "agent"
 ---
 
-# ${command.description}
+# ${command.purpose || `${role.name} - ${action || roleOrCmd}`}
 
-Execute the **${command.name}** workflow as a **${COMMANDS[role].name}**.
+Execute the **${action || roleOrCmd}** workflow as a **${role.name}**.
 
-See full role instructions: [${agentFile}.md](../../.teamspec/agents/${agentFile}.md)
+See full role instructions: [${role.agent}.md](../../.teamspec/agents/${role.agent}.md)
 
-## Quick Reference
+## Workflow
 
-${command.prompt}
+${promptDetails.workflow || command.purpose || 'Execute the command workflow.'}
+
+${promptDetails.template ? `## Template
+
+Use template: \`/.teamspec/templates/${promptDetails.template}\`
+` : ''}
+## Output
+
+${promptDetails.output || command.output || 'Generated artifacts'}
+
+${promptDetails.precondition ? `## Precondition
+
+${promptDetails.precondition}
+` : ''}
+---
+
+> Generated from registry.yml - TeamSpec 4.0
 `;
 
     fs.writeFileSync(filepath, content, 'utf-8');
@@ -323,32 +482,79 @@ ${command.prompt}
 }
 
 /**
- * Generate all prompt files
+ * Generate all prompt files from registry
  */
 function generateAllPrompts(targetDir = process.cwd()) {
     const outputDir = path.join(targetDir, '.github', 'prompts');
 
     // Create output directory
-    if (!fs.existsSync(outputDir)) {
-        fs.mkdirSync(outputDir, { recursive: true });
-    }
+    fs.mkdirSync(outputDir, { recursive: true });
 
     console.log('🚀 Generating GitHub Copilot prompt files...\n');
 
-    const generated = [];
+    // Load registry
+    const registry = loadRegistry(targetDir);
+    const commands = getCommandsFromRegistry(registry);
 
-    // Generate prompts for each role and command
-    for (const [role, config] of Object.entries(COMMANDS)) {
-        console.log(`📋 ${config.name}:`);
-        for (const command of config.commands) {
-            const filename = generatePromptFile(role, command, outputDir);
+    const generated = [];
+    const byRole = {};
+
+    // Generate prompts for each command
+    for (const command of commands) {
+        if (command.status === 'REMOVED') continue;
+
+        const filename = generatePromptFile(command, outputDir, registry);
+        if (filename) {
             generated.push(filename);
+
+            // Group by role for summary
+            const role = command.role || 'Any';
+            if (!byRole[role]) byRole[role] = [];
+            byRole[role].push({ filename, command });
+        }
+    }
+
+    // Print summary by role
+    for (const [role, cmds] of Object.entries(byRole)) {
+        const roleName = ROLES[role]?.name || role;
+        console.log(`📋 ${roleName}:`);
+        for (const { filename } of cmds) {
             console.log(`   ✓ ${filename}`);
         }
     }
 
-    // Generate index file
-    const indexContent = `# TeamSpec Copilot Prompts
+    // Generate README index
+    generateReadme(outputDir, byRole, registry);
+    generated.push('README.md');
+
+    console.log(`\n✅ Generated ${generated.length} files in ${outputDir}`);
+    console.log('\n📖 See .github/prompts/README.md for usage instructions');
+    console.log('💡 In Copilot Chat, type "/" to see available prompts');
+
+    return generated;
+}
+
+/**
+ * Generate README index file
+ */
+function generateReadme(outputDir, byRole, registry) {
+    const pkg = require('../package.json');
+
+    const rolesSections = Object.entries(byRole).map(([role, cmds]) => {
+        const roleName = ROLES[role]?.name || role;
+        const cmdList = cmds.map(({ filename, command }) => {
+            const cmdName = filename.replace('.prompt.md', '');
+            return `- \`/ts:${cmdName}\` - ${command.purpose || cmdName}`;
+        }).join('\n');
+
+        return `
+### ${roleName}
+
+${cmdList}
+`;
+    }).join('\n');
+
+    const content = `# TeamSpec Copilot Prompts
 
 These prompt files provide structured guidance for TeamSpec commands in GitHub Copilot Chat.
 
@@ -363,17 +569,7 @@ Alternatively, run any prompt directly:
 
 ## Available Commands
 
-${Object.entries(COMMANDS).map(([role, config]) => {
-        const isUtility = role === 'utility';
-        return `
-### ${config.name}
-
-${config.commands.map(cmd => {
-            const cmdName = isUtility ? `ts:${cmd.name}` : `ts:${role}-${cmd.name}`;
-            return `- \`/${cmdName}\` - ${cmd.description}`;
-        }).join('\n')}
-`;
-    }).join('\n')}
+${rolesSections}
 
 ## How It Works
 
@@ -382,24 +578,114 @@ ${config.commands.map(cmd => {
 3. Copilot provides role-specific guidance
 4. Follow the workflow to create artifacts
 
+## Command Reference
+
+| Command | Role | Purpose |
+|---------|------|---------|
+${Object.values(byRole).flat().map(({ command }) =>
+        `| \`${command.invocation}\` | ${command.role || 'Any'} | ${command.purpose || '-'} |`
+    ).join('\n')}
+
 ---
 
-*Generated by TeamSpec CLI v${require('../package.json').version}*
+*Generated by TeamSpec CLI v${pkg.version}*
+*Source: registry.yml - TeamSpec ${registry?.version || '4.0'}*
 `;
 
-    fs.writeFileSync(path.join(outputDir, 'README.md'), indexContent, 'utf-8');
-    generated.push('README.md');
-
-    console.log(`\n✅ Generated ${generated.length} files in ${outputDir}`);
-    console.log('\n📖 See .github/prompts/README.md for usage instructions');
-    console.log('💡 In Copilot Chat, type "/" to see available prompts');
-
-    return generated;
+    fs.writeFileSync(path.join(outputDir, 'README.md'), content, 'utf-8');
 }
+
+/**
+ * Get all commands for external use (backwards compatibility)
+ */
+function getCommands(targetDir = process.cwd()) {
+    const registry = loadRegistry(targetDir);
+    return getCommandsFromRegistry(registry);
+}
+
+// Legacy COMMANDS export for backwards compatibility with tests
+const COMMANDS = {
+    ba: {
+        name: 'Business Analyst',
+        commands: [
+            { name: 'analysis', description: 'Create business analysis document', prompt: COMMAND_PROMPTS['ba.analysis']?.workflow || '' },
+            { name: 'ba-increment', description: 'Create BA increment', prompt: COMMAND_PROMPTS['ba.ba-increment']?.workflow || '' },
+            { name: 'review', description: 'Review artifacts', prompt: COMMAND_PROMPTS['ba.review']?.workflow || '' }
+        ]
+    },
+    fa: {
+        name: 'Functional Analyst',
+        commands: [
+            { name: 'feature', description: 'Create feature', prompt: COMMAND_PROMPTS['fa.feature']?.workflow || '' },
+            { name: 'feature-increment', description: 'Create feature-increment', prompt: COMMAND_PROMPTS['fa.feature-increment']?.workflow || '' },
+            { name: 'epic', description: 'Create epic', prompt: COMMAND_PROMPTS['fa.epic']?.workflow || '' },
+            { name: 'story', description: 'Create story', prompt: COMMAND_PROMPTS['fa.story']?.workflow || '' },
+            { name: 'slice', description: 'Slice feature', prompt: COMMAND_PROMPTS['fa.slice']?.workflow || '' },
+            { name: 'sync-proposal', description: 'Prepare sync proposal', prompt: COMMAND_PROMPTS['fa.sync-proposal']?.workflow || '' }
+        ]
+    },
+    po: {
+        name: 'Product Owner',
+        commands: [
+            { name: 'product', description: 'Create product', prompt: COMMAND_PROMPTS['po.product']?.workflow || '' },
+            { name: 'project', description: 'Create project', prompt: COMMAND_PROMPTS['po.project']?.workflow || '' },
+            { name: 'sync', description: 'Sync canon', prompt: COMMAND_PROMPTS['po.sync']?.workflow || '' },
+            { name: 'status', description: 'Status report', prompt: COMMAND_PROMPTS['po.status']?.workflow || '' }
+        ]
+    },
+    sa: {
+        name: 'Solution Architect',
+        commands: [
+            { name: 'ta', description: 'Create TA', prompt: COMMAND_PROMPTS['sa.ta']?.workflow || '' },
+            { name: 'ta-increment', description: 'Create TAI', prompt: COMMAND_PROMPTS['sa.ta-increment']?.workflow || '' },
+            { name: 'sd', description: 'Create SD', prompt: COMMAND_PROMPTS['sa.sd']?.workflow || '' },
+            { name: 'sd-increment', description: 'Create SDI', prompt: COMMAND_PROMPTS['sa.sd-increment']?.workflow || '' },
+            { name: 'review', description: 'Review technical', prompt: COMMAND_PROMPTS['sa.review']?.workflow || '' }
+        ]
+    },
+    dev: {
+        name: 'Developer',
+        commands: [
+            { name: 'plan', description: 'Create dev plan', prompt: COMMAND_PROMPTS['dev.plan']?.workflow || '' },
+            { name: 'implement', description: 'Implement', prompt: COMMAND_PROMPTS['dev.implement']?.workflow || '' }
+        ]
+    },
+    qa: {
+        name: 'QA Engineer',
+        commands: [
+            { name: 'test', description: 'Create test cases', prompt: COMMAND_PROMPTS['qa.test']?.workflow || '' },
+            { name: 'verify', description: 'Verify DoD', prompt: COMMAND_PROMPTS['qa.verify']?.workflow || '' },
+            { name: 'regression', description: 'Update regression', prompt: COMMAND_PROMPTS['qa.regression']?.workflow || '' },
+            { name: 'bug', description: 'File bug', prompt: COMMAND_PROMPTS['qa.bug']?.workflow || '' },
+            { name: 'uat', description: 'Create UAT pack', prompt: COMMAND_PROMPTS['qa.uat']?.workflow || '' }
+        ]
+    },
+    sm: {
+        name: 'Scrum Master',
+        commands: [
+            { name: 'sprint', description: 'Manage sprint', prompt: COMMAND_PROMPTS['sm.sprint']?.workflow || '' },
+            { name: 'deploy-checklist', description: 'Deploy checklist', prompt: COMMAND_PROMPTS['sm.deploy-checklist']?.workflow || '' },
+            { name: 'planning', description: 'Sprint planning', prompt: COMMAND_PROMPTS['sm.planning']?.workflow || '' },
+            { name: 'standup', description: 'Daily standup', prompt: COMMAND_PROMPTS['sm.standup']?.workflow || '' },
+            { name: 'retro', description: 'Retrospective', prompt: COMMAND_PROMPTS['sm.retro']?.workflow || '' },
+            { name: 'sync', description: 'Team sync', prompt: COMMAND_PROMPTS['sm.sync']?.workflow || '' }
+        ]
+    },
+    utility: {
+        name: 'Utility',
+        commands: [
+            { name: 'lint', description: 'Run linter', prompt: COMMAND_PROMPTS['lint']?.workflow || '' },
+            { name: 'fix', description: 'Auto-fix', prompt: COMMAND_PROMPTS['fix']?.workflow || '' }
+        ]
+    }
+};
 
 module.exports = {
     generateAllPrompts,
-    COMMANDS
+    getCommands,
+    COMMANDS,
+    ROLES,
+    COMMAND_PROMPTS
 };
 
 // CLI execution

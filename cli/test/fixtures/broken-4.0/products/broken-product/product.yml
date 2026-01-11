@@ -1,4 +1,8 @@
-# Broken: missing required fields (prefix)
-product-id: broken-product
-name: Broken Product
-# prefix: MISSING -- should trigger TS-PROD rule
+# Product Configuration (4.0)
+# Broken: missing required 'prefix' field
+product:
+  id: "broken-product"
+  name: "Broken Product"
+  # prefix: MISSING -- should trigger TS-PROD rule
+  status: "active"
+  description: "This product is missing the required prefix field"

@@ -1,2565 +1,878 @@
 /**
  * TeamSpec Linter
- * Enforces TeamSpec 4.0 Product-Canon operating model rules
  * 
- * Rule Categories (Legacy 2.0):
- * - TS-PROJ: Project structure and registration
- * - TS-FEAT: Feature Canon integrity (deprecated)
- * - TS-STORY: Story format and delta compliance
- * - TS-ADR: Architecture decisions
- * - TS-DEVPLAN: Development planning
- * - TS-DOD: Definition of Done gates
- * - TS-NAMING: Naming conventions
+ * Validates project artifacts against TeamSpec 4.0 rules.
+ * Rules are defined in spec/4.0/lint-rules.md and registry.yml
  * 
- * Rule Categories (4.0):
- * - TS-PROD: Product structure and registration
- * - TS-FI: Feature-Increment rules
- * - TS-EPIC: Epic rules
- * - TS-QA: QA coverage and regression rules
+ * Version: 4.0
  */
 
 const fs = require('fs');
 const path = require('path');
+const { loadRegistry, loadFolderStructure, getArtifactPatterns } = require('./structure-loader');
 
 // =============================================================================
-// Severity Levels
+// SEVERITY LEVELS
 // =============================================================================
 
 const SEVERITY = {
-  ERROR: 'error',
-  BLOCKER: 'blocker',
-  WARNING: 'warning',
-  INFO: 'info',
+    BLOCKER: 'blocker',
+    ERROR: 'error',
+    WARNING: 'warning',
+    INFO: 'info'
 };
 
 // =============================================================================
-// Naming Patterns - Legacy (pre-4.0)
+// LINT RESULT
 // =============================================================================
 
-const NAMING_PATTERNS_V2 = {
-  feature: /^F-\d{3,}-[a-z][a-z0-9-]*\.md$/,
-  story: /^S-\d{3,}-[a-z][a-z0-9-]*\.md$/,
-  adr: /^ADR-\d{3,}-[a-z][a-z0-9-]*\.md$/,
-  decision: /^DECISION-\d{3,}-[a-z][a-z0-9-]*\.md$/,
-  epic: /^EPIC-\d{3,}-[a-z][a-z0-9-]*\.md$/,
-  devPlan: /^story-\d{3,}-tasks\.md$/,
-  sprint: /^sprint-\d+$/,
+class LintResult {
+    constructor() {
+        this.errors = [];
+        this.warnings = [];
+        this.info = [];
+    }
+
+    add(rule, message, file, severity = SEVERITY.ERROR) {
+        const result = { rule, message, file, severity };
+
+        switch (severity) {
+            case SEVERITY.BLOCKER:
+            case SEVERITY.ERROR:
+                this.errors.push(result);
+                break;
+            case SEVERITY.WARNING:
+                this.warnings.push(result);
+                break;
+            case SEVERITY.INFO:
+                this.info.push(result);
+                break;
+        }
+    }
+
+    hasErrors() {
+        return this.errors.length > 0;
+    }
+
+    hasBlockers() {
+        return this.errors.some(e => e.severity === SEVERITY.BLOCKER);
+    }
+
+    getAll() {
+        return [...this.errors, ...this.warnings, ...this.info];
+    }
+
+    getSummary() {
+        return {
+            errors: this.errors.length,
+            warnings: this.warnings.length,
+            info: this.info.length,
+            total: this.getAll().length,
+            passed: !this.hasErrors()
+        };
+    }
+}
+
+// =============================================================================
+// YAML PARSER (Simple)
+// =============================================================================
+
+function parseYamlSimple(content) {
+    const result = {};
+    const lines = content.split('\n');
+
+    for (const line of lines) {
+        if (!line.trim() || line.trim().startsWith('#')) continue;
+
+        const match = line.match(/^\s*(\w+[\w.-]*):\s*(.*)$/);
+        if (match) {
+            let [, key, value] = match;
+            value = value.trim().replace(/^["']|["']$/g, '');
+
+            // Handle nested keys
+            if (key.includes('.')) {
+                const parts = key.split('.');
+                let obj = result;
+                for (let i = 0; i < parts.length - 1; i++) {
+                    if (!obj[parts[i]]) obj[parts[i]] = {};
+                    obj = obj[parts[i]];
+                }
+                obj[parts[parts.length - 1]] = value;
+            } else {
+                result[key] = value;
+            }
+        }
+    }
+
+    return result;
+}
+
+/**
+ * Parse YAML frontmatter from markdown files
+ */
+function parseFrontmatter(content) {
+    const match = content.match(/^---\n([\s\S]*?)\n---/);
+    if (!match) return {};
+    return parseYamlSimple(match[1]);
+}
+
+/**
+ * Parse product.yml or project.yml
+ */
+function parseConfigYaml(filePath) {
+    if (!fs.existsSync(filePath)) return null;
+
+    try {
+        const content = fs.readFileSync(filePath, 'utf-8');
+        const result = {};
+        const lines = content.split('\n');
+        let currentSection = null;
+        let inArray = false;
+        let arrayKey = null;
+
+        for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed || trimmed.startsWith('#')) continue;
+
+            // Handle array items
+            if (trimmed.startsWith('- ')) {
+                if (arrayKey && result[arrayKey]) {
+                    result[arrayKey].push(trimmed.slice(2).trim());
+                }
+                continue;
+            }
+
+            const colonIdx = trimmed.indexOf(':');
+            if (colonIdx === -1) continue;
+
+            const key = trimmed.slice(0, colonIdx).trim();
+            let value = trimmed.slice(colonIdx + 1).trim();
+
+            // Handle section headers (product:, project:)
+            if (value === '' || value === '|') {
+                currentSection = key;
+                continue;
+            }
+
+            // Handle arrays
+            if (value === '[]') {
+                result[key] = [];
+                arrayKey = key;
+                continue;
+            }
+
+            // Clean quoted values
+            value = value.replace(/^["']|["']$/g, '');
+
+            result[key] = value;
+        }
+
+        return result;
+    } catch (err) {
+        return null;
+    }
+}
+
+// =============================================================================
+// NAMING PATTERN VALIDATION
+// =============================================================================
+
+const NAMING_PATTERNS = {
+    // Product artifacts
+    'feature': /^f-[A-Z]{3,4}-\d{3}-[\w-]+\.md$/,
+    'business-analysis': /^ba-[A-Z]{3,4}-\d{3}-[\w-]+\.md$/,
+    'solution-design': /^sd-[A-Z]{3,4}-\d{3}-[\w-]+\.md$/,
+    'technical-architecture': /^ta-[A-Z]{3,4}-\d{3}-[\w-]+\.md$/,
+    'product-decision': /^dec-[A-Z]{3,4}-\d{3}-[\w-]+\.md$/,
+    'product-regression-test': /^rt-f-[A-Z]{3,4}-\d{3}-[\w-]+\.md$/,
+
+    // Project artifacts
+    'feature-increment': /^fi-[A-Z]{3,4}-\d{3}-[\w-]+\.md$/,
+    'epic': /^epic-[A-Z]{3,4}-\d{3}-[\w-]+\.md$/,
+    'story': /^s-e\d{3}-\d{3}-[\w-]+\.md$/,
+    'dev-plan': /^dp-e\d{3}-s\d{3}-[\w-]+\.md$/,
+    'project-test-case': /^tc-fi-[A-Z]{3,4}-\d{3}-[\w-]+\.md$/,
+    'ba-increment': /^bai-[A-Z]{3,4}-\d{3}-[\w-]+\.md$/,
+    'sd-increment': /^sdi-[A-Z]{3,4}-\d{3}-[\w-]+\.md$/,
+    'ta-increment': /^tai-[A-Z]{3,4}-\d{3}-[\w-]+\.md$/,
+    'bug-report': /^bug-[\w-]+-\d{3}-[\w-]+\.md$/,
+    'regression-impact': /^ri-fi-[A-Z]{3,4}-\d{3}\.md$/
 };
 
 // =============================================================================
-// Naming Patterns - TeamSpec 4.0
-// =============================================================================
-
-const NAMING_PATTERNS_V4 = {
-  // Products
-  product: /^[a-z][a-z0-9-]*$/,           // folder name
-  productPrefix: /^[A-Z]{3,4}$/,          // PRX (3-4 uppercase chars)
-
-  // Business Analysis (in products)
-  businessAnalysis: /^ba-[A-Z]{3,4}-\d{3,}-[a-z][a-z0-9-]*\.md$/,
-
-  // Features (in products) - lowercase f- prefix
-  feature: /^f-[A-Z]{3,4}-\d{3,}-[a-z][a-z0-9-]*\.md$/,
-
-  // Solution Designs (in products)
-  solutionDesign: /^sd-[A-Z]{3,4}-\d{3,}-[a-z][a-z0-9-]*\.md$/,
-
-  // Technical Architecture (in products)
-  techArch: /^ta-[A-Z]{3,4}-\d{3,}-[a-z][a-z0-9-]*\.md$/,
-
-  // Decisions (product level)
-  decisionProduct: /^dec-[A-Z]{3,4}-\d{3,}-[a-z][a-z0-9-]*\.md$/,
-
-  // BA Increments (in projects)
-  baIncrement: /^bai-[A-Z]{3,4}-\d{3,}-[a-z][a-z0-9-]*\.md$/,
-
-  // Feature-Increments (in projects)
-  featureIncrement: /^fi-[A-Z]{3,4}-\d{3,}-[a-z][a-z0-9-]*\.md$/,
-
-  // Solution Design Increments (in projects)
-  sdIncrement: /^sdi-[A-Z]{3,4}-\d{3,}-[a-z][a-z0-9-]*\.md$/,
-
-  // Tech Architecture Increments (in projects)
-  taIncrement: /^tai-[A-Z]{3,4}-\d{3,}-[a-z][a-z0-9-]*\.md$/,
-
-  // Epics
-  epic: /^epic-[A-Z]{3,4}-\d{3,}-[a-z][a-z0-9-]*\.md$/,
-
-  // Stories (with epic reference) - s-eXXX-YYY-description.md
-  story: /^s-e\d{3,}-\d{3,}-[a-z][a-z0-9-]*\.md$/,
-
-  // Decisions (project level)
-  decisionProject: /^dec-\d{3,}-[a-z][a-z0-9-]*\.md$/,
-
-  // Dev Plans (explicit prefix: e=epic, s=story)
-  devPlan: /^dp-e\d{3,}-s\d{3,}-[a-z][a-z0-9-]*\.md$/,
-
-  // Sprints
-  sprint: /^sprint-\d+$/,
-};
-
-// Alias for backward compatibility
-const NAMING_PATTERNS = NAMING_PATTERNS_V2;
-
-// =============================================================================
-// Required Sections
-// =============================================================================
-
-const FEATURE_REQUIRED_SECTIONS = [
-  'Purpose',
-  'Scope|In Scope',
-  'Actors|Personas|Users',
-  'Main Flow|Current Behavior|Behavior',
-  'Business Rules|Rules',
-  'Edge Cases|Exceptions|Error Handling',
-  'Non-Goals|Out of Scope',
-  'Change Log|Story Ledger|Changelog',
-];
-
-const STORY_FORBIDDEN_HEADINGS = [
-  'Full Specification',
-  'Complete Requirements',
-  'End-to-End Behavior',
-  'Full Flow',
-];
-
-const PLACEHOLDER_PATTERNS = [
-  /\{TBD\}/i,
-  /\bTBD\b/,
-  /\?\?\?/,
-  /lorem ipsum/i,
-  /to be defined/i,
-  /\bplaceholder\b/i,
-];
-
-// =============================================================================
-// Helper Functions
+// RULE IMPLEMENTATIONS
 // =============================================================================
 
 /**
- * Parse YAML-like frontmatter from markdown
+ * TS-PROD-001: Product folder must be registered
  */
-function parseYamlFrontmatter(content) {
-  const yamlMatch = content.match(/^---\n([\s\S]*?)\n---/);
-  if (!yamlMatch) return {};
+function checkProductRegistered(workspaceDir, productId, result) {
+    const indexPath = path.join(workspaceDir, 'products', 'products-index.md');
 
-  const yaml = {};
-  const lines = yamlMatch[1].split('\n');
-  for (const line of lines) {
-    const match = line.match(/^([^:]+):\s*(.*)$/);
-    if (match) {
-      yaml[match[1].trim()] = match[2].trim();
-    }
-  }
-  return yaml;
-}
-
-/**
- * Parse simple YAML file
- */
-function parseSimpleYaml(content) {
-  const result = {};
-  const lines = content.split('\n');
-  let currentKey = null;
-  let currentArray = null;
-
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) continue;
-
-    // Array item
-    if (trimmed.startsWith('- ')) {
-      if (currentArray) {
-        currentArray.push(trimmed.slice(2).trim());
-      }
-      continue;
+    if (!fs.existsSync(indexPath)) {
+        result.add('TS-PROD-001', `products-index.md does not exist`, indexPath, SEVERITY.WARNING);
+        return;
     }
 
-    // Key-value pair
-    const match = trimmed.match(/^([^:]+):\s*(.*)$/);
-    if (match) {
-      const key = match[1].trim();
-      const value = match[2].trim();
-
-      if (value === '' || value === '[]') {
-        result[key] = [];
-        currentArray = result[key];
-        currentKey = key;
-      } else {
-        result[key] = value;
-        currentArray = null;
-        currentKey = key;
-      }
+    const indexContent = fs.readFileSync(indexPath, 'utf-8');
+    if (!indexContent.includes(productId)) {
+        result.add('TS-PROD-001', `Product '${productId}' is not registered in products-index.md`, indexPath, SEVERITY.ERROR);
     }
-  }
-
-  return result;
 }
 
 /**
- * Extract headings from markdown
+ * TS-PROD-002: product.yml required with PRX
  */
-function extractHeadings(content) {
-  const headings = [];
-  const lines = content.split(/\r?\n/);
-  for (const line of lines) {
-    const match = line.match(/^(#{1,6})\s+(.+?)[\r\s]*$/);
-    if (match) {
-      headings.push({
-        level: match[1].length,
-        text: match[2].trim(),
-      });
-    }
-  }
-  return headings;
-}
+function checkProductYml(productDir, productId, result) {
+    const ymlPath = path.join(productDir, 'product.yml');
 
-/**
- * Check if content contains a pattern
- */
-function containsPattern(content, pattern) {
-  if (typeof pattern === 'string') {
-    return content.includes(pattern);
-  }
-  return pattern.test(content);
-}
-
-/**
- * Extract checkboxes from markdown
- */
-function extractCheckboxes(content, sectionHeading = null) {
-  let searchContent = content;
-
-  if (sectionHeading) {
-    const sectionPattern = new RegExp(`##\\s+(${sectionHeading})\\s*\\n([\\s\\S]*?)(?=\\n##\\s|$)`, 'i');
-    const match = content.match(sectionPattern);
-    if (match) {
-      searchContent = match[2];
-    } else {
-      return [];
-    }
-  }
-
-  const checkboxes = [];
-  const regex = /- \[([ xX])\]\s*(.+)/g;
-  let match;
-
-  while ((match = regex.exec(searchContent)) !== null) {
-    checkboxes.push({
-      checked: match[1].toLowerCase() === 'x',
-      text: match[2].trim(),
-    });
-  }
-
-  return checkboxes;
-}
-
-/**
- * Extract feature ID from story content
- */
-function extractFeatureLinks(content) {
-  const links = [];
-  const patterns = [
-    /\[F-(\d{3,})/g,
-    /F-(\d{3,})/g,
-  ];
-
-  for (const pattern of patterns) {
-    let match;
-    while ((match = pattern.exec(content)) !== null) {
-      links.push(`F-${match[1]}`);
-    }
-  }
-
-  return [...new Set(links)];
-}
-
-/**
- * Extract story ID from filename or content
- */
-function extractStoryId(filename, content) {
-  // Try filename first
-  const filenameMatch = filename.match(/S-(\d{3,})/);
-  if (filenameMatch) return filenameMatch[1];
-
-  // Try content
-  const contentMatch = content.match(/# Story: S-(\d{3,})/);
-  if (contentMatch) return contentMatch[1];
-
-  return null;
-}
-
-/**
- * Get metadata from markdown (bold fields like **Status:** value)
- */
-function extractMetadata(content) {
-  const metadata = {};
-  const patterns = [
-    // Pattern: **Key:** Value (colon inside bold)
-    /\*\*([^*:]+):\*\*\s*(.+)/g,
-    // Pattern: **Key**: Value (colon outside bold)
-    /\*\*([^*]+)\*\*:\s*(.+)/g,
-    // Pattern: Key: Value at line start
-    /^([A-Za-z ]+):\s*(.+)/gm,
-  ];
-
-  for (const pattern of patterns) {
-    let match;
-    while ((match = pattern.exec(content)) !== null) {
-      const key = match[1].trim().replace(/:$/, '');  // Remove trailing colon if any
-      const value = match[2].trim();
-      if (!metadata[key]) {  // Don't overwrite existing keys
-        metadata[key] = value;
-      }
-    }
-  }
-
-  return metadata;
-}
-
-/**
- * Recursively find files matching a pattern
- */
-function findFiles(dir, pattern, results = []) {
-  if (!fs.existsSync(dir)) return results;
-
-  const entries = fs.readdirSync(dir, { withFileTypes: true });
-
-  for (const entry of entries) {
-    const fullPath = path.join(dir, entry.name);
-
-    if (entry.isDirectory()) {
-      findFiles(fullPath, pattern, results);
-    } else if (pattern.test(entry.name)) {
-      results.push(fullPath);
-    }
-  }
-
-  return results;
-}
-
-/**
- * Find all projects in workspace
- */
-function findProjects(workspaceDir) {
-  const projectsDir = path.join(workspaceDir, 'projects');
-  if (!fs.existsSync(projectsDir)) return [];
-
-  const entries = fs.readdirSync(projectsDir, { withFileTypes: true });
-  return entries
-    .filter(e => e.isDirectory() && e.name !== '.git')
-    .map(e => e.name);
-}
-
-/**
- * Find all products in workspace (4.0)
- */
-function findProducts(workspaceDir) {
-  const productsDir = path.join(workspaceDir, 'products');
-  if (!fs.existsSync(productsDir)) return [];
-
-  const entries = fs.readdirSync(productsDir, { withFileTypes: true });
-  return entries
-    .filter(e => e.isDirectory() && e.name !== '.git')
-    .filter(e => {
-      // Must have product.yml to be considered a product
-      const productYml = path.join(productsDir, e.name, 'product.yml');
-      return fs.existsSync(productYml);
-    })
-    .map(e => e.name);
-}
-
-/**
- * Detect workspace version (2.0 vs 4.0)
- */
-function detectWorkspaceVersion(workspaceDir) {
-  const productsDir = path.join(workspaceDir, 'products');
-  const projectsDir = path.join(workspaceDir, 'projects');
-
-  // 4.0 indicator: products/ folder with at least one product.yml
-  if (fs.existsSync(productsDir)) {
-    const products = findProducts(workspaceDir);
-    if (products.length > 0) {
-      return '4.0';
-    }
-  }
-
-  // 2.0 indicator: projects/ with features/ inside
-  if (fs.existsSync(projectsDir)) {
-    const projects = findProjects(workspaceDir);
-    for (const project of projects) {
-      const featuresDir = path.join(projectsDir, project, 'features');
-      if (fs.existsSync(featuresDir)) {
-        return '2.0';
-      }
-    }
-  }
-
-  // Default to 2.0 if not clear
-  return '2.0';
-}
-
-/**
- * Parse nested YAML structure (for product.yml and project.yml)
- */
-function parseNestedYaml(content) {
-  const result = {};
-  const lines = content.split('\n');
-  let currentSection = null;
-  let currentArray = null;
-  let indentLevel = 0;
-
-  for (const line of lines) {
-    // Skip empty lines and comments
-    if (!line.trim() || line.trim().startsWith('#')) continue;
-
-    // Calculate indent
-    const leadingSpaces = line.match(/^(\s*)/)[1].length;
-    const trimmed = line.trim();
-
-    // Array item
-    if (trimmed.startsWith('- ')) {
-      if (currentArray) {
-        const value = trimmed.slice(2).trim();
-        // Handle objects in arrays
-        if (value.includes(':')) {
-          const obj = {};
-          const match = value.match(/^([^:]+):\s*(.*)$/);
-          if (match) {
-            obj[match[1].trim()] = match[2].trim().replace(/^["']|["']$/g, '');
-          }
-          currentArray.push(obj);
-        } else {
-          currentArray.push(value.replace(/^["']|["']$/g, ''));
-        }
-      }
-      continue;
+    if (!fs.existsSync(ymlPath)) {
+        result.add('TS-PROD-002', `product.yml is missing for product '${productId}'`, ymlPath, SEVERITY.ERROR);
+        return null;
     }
 
-    // Key-value pair
-    const match = trimmed.match(/^([^:]+):\s*(.*)$/);
-    if (match) {
-      const key = match[1].trim();
-      let value = match[2].trim().replace(/^["']|["']$/g, '');
-
-      // Top-level section (like 'product:', 'project:')
-      if (leadingSpaces === 0) {
-        if (value === '' || value === '[]') {
-          result[key] = {};
-          currentSection = result[key];
-          currentArray = null;
-        } else {
-          result[key] = value;
-          currentSection = null;
-          currentArray = null;
-        }
-        indentLevel = 0;
-      } else if (currentSection !== null) {
-        // Nested property
-        if (value === '' || value === '[]') {
-          currentSection[key] = [];
-          currentArray = currentSection[key];
-        } else if (value === '|') {
-          // Multi-line string - read following lines
-          currentSection[key] = '';
-          currentArray = null;
-        } else {
-          currentSection[key] = value;
-          currentArray = null;
-        }
-      }
+    const config = parseConfigYaml(ymlPath);
+    if (!config) {
+        result.add('TS-PROD-002', `product.yml could not be parsed for product '${productId}'`, ymlPath, SEVERITY.ERROR);
+        return null;
     }
-  }
 
-  return result;
+    // Check required fields
+    const requiredFields = ['id', 'name', 'prefix'];
+    for (const field of requiredFields) {
+        if (!config[field]) {
+            result.add('TS-PROD-002', `product.yml is missing required field: '${field}'`, ymlPath, SEVERITY.ERROR);
+        }
+    }
+
+    // Check PRX format
+    if (config.prefix && !/^[A-Z]{3,4}$/.test(config.prefix)) {
+        result.add('TS-PROD-002', `PRX '${config.prefix}' does not match pattern [A-Z]{3,4}`, ymlPath, SEVERITY.ERROR);
+    }
+
+    return config;
 }
 
 /**
- * Load and parse product.yml
+ * TS-PROJ-001: Project folder must be registered
  */
-function loadProductYaml(workspaceDir, productId) {
-  const ymlPath = path.join(workspaceDir, 'products', productId, 'product.yml');
-  if (!fs.existsSync(ymlPath)) return null;
+function checkProjectRegistered(workspaceDir, projectId, result) {
+    const indexPath = path.join(workspaceDir, 'projects', 'projects-index.md');
 
-  const content = fs.readFileSync(ymlPath, 'utf-8');
-  return parseNestedYaml(content);
+    if (!fs.existsSync(indexPath)) {
+        // projects-index.md is optional
+        return;
+    }
+
+    const indexContent = fs.readFileSync(indexPath, 'utf-8');
+    if (!indexContent.includes(projectId)) {
+        result.add('TS-PROJ-001', `Project '${projectId}' is not registered in projects-index.md`, indexPath, SEVERITY.WARNING);
+    }
 }
 
 /**
- * Load and parse project.yml
+ * TS-PROJ-002: project.yml required with minimum metadata
  */
-function loadProjectYaml(workspaceDir, projectId) {
-  const ymlPath = path.join(workspaceDir, 'projects', projectId, 'project.yml');
-  if (!fs.existsSync(ymlPath)) return null;
+function checkProjectYml(projectDir, projectId, result) {
+    const ymlPath = path.join(projectDir, 'project.yml');
 
-  const content = fs.readFileSync(ymlPath, 'utf-8');
-  return parseNestedYaml(content);
+    if (!fs.existsSync(ymlPath)) {
+        result.add('TS-PROJ-002', `project.yml is missing for project '${projectId}'`, ymlPath, SEVERITY.ERROR);
+        return null;
+    }
+
+    const config = parseConfigYaml(ymlPath);
+    if (!config) {
+        result.add('TS-PROJ-002', `project.yml could not be parsed for project '${projectId}'`, ymlPath, SEVERITY.ERROR);
+        return null;
+    }
+
+    // Check required fields
+    const requiredFields = ['id', 'name', 'status'];
+    for (const field of requiredFields) {
+        if (!config[field]) {
+            result.add('TS-PROJ-002', `project.yml is missing required field: '${field}'`, ymlPath, SEVERITY.ERROR);
+        }
+    }
+
+    return config;
 }
 
-// =============================================================================
-// Rule Definitions
-// =============================================================================
+/**
+ * TS-FI-001: Feature-Increment must have AS-IS and TO-BE sections
+ */
+function checkFIContent(filePath, result) {
+    const content = fs.readFileSync(filePath, 'utf-8');
+    const filename = path.basename(filePath);
 
-const rules = {
-  // -------------------------------------------------------------------------
-  // Project Rules (TS-PROJ)
-  // -------------------------------------------------------------------------
+    // Check for AS-IS section
+    if (!content.includes('## AS-IS') && !content.includes('## 2. AS-IS') && !content.includes('## Current State')) {
+        result.add('TS-FI-001', `Feature-Increment '${filename}' is missing AS-IS section`, filePath, SEVERITY.ERROR);
+    }
 
-  'TS-PROJ-001': {
-    id: 'TS-PROJ-001',
-    name: 'Project folder must be registered',
-    severity: SEVERITY.ERROR,
-    owner: 'BA',
-    async check(ctx) {
-      const results = [];
-      const indexPath = path.join(ctx.workspaceDir, 'projects', 'projects-index.md');
+    // Check for TO-BE section
+    if (!content.includes('## TO-BE') && !content.includes('## 3. TO-BE') && !content.includes('## Proposed State')) {
+        result.add('TS-FI-001', `Feature-Increment '${filename}' is missing TO-BE section`, filePath, SEVERITY.ERROR);
+    }
+}
 
-      if (!fs.existsSync(indexPath)) {
-        // If no index exists, skip (will be caught by other rules)
-        return results;
-      }
+/**
+ * TS-FI-002: Feature-Increment must link to target Feature
+ */
+function checkFIFeatureLink(filePath, workspaceDir, result) {
+    const content = fs.readFileSync(filePath, 'utf-8');
+    const filename = path.basename(filePath);
 
-      const indexContent = fs.readFileSync(indexPath, 'utf-8');
+    // Look for feature reference (f-PRX-NNN pattern)
+    const featureRef = content.match(/f-[A-Z]{3,4}-\d{3}/);
 
-      for (const projectId of ctx.projects) {
-        if (!indexContent.includes(projectId)) {
-          results.push({
-            ruleId: 'TS-PROJ-001',
-            severity: SEVERITY.ERROR,
-            file: path.join(ctx.workspaceDir, 'projects', projectId),
-            message: `Project '${projectId}' is not registered in projects-index.md`,
-            owner: 'BA',
-          });
-        }
-      }
+    if (!featureRef) {
+        result.add('TS-FI-002', `Feature-Increment '${filename.replace('.md', '')}' does not reference a target feature`, filePath, SEVERITY.ERROR);
+        return;
+    }
 
-      return results;
-    },
-  },
+    // Verify the referenced feature exists
+    const featurePattern = new RegExp(`${featureRef[0]}[\\w-]*\\.md`);
+    const productsDir = path.join(workspaceDir, 'products');
 
-  'TS-PROJ-002': {
-    id: 'TS-PROJ-002',
-    name: 'project.yml required with minimum metadata',
-    severity: SEVERITY.ERROR,
-    owner: 'BA',
-    async check(ctx) {
-      const results = [];
+    if (fs.existsSync(productsDir)) {
+        let featureFound = false;
+        const products = fs.readdirSync(productsDir, { withFileTypes: true })
+            .filter(d => d.isDirectory())
+            .map(d => d.name);
 
-      // Different required fields for 2.0 vs 4.0
-      const requiredFieldsV2 = ['id', 'name', 'status'];
-      const requiredFieldsV4 = ['id', 'name', 'status'];
-      const requiredFields = ctx.workspaceVersion === '4.0' ? requiredFieldsV4 : requiredFieldsV2;
-
-      for (const projectId of ctx.projects) {
-        const ymlPath = path.join(ctx.workspaceDir, 'projects', projectId, 'project.yml');
-
-        if (!fs.existsSync(ymlPath)) {
-          results.push({
-            ruleId: 'TS-PROJ-002',
-            severity: SEVERITY.ERROR,
-            file: ymlPath,
-            message: `project.yml is missing for project '${projectId}'`,
-            owner: 'BA',
-          });
-          continue;
-        }
-
-        const content = fs.readFileSync(ymlPath, 'utf-8');
-
-        // Try nested format first (4.0), then flat format (2.0)
-        let yaml = parseNestedYaml(content);
-        let project = yaml.project || {};
-
-        // If no nested 'project:' key found, treat as flat format (2.0 style)
-        if (Object.keys(project).length === 0) {
-          project = parseSimpleYaml(content);
-          // Map flat keys to expected format (project_id -> id, etc.)
-          if (project.project_id) project.id = project.project_id;
-        }
-
-        for (const field of requiredFields) {
-          if (!project[field]) {
-            results.push({
-              ruleId: 'TS-PROJ-002',
-              severity: SEVERITY.ERROR,
-              file: ymlPath,
-              message: `project.yml is missing required field: '${field}'`,
-              owner: 'BA',
-            });
-          }
-        }
-      }
-
-      return results;
-    },
-  },
-
-  // -------------------------------------------------------------------------
-  // Feature Rules (TS-FEAT) - Version-aware
-  // In 2.0: Features are in projects/{project}/features/
-  // In 4.0: Features are in products/{product}/features/ (Canon)
-  // -------------------------------------------------------------------------
-
-  'TS-FEAT-001': {
-    id: 'TS-FEAT-001',
-    name: 'Feature file required for any story link',
-    severity: SEVERITY.ERROR,
-    owner: 'BA/FA',
-    async check(ctx) {
-      const results = [];
-
-      // In 4.0, this rule is less strict - stories link to Epics, not features directly
-      // Skip this check in 4.0 (handled by TS-STORY-006/007 for Epic linking)
-      if (ctx.workspaceVersion === '4.0') return results;
-
-      for (const projectId of ctx.projects) {
-        const storiesDir = path.join(ctx.workspaceDir, 'projects', projectId, 'stories');
-        const featuresDir = path.join(ctx.workspaceDir, 'projects', projectId, 'features');
-        const storyFiles = findFiles(storiesDir, /\.md$/);
-
-        for (const storyFile of storyFiles) {
-          if (path.basename(storyFile) === 'README.md') continue;
-
-          const content = fs.readFileSync(storyFile, 'utf-8');
-          const featureLinks = extractFeatureLinks(content);
-
-          for (const featureId of featureLinks) {
-            const featurePattern = new RegExp(`^${featureId}-.*\\.md$`);
-            const featureFiles = fs.existsSync(featuresDir)
-              ? fs.readdirSync(featuresDir).filter(f => featurePattern.test(f))
-              : [];
-
-            if (featureFiles.length === 0) {
-              results.push({
-                ruleId: 'TS-FEAT-001',
-                severity: SEVERITY.ERROR,
-                file: storyFile,
-                message: `Referenced feature '${featureId}' not found in features/`,
-                owner: 'BA/FA',
-              });
+        for (const prod of products) {
+            const featuresDir = path.join(productsDir, prod, 'features');
+            if (fs.existsSync(featuresDir)) {
+                const features = fs.readdirSync(featuresDir);
+                if (features.some(f => featurePattern.test(f))) {
+                    featureFound = true;
+                    break;
+                }
             }
-          }
-        }
-      }
-
-      return results;
-    },
-  },
-
-  'TS-FEAT-002': {
-    id: 'TS-FEAT-002',
-    name: 'Feature must include canon sections',
-    severity: SEVERITY.ERROR,
-    owner: 'BA/FA',
-    async check(ctx) {
-      const results = [];
-
-      if (ctx.workspaceVersion === '4.0') {
-        // In 4.0, check product features
-        for (const productId of ctx.products) {
-          const featuresDir = path.join(ctx.workspaceDir, 'products', productId, 'features');
-          if (!fs.existsSync(featuresDir)) continue;
-
-          const featureFiles = findFiles(featuresDir, /^f-[A-Z]{3,4}-\d{3,}-.*\.md$/);
-
-          for (const featureFile of featureFiles) {
-            const content = fs.readFileSync(featureFile, 'utf-8');
-            const headings = extractHeadings(content);
-            const headingTexts = headings.map(h => h.text);
-
-            for (const required of FEATURE_REQUIRED_SECTIONS) {
-              const patterns = required.split('|');
-              const found = patterns.some(p =>
-                headingTexts.some(h => h.toLowerCase().includes(p.toLowerCase()))
-              );
-
-              if (!found) {
-                results.push({
-                  ruleId: 'TS-FEAT-002',
-                  severity: SEVERITY.ERROR,
-                  file: featureFile,
-                  message: `Feature is missing required section: '${required}'`,
-                  owner: 'BA/FA',
-                });
-              }
-            }
-          }
-        }
-      } else {
-        // In 2.0, check project features
-        for (const projectId of ctx.projects) {
-          const featuresDir = path.join(ctx.workspaceDir, 'projects', projectId, 'features');
-          if (!fs.existsSync(featuresDir)) continue;
-
-          const featureFiles = findFiles(featuresDir, /^F-\d{3,}-.*\.md$/);
-
-          for (const featureFile of featureFiles) {
-            const content = fs.readFileSync(featureFile, 'utf-8');
-            const headings = extractHeadings(content);
-            const headingTexts = headings.map(h => h.text);
-
-            for (const required of FEATURE_REQUIRED_SECTIONS) {
-              const patterns = required.split('|');
-              const found = patterns.some(p =>
-                headingTexts.some(h => h.toLowerCase().includes(p.toLowerCase()))
-              );
-
-              if (!found) {
-                results.push({
-                  ruleId: 'TS-FEAT-002',
-                  severity: SEVERITY.ERROR,
-                  file: featureFile,
-                  message: `Feature is missing required section: '${required}'`,
-                  owner: 'BA/FA',
-                });
-              }
-            }
-          }
-        }
-      }
-
-      return results;
-    },
-  },
-
-  'TS-FEAT-003': {
-    id: 'TS-FEAT-003',
-    name: 'Feature IDs must be unique within project/product',
-    severity: SEVERITY.ERROR,
-    owner: 'BA/FA',
-    async check(ctx) {
-      const results = [];
-
-      if (ctx.workspaceVersion === '4.0') {
-        // In 4.0, check product features
-        for (const productId of ctx.products) {
-          const featuresDir = path.join(ctx.workspaceDir, 'products', productId, 'features');
-          if (!fs.existsSync(featuresDir)) continue;
-
-          const featureFiles = findFiles(featuresDir, /^f-[A-Z]{3,4}-\d{3,}-.*\.md$/);
-          const idToFiles = new Map();
-
-          for (const featureFile of featureFiles) {
-            const match = path.basename(featureFile).match(/^(f-[A-Z]{3,4}-\d{3,})/);
-            if (match) {
-              const id = match[1];
-              if (!idToFiles.has(id)) {
-                idToFiles.set(id, []);
-              }
-              idToFiles.get(id).push(featureFile);
-            }
-          }
-
-          for (const [id, files] of idToFiles) {
-            if (files.length > 1) {
-              results.push({
-                ruleId: 'TS-FEAT-003',
-                severity: SEVERITY.ERROR,
-                file: files[1],
-                message: `Duplicate feature ID '${id}' found in: ${files.map(f => path.basename(f)).join(', ')}`,
-                owner: 'BA/FA',
-              });
-            }
-          }
-        }
-      } else {
-        // In 2.0, check project features
-        for (const projectId of ctx.projects) {
-          const featuresDir = path.join(ctx.workspaceDir, 'projects', projectId, 'features');
-          if (!fs.existsSync(featuresDir)) continue;
-
-          const featureFiles = findFiles(featuresDir, /^F-\d{3,}-.*\.md$/);
-          const idToFiles = new Map();
-
-          for (const featureFile of featureFiles) {
-            const match = path.basename(featureFile).match(/^(F-\d{3,})/);
-            if (match) {
-              const id = match[1];
-              if (!idToFiles.has(id)) {
-                idToFiles.set(id, []);
-              }
-              idToFiles.get(id).push(featureFile);
-            }
-          }
-
-          for (const [id, files] of idToFiles) {
-            if (files.length > 1) {
-              results.push({
-                ruleId: 'TS-FEAT-003',
-                severity: SEVERITY.ERROR,
-                file: files[1],
-                message: `Duplicate feature ID '${id}' found in: ${files.map(f => path.basename(f)).join(', ')}`,
-                owner: 'BA/FA',
-              });
-            }
-          }
-        }
-      }
-
-      return results;
-    },
-  },
-
-  // -------------------------------------------------------------------------
-  // Story Rules (TS-STORY) - Version-aware
-  // In 2.0: Stories are S-XXX-*.md and link to features
-  // In 4.0: Stories are s-eXXX-YYY-*.md and link to Epics
-  // -------------------------------------------------------------------------
-
-  'TS-STORY-001': {
-    id: 'TS-STORY-001',
-    name: 'Story must link to feature',
-    severity: SEVERITY.WARNING, // Demoted to WARNING in 4.0, was ERROR in 2.0
-    owner: 'FA',
-    async check(ctx) {
-      const results = [];
-
-      // In 4.0, stories link to Epics, feature links are optional (for traceability)
-      const severity = ctx.workspaceVersion === '4.0' ? SEVERITY.WARNING : SEVERITY.ERROR;
-
-      for (const projectId of ctx.projects) {
-        const storiesDir = path.join(ctx.workspaceDir, 'projects', projectId, 'stories');
-
-        // Different patterns for 2.0 vs 4.0
-        const storyPattern = ctx.workspaceVersion === '4.0'
-          ? /^s-e\d{3,}-\d{3,}-.*\.md$/
-          : /^S-\d{3,}-.*\.md$/;
-
-        const storyFiles = findFiles(storiesDir, storyPattern);
-
-        for (const storyFile of storyFiles) {
-          const content = fs.readFileSync(storyFile, 'utf-8');
-          const featureLinks = extractFeatureLinks(content);
-
-          // Also check for feature-increment references in 4.0
-          const hasFIRef = ctx.workspaceVersion === '4.0' && /fi-[A-Z]{3,4}-\d{3,}/.test(content);
-
-          // Check for Linked Features section
-          const hasLinkedSection = /##\s*(Linked Features?|Features?|Feature-Increments?)/i.test(content);
-
-          if (featureLinks.length === 0 && !hasLinkedSection && !hasFIRef) {
-            const message = ctx.workspaceVersion === '4.0'
-              ? 'Story has no feature or feature-increment link. Consider adding for traceability.'
-              : 'Story has no feature link. Stories must link to at least one feature.';
-
-            results.push({
-              ruleId: 'TS-STORY-001',
-              severity: severity,
-              file: storyFile,
-              message: message,
-              owner: 'FA',
-            });
-          }
-        }
-      }
-
-      return results;
-    },
-  },
-
-  'TS-STORY-002': {
-    id: 'TS-STORY-002',
-    name: 'Story must describe delta-only behavior',
-    severity: SEVERITY.ERROR,
-    owner: 'FA',
-    async check(ctx) {
-      const results = [];
-
-      for (const projectId of ctx.projects) {
-        const storiesDir = path.join(ctx.workspaceDir, 'projects', projectId, 'stories');
-
-        // Different patterns for 2.0 vs 4.0
-        const storyPattern = ctx.workspaceVersion === '4.0'
-          ? /^s-e\d{3,}-\d{3,}-.*\.md$/
-          : /^S-\d{3,}-.*\.md$/;
-
-        const storyFiles = findFiles(storiesDir, storyPattern);
-
-        for (const storyFile of storyFiles) {
-          const content = fs.readFileSync(storyFile, 'utf-8');
-
-          // Check for Before/After pattern (or AS-IS/TO-BE in 4.0)
-          const hasBefore = /\b(Before|Current behavior|AS-IS|Current State).*:/i.test(content);
-          const hasAfter = /\b(After|New behavior|TO-BE|Target State).*:/i.test(content);
-
-          if (!hasBefore || !hasAfter) {
-            results.push({
-              ruleId: 'TS-STORY-002',
-              severity: SEVERITY.ERROR,
-              file: storyFile,
-              message: 'Story must have Before/After (or AS-IS/TO-BE) sections describing delta behavior.',
-              owner: 'FA',
-            });
-          }
-
-          // Check for forbidden full-spec headings
-          const headings = extractHeadings(content);
-          for (const heading of headings) {
-            for (const forbidden of STORY_FORBIDDEN_HEADINGS) {
-              if (heading.text.toLowerCase().includes(forbidden.toLowerCase())) {
-                results.push({
-                  ruleId: 'TS-STORY-002',
-                  severity: SEVERITY.ERROR,
-                  file: storyFile,
-                  message: `Story contains forbidden heading '${heading.text}'. Stories describe deltas, not full specifications.`,
-                  owner: 'FA',
-                });
-              }
-            }
-          }
-        }
-      }
-
-      return results;
-    },
-  },
-
-  'TS-STORY-003': {
-    id: 'TS-STORY-003',
-    name: 'Acceptance Criteria must be present and testable',
-    severity: SEVERITY.ERROR,
-    owner: 'FA',
-    async check(ctx) {
-      const results = [];
-
-      for (const projectId of ctx.projects) {
-        const storiesDir = path.join(ctx.workspaceDir, 'projects', projectId, 'stories');
-
-        // Different patterns for 2.0 vs 4.0
-        const storyPattern = ctx.workspaceVersion === '4.0'
-          ? /^s-e\d{3,}-\d{3,}-.*\.md$/
-          : /^S-\d{3,}-.*\.md$/;
-
-        const storyFiles = findFiles(storiesDir, storyPattern);
-
-        for (const storyFile of storyFiles) {
-          const content = fs.readFileSync(storyFile, 'utf-8');
-
-          // Check for AC section
-          const hasAC = /##\s*Acceptance Criteria/i.test(content);
-
-          if (!hasAC) {
-            results.push({
-              ruleId: 'TS-STORY-003',
-              severity: SEVERITY.ERROR,
-              file: storyFile,
-              message: 'Acceptance Criteria section is missing.',
-              owner: 'FA',
-            });
-            continue;
-          }
-
-          // Check for placeholders
-          for (const pattern of PLACEHOLDER_PATTERNS) {
-            if (pattern.test(content)) {
-              results.push({
-                ruleId: 'TS-STORY-003',
-                severity: SEVERITY.ERROR,
-                file: storyFile,
-                message: `Story contains placeholder text (${pattern.source}). All content must be complete.`,
-                owner: 'FA',
-              });
-              break;
-            }
-          }
-        }
-      }
-
-      return results;
-    },
-  },
-
-  'TS-STORY-004': {
-    id: 'TS-STORY-004',
-    name: 'Only SM can assign sprint',
-    severity: SEVERITY.ERROR,
-    owner: 'SM',
-    async check(ctx) {
-      const results = [];
-
-      for (const projectId of ctx.projects) {
-        const storiesDir = path.join(ctx.workspaceDir, 'projects', projectId, 'stories');
-        const storyFiles = findFiles(storiesDir, /\.md$/);
-
-        for (const storyFile of storyFiles) {
-          if (path.basename(storyFile) === 'README.md') continue;
-
-          const content = fs.readFileSync(storyFile, 'utf-8');
-          const metadata = extractMetadata(content);
-
-          // Check if sprint is assigned
-          if (metadata.Sprint && metadata.Sprint !== '-' && metadata.Sprint !== 'None') {
-            // Check for SM role in assignment - various patterns
-            const hasSMAssignment = /Assigned By:.*Role:\s*SM/i.test(content) ||
-              /Role:\s*SM.*Assigned/i.test(content) ||
-              /\*\*Assigned By:\*\*.*SM/i.test(content) ||
-              /Assigned By:.*SM\s*$/im.test(content);
-
-            // Also fail if explicitly NOT SM
-            const hasNonSMAssignment = /\*\*Assigned By:\*\*\s*(DEV|BA|FA|ARCH|QA)\s*(\(|$)/i.test(content);
-
-            if (!hasSMAssignment || hasNonSMAssignment) {
-              results.push({
-                ruleId: 'TS-STORY-004',
-                severity: SEVERITY.ERROR,
-                file: storyFile,
-                message: 'Sprint assignment must be done by SM role. Add "Assigned By: Role: SM".',
-                owner: 'SM',
-              });
-            }
-          }
-        }
-      }
-
-      return results;
-    },
-  },
-
-  'TS-STORY-005': {
-    id: 'TS-STORY-005',
-    name: 'Ready for Development requires DoR checklist complete',
-    severity: SEVERITY.ERROR,
-    owner: 'FA',
-    async check(ctx) {
-      const results = [];
-
-      for (const projectId of ctx.projects) {
-        // Check both folder names: 2.0 uses "ready-for-development", 4.0 uses "ready-to-develop"
-        const readyDirV2 = path.join(ctx.workspaceDir, 'projects', projectId, 'stories', 'ready-for-development');
-        const readyDirV4 = path.join(ctx.workspaceDir, 'projects', projectId, 'stories', 'ready-to-develop');
-
-        const readyDirs = [];
-        if (fs.existsSync(readyDirV2)) readyDirs.push(readyDirV2);
-        if (fs.existsSync(readyDirV4)) readyDirs.push(readyDirV4);
-
-        for (const readyDir of readyDirs) {
-          const storyFiles = findFiles(readyDir, /\.md$/);
-
-          for (const storyFile of storyFiles) {
-            if (path.basename(storyFile) === 'README.md') continue;
-
-            const content = fs.readFileSync(storyFile, 'utf-8');
-
-            // Stories in ready folder must have complete DoR
-            // Check for DoR section
-            const dorCheckboxes = extractCheckboxes(content, 'DoR Checklist|Definition of Ready');
-
-            if (dorCheckboxes.length > 0) {
-              const unchecked = dorCheckboxes.filter(c => !c.checked);
-              if (unchecked.length > 0) {
-                results.push({
-                  ruleId: 'TS-STORY-005',
-                  severity: SEVERITY.ERROR,
-                  file: storyFile,
-                  message: `DoR Checklist incomplete. Unchecked items: ${unchecked.map(c => c.text).join(', ')}`,
-                  owner: 'FA',
-                });
-              }
-            }
-          }
-        }
-      }
-
-      return results;
-    },
-  },
-
-  // -------------------------------------------------------------------------
-  // ADR Rules (TS-ADR) - Version-aware
-  // In 2.0: ADRs are in projects/{project}/adr/
-  // In 4.0: ADRs are technical-architecture-increments/ (project) or technical-architecture/ (product)
-  // -------------------------------------------------------------------------
-
-  'TS-ADR-001': {
-    id: 'TS-ADR-001',
-    name: 'Story marked "Architecture Required" must have ADR',
-    severity: SEVERITY.ERROR,
-    owner: 'SA',
-    async check(ctx) {
-      const results = [];
-
-      for (const projectId of ctx.projects) {
-        const storiesDir = path.join(ctx.workspaceDir, 'projects', projectId, 'stories');
-        const storyFiles = findFiles(storiesDir, /\.md$/);
-
-        for (const storyFile of storyFiles) {
-          if (path.basename(storyFile) === 'README.md') continue;
-
-          const content = fs.readFileSync(storyFile, 'utf-8');
-
-          // Check if ADR Required is checked
-          const checkboxes = extractCheckboxes(content);
-          const adrRequired = checkboxes.some(c => c.checked && /ADR Required|Architecture Required/i.test(c.text));
-
-          if (adrRequired) {
-            // Check for ADR reference - support both 2.0 and 4.0 patterns
-            const hasAdrRef = /ADR-\d{3,}|tai-[A-Z]{3,4}-\d{3,}/i.test(content);
-
-            if (!hasAdrRef) {
-              const refType = ctx.workspaceVersion === '4.0' ? 'ADR/TAI (tai-PRX-XXX)' : 'ADR';
-              results.push({
-                ruleId: 'TS-ADR-001',
-                severity: SEVERITY.ERROR,
-                file: storyFile,
-                message: `Story has "ADR Required" checked but no ${refType} reference found.`,
-                owner: 'SA',
-              });
-            }
-          }
-        }
-      }
-
-      return results;
-    },
-  },
-
-  'TS-ADR-002': {
-    id: 'TS-ADR-002',
-    name: 'ADR must link to feature(s)',
-    severity: SEVERITY.ERROR,
-    owner: 'SA',
-    async check(ctx) {
-      const results = [];
-
-      for (const projectId of ctx.projects) {
-        // Check both 2.0 (adr/) and 4.0 (technical-architecture-increments/) locations
-        const adrDirV2 = path.join(ctx.workspaceDir, 'projects', projectId, 'adr');
-        const adrDirV4 = path.join(ctx.workspaceDir, 'projects', projectId, 'technical-architecture-increments');
-
-        // 2.0 pattern
-        if (fs.existsSync(adrDirV2)) {
-          const adrFiles = findFiles(adrDirV2, /^ADR-\d{3,}-.*\.md$/);
-
-          for (const adrFile of adrFiles) {
-            const content = fs.readFileSync(adrFile, 'utf-8');
-
-            // Check for feature reference
-            const hasFeatureRef = /F-\d{3,}|Linked Feature|Related Feature/i.test(content);
-
-            if (!hasFeatureRef) {
-              results.push({
-                ruleId: 'TS-ADR-002',
-                severity: SEVERITY.ERROR,
-                file: adrFile,
-                message: 'ADR must link to at least one feature.',
-                owner: 'SA',
-              });
-            }
-          }
         }
 
-        // 4.0 pattern
-        if (fs.existsSync(adrDirV4)) {
-          const taiFiles = findFiles(adrDirV4, /^tai-[A-Z]{3,4}-\d{3,}-.*\.md$/);
-
-          for (const taiFile of taiFiles) {
-            const content = fs.readFileSync(taiFile, 'utf-8');
-
-            // Check for feature or feature-increment reference
-            const hasRef = /f-[A-Z]{3,4}-\d{3,}|fi-[A-Z]{3,4}-\d{3,}|Linked Feature|Target Feature/i.test(content);
-
-            if (!hasRef) {
-              results.push({
-                ruleId: 'TS-ADR-002',
-                severity: SEVERITY.ERROR,
-                file: taiFile,
-                message: 'Technical Architecture Increment must link to at least one feature or feature-increment.',
-                owner: 'SA',
-              });
-            }
-          }
+        if (!featureFound) {
+            result.add('TS-FI-002', `Feature '${featureRef[0]}' referenced by FI does not exist`, filePath, SEVERITY.WARNING);
         }
-      }
+    }
+}
+
+/**
+ * TS-EPIC-001: Epic file naming convention
+ */
+function checkEpicNaming(filePath, result) {
+    const filename = path.basename(filePath);
+
+    if (!NAMING_PATTERNS.epic.test(filename)) {
+        result.add('TS-EPIC-001', `Epic file '${filename}' does not match naming convention: epic-PRX-XXX-description.md`, filePath, SEVERITY.ERROR);
+    }
+}
+
+/**
+ * TS-STORY-001: Story must link to Epic via filename
+ */
+function checkStoryEpicLink(filePath, projectDir, result) {
+    const filename = path.basename(filePath);
+
+    // Check naming pattern
+    if (!NAMING_PATTERNS.story.test(filename)) {
+        result.add('TS-STORY-001', `Story '${filename}' does not match naming convention: s-eXXX-YYY-description.md`, filePath, SEVERITY.ERROR);
+        return;
+    }
+
+    // Extract epic number
+    const epicMatch = filename.match(/s-e(\d{3})-/);
+    if (epicMatch) {
+        const epicNum = epicMatch[1];
+        const epicsDir = path.join(projectDir, 'epics');
 
-      return results;
-    },
-  },
-
-  // -------------------------------------------------------------------------
-  // Dev Plan Rules (TS-DEVPLAN)
-  // -------------------------------------------------------------------------
-
-  'TS-DEVPLAN-001': {
-    id: 'TS-DEVPLAN-001',
-    name: 'Story in sprint must have dev plan',
-    severity: SEVERITY.ERROR,
-    owner: 'DEV',
-    async check(ctx) {
-      const results = [];
-
-      for (const projectId of ctx.projects) {
-        const storiesDir = path.join(ctx.workspaceDir, 'projects', projectId, 'stories');
-        const devPlansDir = path.join(ctx.workspaceDir, 'projects', projectId, 'dev-plans');
-        const storyFiles = findFiles(storiesDir, /^S-\d{3,}-.*\.md$/);
-
-        for (const storyFile of storyFiles) {
-          const content = fs.readFileSync(storyFile, 'utf-8');
-          const metadata = extractMetadata(content);
-
-          // Check if story is in sprint
-          const isInSprint = metadata.Status && /in sprint|in progress|ready for testing/i.test(metadata.Status);
-
-          if (isInSprint) {
-            const storyId = extractStoryId(path.basename(storyFile), content);
-
-            if (storyId) {
-              const devPlanPath = path.join(devPlansDir, `story-${storyId}-tasks.md`);
-
-              if (!fs.existsSync(devPlanPath)) {
-                results.push({
-                  ruleId: 'TS-DEVPLAN-001',
-                  severity: SEVERITY.ERROR,
-                  file: storyFile,
-                  message: `Story is in sprint but dev plan is missing. Expected: dev-plans/story-${storyId}-tasks.md`,
-                  owner: 'DEV',
-                });
-              }
-            }
-          }
-        }
-      }
-
-      return results;
-    },
-  },
-
-  // -------------------------------------------------------------------------
-  // DoD Rules (TS-DOD)
-  // -------------------------------------------------------------------------
-
-  'TS-DOD-001': {
-    id: 'TS-DOD-001',
-    name: 'Story cannot be Done if behavior changed and Canon not updated',
-    severity: SEVERITY.BLOCKER,
-    owner: 'FA',
-    async check(ctx) {
-      const results = [];
-
-      for (const projectId of ctx.projects) {
-        const storiesDir = path.join(ctx.workspaceDir, 'projects', projectId, 'stories');
-        const storyFiles = findFiles(storiesDir, /\.md$/);
-
-        for (const storyFile of storyFiles) {
-          if (path.basename(storyFile) === 'README.md') continue;
-
-          const content = fs.readFileSync(storyFile, 'utf-8');
-          const metadata = extractMetadata(content);
-
-          // Check if status is Done
-          const isDone = metadata.Status && /done/i.test(metadata.Status);
-
-          if (isDone) {
-            // Check if behavior is being added/changed (anywhere in file)
-            const allCheckboxes = extractCheckboxes(content);
-            const addsBehavior = allCheckboxes.some(c => c.checked && /adds behavior/i.test(c.text));
-            const changesBehavior = allCheckboxes.some(c => c.checked && /changes behavior/i.test(c.text));
-
-            if (addsBehavior || changesBehavior) {
-              // Check DoD for Canon update - look for unchecked "Feature Canon updated" item
-              const dodCheckboxes = extractCheckboxes(content, 'DoD Checklist|Definition of Done');
-              const canonChecked = dodCheckboxes.some(c => c.checked && /feature canon updated|canon updated/i.test(c.text));
-              const canonUnchecked = dodCheckboxes.some(c => !c.checked && /feature canon updated|canon updated/i.test(c.text));
-
-              if (canonUnchecked || (!canonChecked && dodCheckboxes.length > 0)) {
-                results.push({
-                  ruleId: 'TS-DOD-001',
-                  severity: SEVERITY.BLOCKER,
-                  file: storyFile,
-                  message: 'Story is marked Done with behavior changes but Feature Canon not updated. This blocks release.',
-                  owner: 'FA',
-                });
-              }
-            }
-          }
-        }
-      }
-
-      return results;
-    },
-  },
-
-  // -------------------------------------------------------------------------
-  // Naming Convention Rules (TS-NAMING)
-  // -------------------------------------------------------------------------
-
-  'TS-NAMING-FEATURE': {
-    id: 'TS-NAMING-FEATURE',
-    name: 'Feature file naming convention',
-    severity: SEVERITY.WARNING,
-    owner: 'FA',
-    async check(ctx) {
-      const results = [];
-
-      for (const projectId of ctx.projects) {
-        const featuresDir = path.join(ctx.workspaceDir, 'projects', projectId, 'features');
-        if (!fs.existsSync(featuresDir)) continue;
-
-        const files = fs.readdirSync(featuresDir).filter(f => f.endsWith('.md'));
-
-        for (const file of files) {
-          if (['features-index.md', 'story-ledger.md', 'README.md'].includes(file)) continue;
-
-          if (!NAMING_PATTERNS.feature.test(file)) {
-            results.push({
-              ruleId: 'TS-NAMING-FEATURE',
-              severity: SEVERITY.WARNING,
-              file: path.join(featuresDir, file),
-              message: `Feature file '${file}' does not match naming convention: F-NNN-description.md`,
-              owner: 'FA',
-            });
-          }
-        }
-      }
-
-      return results;
-    },
-  },
-
-  'TS-NAMING-STORY': {
-    id: 'TS-NAMING-STORY',
-    name: 'Story file naming convention',
-    severity: SEVERITY.WARNING,
-    owner: 'FA',
-    async check(ctx) {
-      const results = [];
-
-      for (const projectId of ctx.projects) {
-        const storiesDir = path.join(ctx.workspaceDir, 'projects', projectId, 'stories');
-        if (!fs.existsSync(storiesDir)) continue;
-
-        const storyFiles = findFiles(storiesDir, /\.md$/);
-
-        for (const storyFile of storyFiles) {
-          const filename = path.basename(storyFile);
-          if (filename === 'README.md') continue;
-
-          if (!NAMING_PATTERNS.story.test(filename)) {
-            results.push({
-              ruleId: 'TS-NAMING-STORY',
-              severity: SEVERITY.WARNING,
-              file: storyFile,
-              message: `Story file '${filename}' does not match naming convention: S-NNN-description.md`,
-              owner: 'FA',
-            });
-          }
-        }
-      }
-
-      return results;
-    },
-  },
-
-  'TS-NAMING-DEVPLAN': {
-    id: 'TS-NAMING-DEVPLAN',
-    name: 'Dev plan file naming convention',
-    severity: SEVERITY.WARNING,
-    owner: 'DEV',
-    async check(ctx) {
-      const results = [];
-
-      for (const projectId of ctx.projects) {
-        const devPlansDir = path.join(ctx.workspaceDir, 'projects', projectId, 'dev-plans');
-        if (!fs.existsSync(devPlansDir)) continue;
-
-        const files = fs.readdirSync(devPlansDir).filter(f => f.endsWith('.md'));
-
-        for (const file of files) {
-          if (file === 'README.md') continue;
-
-          if (!NAMING_PATTERNS.devPlan.test(file)) {
-            results.push({
-              ruleId: 'TS-NAMING-DEVPLAN',
-              severity: SEVERITY.WARNING,
-              file: path.join(devPlansDir, file),
-              message: `Dev plan file '${file}' does not match naming convention: story-NNN-tasks.md`,
-              owner: 'DEV',
-            });
-          }
-        }
-      }
-
-      return results;
-    },
-  },
-
-  'TS-NAMING-ADR': {
-    id: 'TS-NAMING-ADR',
-    name: 'ADR file naming convention',
-    severity: SEVERITY.WARNING,
-    owner: 'SA',
-    async check(ctx) {
-      const results = [];
-
-      for (const projectId of ctx.projects) {
-        const adrDir = path.join(ctx.workspaceDir, 'projects', projectId, 'adr');
-        if (!fs.existsSync(adrDir)) continue;
-
-        const files = fs.readdirSync(adrDir).filter(f => f.endsWith('.md'));
-
-        for (const file of files) {
-          if (file === 'README.md') continue;
-
-          if (!NAMING_PATTERNS.adr.test(file)) {
-            results.push({
-              ruleId: 'TS-NAMING-ADR',
-              severity: SEVERITY.WARNING,
-              file: path.join(adrDir, file),
-              message: `ADR file '${file}' does not match naming convention: ADR-NNN-description.md`,
-              owner: 'SA',
-            });
-          }
-        }
-      }
-
-      return results;
-    },
-  },
-
-  // ===========================================================================
-  // TeamSpec 4.0 Rules
-  // ===========================================================================
-
-  // -------------------------------------------------------------------------
-  // Product Rules (TS-PROD) - 4.0 Only
-  // -------------------------------------------------------------------------
-
-  'TS-PROD-001': {
-    id: 'TS-PROD-001',
-    name: 'Product folder must be registered',
-    severity: SEVERITY.ERROR,
-    owner: 'PO',
-    v4Only: true,
-    async check(ctx) {
-      const results = [];
-      if (ctx.workspaceVersion !== '4.0') return results;
-
-      const indexPath = path.join(ctx.workspaceDir, 'products', 'products-index.md');
-
-      if (!fs.existsSync(indexPath)) {
-        // If no products-index.md, skip
-        return results;
-      }
-
-      const indexContent = fs.readFileSync(indexPath, 'utf-8');
-
-      for (const productId of ctx.products) {
-        if (!indexContent.includes(productId)) {
-          results.push({
-            ruleId: 'TS-PROD-001',
-            severity: SEVERITY.ERROR,
-            file: path.join(ctx.workspaceDir, 'products', productId),
-            message: `Product '${productId}' is not registered in products-index.md`,
-            owner: 'PO',
-          });
-        }
-      }
-
-      return results;
-    },
-  },
-
-  'TS-PROD-002': {
-    id: 'TS-PROD-002',
-    name: 'product.yml required with minimum metadata',
-    severity: SEVERITY.ERROR,
-    owner: 'PO',
-    v4Only: true,
-    async check(ctx) {
-      const results = [];
-      if (ctx.workspaceVersion !== '4.0') return results;
-
-      for (const productId of ctx.products) {
-        const ymlPath = path.join(ctx.workspaceDir, 'products', productId, 'product.yml');
-
-        if (!fs.existsSync(ymlPath)) {
-          results.push({
-            ruleId: 'TS-PROD-002',
-            severity: SEVERITY.ERROR,
-            file: ymlPath,
-            message: `product.yml is missing for product '${productId}'`,
-            owner: 'PO',
-          });
-          continue;
-        }
-
-        const content = fs.readFileSync(ymlPath, 'utf-8');
-        const yaml = parseNestedYaml(content);
-        const product = yaml.product || {};
-
-        // Check required fields
-        const requiredFields = ['id', 'prefix', 'name', 'status'];
-        for (const field of requiredFields) {
-          if (!product[field]) {
-            results.push({
-              ruleId: 'TS-PROD-002',
-              severity: SEVERITY.ERROR,
-              file: ymlPath,
-              message: `product.yml is missing required field: 'product.${field}'`,
-              owner: 'PO',
-            });
-          }
-        }
-
-        // Validate prefix format (3-4 uppercase chars)
-        if (product.prefix && !/^[A-Z]{3,4}$/.test(product.prefix)) {
-          results.push({
-            ruleId: 'TS-PROD-002',
-            severity: SEVERITY.ERROR,
-            file: ymlPath,
-            message: `product.prefix must be 3-4 uppercase characters, got: '${product.prefix}'`,
-            owner: 'PO',
-          });
-        }
-      }
-
-      return results;
-    },
-  },
-
-  'TS-PROD-003': {
-    id: 'TS-PROD-003',
-    name: 'Product-Project bidirectional consistency',
-    severity: SEVERITY.WARNING,
-    owner: 'PO/BA',
-    v4Only: true,
-    async check(ctx) {
-      const results = [];
-      if (ctx.workspaceVersion !== '4.0') return results;
-
-      // Build project -> products map
-      const projectToProducts = new Map();
-      for (const projectId of ctx.projects) {
-        const yaml = loadProjectYaml(ctx.workspaceDir, projectId);
-        if (yaml && yaml.project && yaml.project.target_products) {
-          const targets = Array.isArray(yaml.project.target_products)
-            ? yaml.project.target_products
-            : [];
-          projectToProducts.set(projectId, targets);
-        }
-      }
-
-      // Build product -> projects map
-      const productToProjects = new Map();
-      for (const productId of ctx.products) {
-        const yaml = loadProductYaml(ctx.workspaceDir, productId);
-        if (yaml && yaml.product && yaml.product.active_projects) {
-          const active = Array.isArray(yaml.product.active_projects)
-            ? yaml.product.active_projects
-            : [];
-          productToProjects.set(productId, active);
-        }
-      }
-
-      // Check consistency: project targets product but product doesn't list project
-      for (const [projectId, products] of projectToProducts) {
-        for (const productId of products) {
-          // Handle both string and object format
-          const targetProductId = typeof productId === 'object' ? productId.product_id : productId;
-          const projectsInProduct = productToProjects.get(targetProductId) || [];
-
-          const projectListed = projectsInProduct.some(p => {
-            const pId = typeof p === 'object' ? p.project_id : p;
-            return pId === projectId;
-          });
-
-          if (!projectListed && ctx.products.includes(targetProductId)) {
-            results.push({
-              ruleId: 'TS-PROD-003',
-              severity: SEVERITY.WARNING,
-              file: path.join(ctx.workspaceDir, 'products', targetProductId, 'product.yml'),
-              message: `Project '${projectId}' targets product '${targetProductId}' but product doesn't list it in active_projects`,
-              owner: 'PO/BA',
-            });
-          }
-        }
-      }
-
-      return results;
-    },
-  },
-
-  'TS-PROD-004': {
-    id: 'TS-PROD-004',
-    name: 'Product features-index.md required',
-    severity: SEVERITY.ERROR,
-    owner: 'PO',
-    v4Only: true,
-    async check(ctx) {
-      const results = [];
-      if (ctx.workspaceVersion !== '4.0') return results;
-
-      for (const productId of ctx.products) {
-        const indexPath = path.join(ctx.workspaceDir, 'products', productId, 'features', 'features-index.md');
-
-        if (!fs.existsSync(indexPath)) {
-          results.push({
-            ruleId: 'TS-PROD-004',
-            severity: SEVERITY.ERROR,
-            file: path.join(ctx.workspaceDir, 'products', productId, 'features'),
-            message: `Product '${productId}' is missing features/features-index.md`,
-            owner: 'PO',
-          });
-        }
-      }
-
-      return results;
-    },
-  },
-
-  'TS-PROD-005': {
-    id: 'TS-PROD-005',
-    name: 'Product story-ledger.md required',
-    severity: SEVERITY.ERROR,
-    owner: 'PO',
-    v4Only: true,
-    async check(ctx) {
-      const results = [];
-      if (ctx.workspaceVersion !== '4.0') return results;
-
-      for (const productId of ctx.products) {
-        const ledgerPath = path.join(ctx.workspaceDir, 'products', productId, 'features', 'story-ledger.md');
-
-        if (!fs.existsSync(ledgerPath)) {
-          results.push({
-            ruleId: 'TS-PROD-005',
-            severity: SEVERITY.ERROR,
-            file: path.join(ctx.workspaceDir, 'products', productId, 'features'),
-            message: `Product '${productId}' is missing features/story-ledger.md`,
-            owner: 'PO',
-          });
-        }
-      }
-
-      return results;
-    },
-  },
-
-  // -------------------------------------------------------------------------
-  // Feature-Increment Rules (TS-FI) - 4.0 Only
-  // -------------------------------------------------------------------------
-
-  'TS-FI-001': {
-    id: 'TS-FI-001',
-    name: 'Feature-Increment must reference product and feature',
-    severity: SEVERITY.ERROR,
-    owner: 'BA',
-    v4Only: true,
-    async check(ctx) {
-      const results = [];
-      if (ctx.workspaceVersion !== '4.0') return results;
-
-      for (const projectId of ctx.projects) {
-        const fiDir = path.join(ctx.workspaceDir, 'projects', projectId, 'feature-increments');
-        if (!fs.existsSync(fiDir)) continue;
-
-        // Pattern: fi-PRX-XXX-*.md
-        const fiFiles = findFiles(fiDir, /^fi-[A-Z]{3,4}-\d{3,}-.*\.md$/);
-
-        for (const fiFile of fiFiles) {
-          const content = fs.readFileSync(fiFile, 'utf-8');
-          const filename = path.basename(fiFile);
-
-          // Extract PRX from filename
-          const prxMatch = filename.match(/^fi-([A-Z]{3,4})-/);
-          const prx = prxMatch ? prxMatch[1] : null;
-
-          // Check for product reference
-          const hasProduct = /\*\*Target Product\*\*:|product_id:|target_product:/i.test(content);
-          // Check for feature reference (f-PRX-XXX pattern)
-          const hasFeature = /\*\*Target Feature\*\*:|f-[A-Z]{3,4}-\d{3,}/i.test(content);
-
-          if (!hasProduct) {
-            results.push({
-              ruleId: 'TS-FI-001',
-              severity: SEVERITY.ERROR,
-              file: fiFile,
-              message: 'Feature-Increment must specify Target Product',
-              owner: 'BA',
-            });
-          }
-
-          if (!hasFeature) {
-            results.push({
-              ruleId: 'TS-FI-001',
-              severity: SEVERITY.ERROR,
-              file: fiFile,
-              message: `Feature-Increment must specify Target Feature (f-${prx || 'PRX'}-XXX)`,
-              owner: 'BA',
-            });
-          }
-        }
-      }
-
-      return results;
-    },
-  },
-
-  'TS-FI-002': {
-    id: 'TS-FI-002',
-    name: 'Feature-Increment must have AS-IS and TO-BE sections',
-    severity: SEVERITY.ERROR,
-    owner: 'BA/FA',
-    v4Only: true,
-    async check(ctx) {
-      const results = [];
-      if (ctx.workspaceVersion !== '4.0') return results;
-
-      for (const projectId of ctx.projects) {
-        const fiDir = path.join(ctx.workspaceDir, 'projects', projectId, 'feature-increments');
-        if (!fs.existsSync(fiDir)) continue;
-
-        const fiFiles = findFiles(fiDir, /^fi-[A-Z]{3,4}-\d{3,}-.*\.md$/);
-
-        for (const fiFile of fiFiles) {
-          const content = fs.readFileSync(fiFile, 'utf-8');
-
-          const hasAsIs = /##\s*(AS-IS|Current State|Current Behavior)/i.test(content);
-          const hasToBe = /##\s*(TO-BE|Target State|New Behavior|Proposed)/i.test(content);
-
-          if (!hasAsIs) {
-            results.push({
-              ruleId: 'TS-FI-002',
-              severity: SEVERITY.ERROR,
-              file: fiFile,
-              message: 'Feature-Increment must have AS-IS section describing current state',
-              owner: 'BA/FA',
-            });
-          }
-
-          if (!hasToBe) {
-            results.push({
-              ruleId: 'TS-FI-002',
-              severity: SEVERITY.ERROR,
-              file: fiFile,
-              message: 'Feature-Increment must have TO-BE section describing target state',
-              owner: 'BA/FA',
-            });
-          }
-        }
-      }
-
-      return results;
-    },
-  },
-
-  'TS-FI-003': {
-    id: 'TS-FI-003',
-    name: 'Feature-Increment target feature must exist in product',
-    severity: SEVERITY.ERROR,
-    owner: 'BA',
-    v4Only: true,
-    async check(ctx) {
-      const results = [];
-      if (ctx.workspaceVersion !== '4.0') return results;
-
-      // Build map of product prefixes to feature files
-      const productFeatures = new Map();
-      for (const productId of ctx.products) {
-        const yaml = loadProductYaml(ctx.workspaceDir, productId);
-        const prefix = yaml?.product?.prefix;
-        if (!prefix) continue;
-
-        const featuresDir = path.join(ctx.workspaceDir, 'products', productId, 'features');
-        if (fs.existsSync(featuresDir)) {
-          const features = fs.readdirSync(featuresDir)
-            .filter(f => f.match(/^f-[A-Z]{3,4}-\d{3,}/))
-            .map(f => f.match(/^(f-[A-Z]{3,4}-\d{3,})/)?.[1])
-            .filter(Boolean);
-          productFeatures.set(prefix, features);
-        }
-      }
-
-      for (const projectId of ctx.projects) {
-        const fiDir = path.join(ctx.workspaceDir, 'projects', projectId, 'feature-increments');
-        if (!fs.existsSync(fiDir)) continue;
-
-        const fiFiles = findFiles(fiDir, /^fi-[A-Z]{3,4}-\d{3,}-.*\.md$/);
-
-        for (const fiFile of fiFiles) {
-          const content = fs.readFileSync(fiFile, 'utf-8');
-
-          // Extract feature references from content
-          const featureRefs = content.match(/f-[A-Z]{3,4}-\d{3,}/g) || [];
-
-          for (const featureRef of [...new Set(featureRefs)]) {
-            const prxMatch = featureRef.match(/f-([A-Z]{3,4})-/);
-            if (!prxMatch) continue;
-
-            const prx = prxMatch[1];
-            const features = productFeatures.get(prx) || [];
-
-            if (!features.includes(featureRef)) {
-              results.push({
-                ruleId: 'TS-FI-003',
-                severity: SEVERITY.ERROR,
-                file: fiFile,
-                message: `Referenced feature '${featureRef}' does not exist in product with prefix '${prx}'`,
-                owner: 'BA',
-              });
-            }
-          }
-        }
-      }
-
-      return results;
-    },
-  },
-
-  'TS-FI-004': {
-    id: 'TS-FI-004',
-    name: 'Feature-Increment IDs must be unique within project',
-    severity: SEVERITY.ERROR,
-    owner: 'BA',
-    v4Only: true,
-    async check(ctx) {
-      const results = [];
-      if (ctx.workspaceVersion !== '4.0') return results;
-
-      for (const projectId of ctx.projects) {
-        const fiDir = path.join(ctx.workspaceDir, 'projects', projectId, 'feature-increments');
-        if (!fs.existsSync(fiDir)) continue;
-
-        const fiFiles = findFiles(fiDir, /^fi-[A-Z]{3,4}-\d{3,}-.*\.md$/);
-        const idToFiles = new Map();
-
-        for (const fiFile of fiFiles) {
-          const match = path.basename(fiFile).match(/^(fi-[A-Z]{3,4}-\d{3,})/);
-          if (match) {
-            const id = match[1];
-            if (!idToFiles.has(id)) {
-              idToFiles.set(id, []);
-            }
-            idToFiles.get(id).push(fiFile);
-          }
-        }
-
-        for (const [id, files] of idToFiles) {
-          if (files.length > 1) {
-            results.push({
-              ruleId: 'TS-FI-004',
-              severity: SEVERITY.ERROR,
-              file: files[1],
-              message: `Duplicate Feature-Increment ID '${id}' found in: ${files.map(f => path.basename(f)).join(', ')}`,
-              owner: 'BA',
-            });
-          }
-        }
-      }
-
-      return results;
-    },
-  },
-
-  // -------------------------------------------------------------------------
-  // Epic Rules (TS-EPIC) - 4.0 Only
-  // -------------------------------------------------------------------------
-
-  'TS-EPIC-001': {
-    id: 'TS-EPIC-001',
-    name: 'Epic must link to Feature-Increments',
-    severity: SEVERITY.ERROR,
-    owner: 'BA',
-    v4Only: true,
-    async check(ctx) {
-      const results = [];
-      if (ctx.workspaceVersion !== '4.0') return results;
-
-      for (const projectId of ctx.projects) {
-        const epicsDir = path.join(ctx.workspaceDir, 'projects', projectId, 'epics');
-        if (!fs.existsSync(epicsDir)) continue;
-
-        // Pattern: epic-PRX-XXX-*.md
-        const epicFiles = findFiles(epicsDir, /^epic-[A-Z]{3,4}-\d{3,}-.*\.md$/);
-
-        for (const epicFile of epicFiles) {
-          const content = fs.readFileSync(epicFile, 'utf-8');
-
-          // Check for fi-PRX-XXX reference
-          const hasFI = /fi-[A-Z]{3,4}-\d{3,}/.test(content);
-
-          if (!hasFI) {
-            results.push({
-              ruleId: 'TS-EPIC-001',
-              severity: SEVERITY.ERROR,
-              file: epicFile,
-              message: 'Epic must link to at least one Feature-Increment (fi-PRX-XXX)',
-              owner: 'BA',
-            });
-          }
-        }
-      }
-
-      return results;
-    },
-  },
-
-  'TS-EPIC-002': {
-    id: 'TS-EPIC-002',
-    name: 'Epic must define TO-BE state',
-    severity: SEVERITY.ERROR,
-    owner: 'BA/FA',
-    v4Only: true,
-    async check(ctx) {
-      const results = [];
-      if (ctx.workspaceVersion !== '4.0') return results;
-
-      for (const projectId of ctx.projects) {
-        const epicsDir = path.join(ctx.workspaceDir, 'projects', projectId, 'epics');
-        if (!fs.existsSync(epicsDir)) continue;
-
-        const epicFiles = findFiles(epicsDir, /^epic-[A-Z]{3,4}-\d{3,}-.*\.md$/);
-
-        for (const epicFile of epicFiles) {
-          const content = fs.readFileSync(epicFile, 'utf-8');
-
-          const hasToBe = /##\s*(TO-BE|Target State|Outcome|Business Value|Value Proposition)/i.test(content);
-
-          if (!hasToBe) {
-            results.push({
-              ruleId: 'TS-EPIC-002',
-              severity: SEVERITY.ERROR,
-              file: epicFile,
-              message: 'Epic must define TO-BE state or Business Value section',
-              owner: 'BA/FA',
-            });
-          }
-        }
-      }
-
-      return results;
-    },
-  },
-
-  'TS-EPIC-003': {
-    id: 'TS-EPIC-003',
-    name: 'Epic IDs must be unique within project',
-    severity: SEVERITY.ERROR,
-    owner: 'BA',
-    v4Only: true,
-    async check(ctx) {
-      const results = [];
-      if (ctx.workspaceVersion !== '4.0') return results;
-
-      for (const projectId of ctx.projects) {
-        const epicsDir = path.join(ctx.workspaceDir, 'projects', projectId, 'epics');
-        if (!fs.existsSync(epicsDir)) continue;
-
-        const epicFiles = findFiles(epicsDir, /^epic-[A-Z]{3,4}-\d{3,}-.*\.md$/);
-        const idToFiles = new Map();
-
-        for (const epicFile of epicFiles) {
-          const match = path.basename(epicFile).match(/^(epic-[A-Z]{3,4}-\d{3,})/);
-          if (match) {
-            const id = match[1];
-            if (!idToFiles.has(id)) {
-              idToFiles.set(id, []);
-            }
-            idToFiles.get(id).push(epicFile);
-          }
-        }
-
-        for (const [id, files] of idToFiles) {
-          if (files.length > 1) {
-            results.push({
-              ruleId: 'TS-EPIC-003',
-              severity: SEVERITY.ERROR,
-              file: files[1],
-              message: `Duplicate Epic ID '${id}' found in: ${files.map(f => path.basename(f)).join(', ')}`,
-              owner: 'BA',
-            });
-          }
-        }
-      }
-
-      return results;
-    },
-  },
-
-  // -------------------------------------------------------------------------
-  // Updated Project Rules (TS-PROJ) - 4.0 Extensions
-  // -------------------------------------------------------------------------
-
-  'TS-PROJ-003': {
-    id: 'TS-PROJ-003',
-    name: 'Project must target at least one product',
-    severity: SEVERITY.ERROR,
-    owner: 'BA',
-    v4Only: true,
-    async check(ctx) {
-      const results = [];
-      if (ctx.workspaceVersion !== '4.0') return results;
-
-      for (const projectId of ctx.projects) {
-        const ymlPath = path.join(ctx.workspaceDir, 'projects', projectId, 'project.yml');
-
-        if (!fs.existsSync(ymlPath)) continue;
-
-        const content = fs.readFileSync(ymlPath, 'utf-8');
-        const yaml = parseNestedYaml(content);
-        const project = yaml.project || {};
-        const targets = project.target_products || [];
-
-        if (!Array.isArray(targets) || targets.length === 0) {
-          results.push({
-            ruleId: 'TS-PROJ-003',
-            severity: SEVERITY.ERROR,
-            file: ymlPath,
-            message: 'Project must target at least one product in target_products',
-            owner: 'BA',
-          });
-        }
-      }
-
-      return results;
-    },
-  },
-
-  'TS-PROJ-004': {
-    id: 'TS-PROJ-004',
-    name: 'Target products must exist',
-    severity: SEVERITY.ERROR,
-    owner: 'BA',
-    v4Only: true,
-    async check(ctx) {
-      const results = [];
-      if (ctx.workspaceVersion !== '4.0') return results;
-
-      for (const projectId of ctx.projects) {
-        const yaml = loadProjectYaml(ctx.workspaceDir, projectId);
-        if (!yaml || !yaml.project) continue;
-
-        const targets = yaml.project.target_products || [];
-
-        for (const target of targets) {
-          const productId = typeof target === 'object' ? target.product_id : target;
-
-          if (!ctx.products.includes(productId)) {
-            results.push({
-              ruleId: 'TS-PROJ-004',
-              severity: SEVERITY.ERROR,
-              file: path.join(ctx.workspaceDir, 'projects', projectId, 'project.yml'),
-              message: `Target product '${productId}' does not exist in products/`,
-              owner: 'BA',
-            });
-          }
-        }
-      }
-
-      return results;
-    },
-  },
-
-  // -------------------------------------------------------------------------
-  // Updated Story Rules (TS-STORY) - 4.0 Extensions
-  // -------------------------------------------------------------------------
-
-  'TS-STORY-006': {
-    id: 'TS-STORY-006',
-    name: 'Story must link to Epic (4.0)',
-    severity: SEVERITY.ERROR,
-    owner: 'FA',
-    v4Only: true,
-    async check(ctx) {
-      const results = [];
-      if (ctx.workspaceVersion !== '4.0') return results;
-
-      for (const projectId of ctx.projects) {
-        const storiesDir = path.join(ctx.workspaceDir, 'projects', projectId, 'stories');
-        if (!fs.existsSync(storiesDir)) continue;
-
-        // Check all story folders
-        const storyFolders = ['backlog', 'ready-to-refine', 'ready-to-develop'];
-
-        for (const folder of storyFolders) {
-          const folderPath = path.join(storiesDir, folder);
-          if (!fs.existsSync(folderPath)) continue;
-
-          // Find all .md files (except README)
-          const files = fs.readdirSync(folderPath).filter(f => f.endsWith('.md') && f !== 'README.md');
-
-          for (const file of files) {
-            // Check if filename matches s-eXXX-YYY pattern
-            if (!NAMING_PATTERNS_V4.story.test(file)) {
-              results.push({
-                ruleId: 'TS-STORY-006',
-                severity: SEVERITY.ERROR,
-                file: path.join(folderPath, file),
-                message: `Story filename must include Epic ID (s-eXXX-YYY-description.md), got: '${file}'`,
-                owner: 'FA',
-              });
-            }
-          }
-        }
-      }
-
-      return results;
-    },
-  },
-
-  'TS-STORY-007': {
-    id: 'TS-STORY-007',
-    name: 'Linked Epic must exist',
-    severity: SEVERITY.ERROR,
-    owner: 'FA',
-    v4Only: true,
-    async check(ctx) {
-      const results = [];
-      if (ctx.workspaceVersion !== '4.0') return results;
-
-      for (const projectId of ctx.projects) {
-        const storiesDir = path.join(ctx.workspaceDir, 'projects', projectId, 'stories');
-        const epicsDir = path.join(ctx.workspaceDir, 'projects', projectId, 'epics');
-        if (!fs.existsSync(storiesDir)) continue;
-
-        // Get all epic numbers from the epics folder
-        const epicNumbers = new Set();
         if (fs.existsSync(epicsDir)) {
-          const epicFiles = fs.readdirSync(epicsDir);
-          for (const epicFile of epicFiles) {
-            const match = epicFile.match(/^epic-[A-Z]{3,4}-(\d{3,})/);
-            if (match) epicNumbers.add(match[1]);
-          }
-        }
+            const epics = fs.readdirSync(epicsDir);
+            const epicExists = epics.some(e => e.includes(`-${epicNum}-`) || e.includes(`-${parseInt(epicNum)}-`));
 
-        // Check all story folders
-        const storyFolders = ['backlog', 'ready-to-refine', 'ready-to-develop'];
-
-        for (const folder of storyFolders) {
-          const folderPath = path.join(storiesDir, folder);
-          if (!fs.existsSync(folderPath)) continue;
-
-          const storyFiles = findFiles(folderPath, /^s-e\d{3,}-\d{3,}-.*\.md$/);
-
-          for (const storyFile of storyFiles) {
-            const match = path.basename(storyFile).match(/^s-e(\d{3,})-/);
-            if (match && !epicNumbers.has(match[1])) {
-              results.push({
-                ruleId: 'TS-STORY-007',
-                severity: SEVERITY.ERROR,
-                file: storyFile,
-                message: `Referenced Epic e${match[1]} does not exist in epics folder`,
-                owner: 'FA',
-              });
+            if (!epicExists) {
+                result.add('TS-STORY-001', `Story '${filename}' references non-existent epic ${epicNum}`, filePath, SEVERITY.ERROR);
             }
-          }
         }
-      }
+    }
+}
 
-      return results;
-    },
-  },
+/**
+ * TS-STORY-002: Story describes delta, not full behavior
+ */
+function checkStoryDelta(filePath, result) {
+    const content = fs.readFileSync(filePath, 'utf-8');
+    const filename = path.basename(filePath);
 
-  // -------------------------------------------------------------------------
-  // Updated DoD Rules (TS-DOD) - 4.0 Extensions
-  // -------------------------------------------------------------------------
+    // Look for delta language
+    const deltaTerms = ['adds', 'changes', 'removes', 'modifies', 'updates', 'introduces', 'replaces'];
+    const hasDeltaLanguage = deltaTerms.some(term =>
+        content.toLowerCase().includes(term)
+    );
 
-  'TS-DOD-003': {
-    id: 'TS-DOD-003',
-    name: 'Product sync after deployment',
-    severity: SEVERITY.BLOCKER,
-    owner: 'PO',
-    v4Only: true,
-    async check(ctx) {
-      const results = [];
-      if (ctx.workspaceVersion !== '4.0') return results;
+    // Look for Feature-Increment reference
+    const hasFIRef = /fi-[A-Z]{3,4}-\d{3}/.test(content);
 
-      for (const projectId of ctx.projects) {
-        const yaml = loadProjectYaml(ctx.workspaceDir, projectId);
-        if (!yaml || !yaml.project) continue;
+    if (!hasDeltaLanguage && !hasFIRef) {
+        result.add('TS-STORY-002', `Story '${filename.replace('.md', '')}' appears to describe full behavior instead of delta`, filePath, SEVERITY.WARNING);
+    }
+}
 
-        const deployment = yaml.project.deployment || yaml.deployment || {};
+/**
+ * TS-NAMING-*: Artifact naming conventions
+ */
+function checkArtifactNaming(filePath, artifactType, result) {
+    const filename = path.basename(filePath);
+    const pattern = NAMING_PATTERNS[artifactType];
 
-        // Check if project is marked as deployed
-        if (deployment.deployed_date || deployment.deployed) {
-          // Check if sync has been executed
-          if (!deployment.canon_synced) {
-            results.push({
-              ruleId: 'TS-DOD-003',
-              severity: SEVERITY.BLOCKER,
-              file: path.join(ctx.workspaceDir, 'projects', projectId, 'project.yml'),
-              message: 'Project deployed but Product Canon not synced. Run ts:po sync',
-              owner: 'PO',
-            });
-          }
-        }
-      }
+    if (pattern && !pattern.test(filename)) {
+        const ruleId = `TS-NAMING-${artifactType.toUpperCase().replace(/-/g, '')}`;
+        result.add(ruleId, `File '${filename}' does not match naming convention for ${artifactType}`, filePath, SEVERITY.ERROR);
+    }
+}
 
-      return results;
-    },
-  },
+/**
+ * TS-DOD-001: Story must have all AC verified
+ */
+function checkDoneStoryAC(filePath, result) {
+    const content = fs.readFileSync(filePath, 'utf-8');
+    const filename = path.basename(filePath);
 
-  // -------------------------------------------------------------------------
-  // 4.0 Naming Convention Rules
-  // -------------------------------------------------------------------------
+    // Check for unverified AC (unchecked checkboxes)
+    const hasUnverifiedAC = /- \[ \]/.test(content);
 
-  'TS-NAMING-FI': {
-    id: 'TS-NAMING-FI',
-    name: 'Feature-Increment file naming convention',
-    severity: SEVERITY.WARNING,
-    owner: 'BA',
-    v4Only: true,
-    async check(ctx) {
-      const results = [];
-      if (ctx.workspaceVersion !== '4.0') return results;
+    if (hasUnverifiedAC) {
+        result.add('TS-DOD-001', `Story '${filename.replace('.md', '')}' has unverified acceptance criteria`, filePath, SEVERITY.ERROR);
+    }
+}
 
-      for (const projectId of ctx.projects) {
-        const fiDir = path.join(ctx.workspaceDir, 'projects', projectId, 'feature-increments');
-        if (!fs.existsSync(fiDir)) continue;
+/**
+ * TS-DOD-003: Product sync after deployment
+ */
+function checkCanonSync(projectConfig, projectDir, result) {
+    if (projectConfig.deployed_date && !projectConfig.canon_synced) {
+        result.add('TS-DOD-003', `Project deployed but Product Canon not synced. Run ts:po sync`, path.join(projectDir, 'project.yml'), SEVERITY.BLOCKER);
+    }
+}
 
-        const files = fs.readdirSync(fiDir).filter(f => f.endsWith('.md'));
+/**
+ * TS-QA-001: Deployed Feature-Increment must have test coverage
+ */
+function checkFITestCoverage(fiFile, projectDir, result) {
+    const fiName = path.basename(fiFile, '.md');
+    const fiMatch = fiName.match(/^fi-([A-Z]{3,4}-\d{3})/);
 
-        for (const file of files) {
-          if (['increments-index.md', 'README.md'].includes(file)) continue;
+    if (!fiMatch) return;
 
-          if (!NAMING_PATTERNS_V4.featureIncrement.test(file)) {
-            results.push({
-              ruleId: 'TS-NAMING-FI',
-              severity: SEVERITY.WARNING,
-              file: path.join(fiDir, file),
-              message: `Feature-Increment file '${file}' does not match naming convention: fi-PRX-XXX-description.md`,
-              owner: 'BA',
-            });
-          }
-        }
-      }
-
-      return results;
-    },
-  },
-
-  'TS-NAMING-EPIC': {
-    id: 'TS-NAMING-EPIC',
-    name: 'Epic file naming convention (4.0)',
-    severity: SEVERITY.WARNING,
-    owner: 'BA',
-    v4Only: true,
-    async check(ctx) {
-      const results = [];
-      if (ctx.workspaceVersion !== '4.0') return results;
-
-      for (const projectId of ctx.projects) {
-        const epicsDir = path.join(ctx.workspaceDir, 'projects', projectId, 'epics');
-        if (!fs.existsSync(epicsDir)) continue;
-
-        const files = fs.readdirSync(epicsDir).filter(f => f.endsWith('.md'));
-
-        for (const file of files) {
-          if (['epics-index.md', 'README.md'].includes(file)) continue;
-
-          if (!NAMING_PATTERNS_V4.epic.test(file)) {
-            results.push({
-              ruleId: 'TS-NAMING-EPIC',
-              severity: SEVERITY.WARNING,
-              file: path.join(epicsDir, file),
-              message: `Epic file '${file}' does not match naming convention: epic-PRX-XXX-description.md`,
-              owner: 'BA',
-            });
-          }
-        }
-      }
-
-      return results;
-    },
-  },
-
-  'TS-NAMING-PRODUCT': {
-    id: 'TS-NAMING-PRODUCT',
-    name: 'Product folder naming convention',
-    severity: SEVERITY.WARNING,
-    owner: 'PO',
-    v4Only: true,
-    async check(ctx) {
-      const results = [];
-      if (ctx.workspaceVersion !== '4.0') return results;
-
-      const productsDir = path.join(ctx.workspaceDir, 'products');
-      if (!fs.existsSync(productsDir)) return results;
-
-      const entries = fs.readdirSync(productsDir, { withFileTypes: true });
-
-      for (const entry of entries) {
-        if (!entry.isDirectory()) continue;
-        if (entry.name === '.git') continue;
-
-        // Check if it has a product.yml (valid product folder)
-        const productYml = path.join(productsDir, entry.name, 'product.yml');
-        if (!fs.existsSync(productYml)) continue;
-
-        if (!NAMING_PATTERNS_V4.product.test(entry.name)) {
-          results.push({
-            ruleId: 'TS-NAMING-PRODUCT',
-            severity: SEVERITY.WARNING,
-            file: path.join(productsDir, entry.name),
-            message: `Product folder '${entry.name}' does not match naming convention: lowercase-with-dashes`,
-            owner: 'PO',
-          });
-        }
-      }
-
-      return results;
-    },
-  },
-
-  // -------------------------------------------------------------------------
-  // QA Rules (TS-QA) - Test coverage and regression
-  // -------------------------------------------------------------------------
-
-  'TS-QA-001': {
-    id: 'TS-QA-001',
-    name: 'Deployed Feature-Increment must have test coverage',
-    severity: SEVERITY.WARNING,
-    owner: 'QA',
-    v4Only: true,
-    async check(ctx) {
-      const results = [];
-      if (ctx.workspaceVersion !== '4.0') return results;
-
-      for (const projectId of ctx.projects) {
-        // Check if project is deployed
-        const yaml = loadProjectYaml(ctx.workspaceDir, projectId);
-        if (!yaml || !yaml.project) continue;
-
-        const deployment = yaml.project.deployment || yaml.deployment || {};
-        if (!deployment.deployed_date && !deployment.deployed) continue;
-
-        // Find all FIs in project
-        const fiDir = path.join(ctx.workspaceDir, 'projects', projectId, 'feature-increments');
-        if (!fs.existsSync(fiDir)) continue;
-
-        const fiFiles = fs.readdirSync(fiDir)
-          .filter(f => f.endsWith('.md') && !['increments-index.md', 'README.md'].includes(f));
-
-        // Check each FI for corresponding test case file
-        const qaDir = path.join(ctx.workspaceDir, 'projects', projectId, 'qa', 'test-cases');
-
-        for (const fiFile of fiFiles) {
-          // Extract FI ID from filename (e.g., fi-ACME-001-description.md -> fi-ACME-001)
-          const match = fiFile.match(/^(fi-[A-Z]{3,4}-\d{3,})/);
-          if (!match) continue;
-
-          const fiId = match[1];
-
-          // Look for test case file (tc-fi-PRX-XXX-*.md)
-          if (!fs.existsSync(qaDir)) {
-            results.push({
-              ruleId: 'TS-QA-001',
-              severity: SEVERITY.WARNING,
-              file: path.join(fiDir, fiFile),
-              message: `Deployed FI '${fiId}' has no test coverage (no qa/test-cases directory)`,
-              owner: 'QA',
-            });
-            continue;
-          }
-
-          const tcFiles = fs.readdirSync(qaDir);
-          const hasTestCoverage = tcFiles.some(tc => tc.startsWith(`tc-${fiId}`) && tc.endsWith('.md'));
-
-          if (!hasTestCoverage) {
-            results.push({
-              ruleId: 'TS-QA-001',
-              severity: SEVERITY.WARNING,
-              file: path.join(fiDir, fiFile),
-              message: `Deployed FI '${fiId}' has no test coverage. Expected: tc-${fiId}-*.md`,
-              owner: 'QA',
-            });
-          }
-        }
-      }
-
-      return results;
-    },
-  },
-
-  'TS-QA-002': {
-    id: 'TS-QA-002',
-    name: 'Deployment without regression confirmation',
-    severity: SEVERITY.WARNING,
-    owner: 'QA',
-    v4Only: true,
-    async check(ctx) {
-      const results = [];
-      if (ctx.workspaceVersion !== '4.0') return results;
-
-      for (const projectId of ctx.projects) {
-        const yaml = loadProjectYaml(ctx.workspaceDir, projectId);
-        if (!yaml || !yaml.project) continue;
-
-        const deployment = yaml.project.deployment || yaml.deployment || {};
-
-        // Check if deployment is recent (has date but no regression confirmation)
-        if (deployment.deployed_date || deployment.deployed) {
-          const regressionConfirmed = deployment.regression_confirmed ||
-            deployment.regression_passed ||
-            deployment.regression_verified;
-
-          if (!regressionConfirmed) {
-            results.push({
-              ruleId: 'TS-QA-002',
-              severity: SEVERITY.WARNING,
-              file: path.join(ctx.workspaceDir, 'projects', projectId, 'project.yml'),
-              message: 'Deployment without regression test confirmation. Add regression_confirmed: true to project.yml after verification',
-              owner: 'QA',
-            });
-          }
-        }
-      }
-
-      return results;
-    },
-  },
-};
-
-// =============================================================================
-// Linter Class
-// =============================================================================
-
-class Linter {
-  constructor(workspaceDir) {
-    this.workspaceDir = workspaceDir;
-  }
-
-  /**
-   * Run all linter rules
-   */
-  async run(options = {}) {
-    const projects = options.project
-      ? [options.project]
-      : findProjects(this.workspaceDir);
-
-    const products = findProducts(this.workspaceDir);
-    const workspaceVersion = detectWorkspaceVersion(this.workspaceDir);
-
-    const ctx = {
-      workspaceDir: this.workspaceDir,
-      projects,
-      products,
-      workspaceVersion,
-    };
-
-    const results = [];
-
-    for (const rule of Object.values(rules)) {
-      try {
-        // Skip 4.0-only rules in 2.0 workspaces
-        if (rule.v4Only && workspaceVersion !== '4.0') {
-          continue;
-        }
-
-        const ruleResults = await rule.check(ctx);
-        results.push(...ruleResults);
-      } catch (err) {
-        results.push({
-          ruleId: rule.id,
-          severity: SEVERITY.ERROR,
-          file: this.workspaceDir,
-          message: `Rule execution failed: ${err.message}`,
-          owner: 'System',
-        });
-      }
+    const tcDir = path.join(projectDir, 'qa', 'test-cases');
+    if (!fs.existsSync(tcDir)) {
+        result.add('TS-QA-001', `No test-cases directory for FI test coverage validation`, tcDir, SEVERITY.WARNING);
+        return;
     }
 
-    return results;
-  }
+    const tcFiles = fs.readdirSync(tcDir);
+    const hasTestCase = tcFiles.some(tc => tc.includes(fiMatch[1]));
 
-  /**
-   * Run a specific rule
-   */
-  async runRule(ruleId, options = {}) {
-    const rule = rules[ruleId];
-    if (!rule) {
-      throw new Error(`Unknown rule: ${ruleId}`);
+    if (!hasTestCase) {
+        result.add('TS-QA-001', `Deployed FI '${fiName}' has no test coverage. Expected: tc-fi-${fiMatch[1]}-*.md`, fiFile, SEVERITY.WARNING);
+    }
+}
+
+/**
+ * TS-QA-003: Regression impact must be recorded for each FI
+ */
+function checkRegressionImpact(fiFile, projectDir, workspaceDir, result) {
+    const fiName = path.basename(fiFile, '.md');
+    const fiMatch = fiName.match(/^fi-([A-Z]{3,4})-(\d{3})/);
+
+    if (!fiMatch) return;
+
+    const prx = fiMatch[1];
+    const num = fiMatch[2];
+    const riDir = path.join(projectDir, 'qa', 'regression-impact');
+    const riFile = path.join(riDir, `ri-fi-${prx}-${num}.md`);
+
+    if (!fs.existsSync(riFile)) {
+        result.add('TS-QA-003', `FI '${fiName}' has no regression impact record. Create ri-fi-${prx}-${num}.md`, fiFile, SEVERITY.ERROR);
+        return;
     }
 
-    const projects = options.project
-      ? [options.project]
-      : findProjects(this.workspaceDir);
+    // Check ri file content
+    const riContent = fs.readFileSync(riFile, 'utf-8');
 
-    const products = findProducts(this.workspaceDir);
-    const workspaceVersion = detectWorkspaceVersion(this.workspaceDir);
-
-    const ctx = {
-      workspaceDir: this.workspaceDir,
-      projects,
-      products,
-      workspaceVersion,
-    };
-
-    return rule.check(ctx);
-  }
-
-  /**
-   * Get workspace version
-   */
-  getWorkspaceVersion() {
-    return detectWorkspaceVersion(this.workspaceDir);
-  }
-
-  /**
-   * Group results by file
-   */
-  groupByFile(results) {
-    const grouped = {};
-
-    for (const result of results) {
-      if (!grouped[result.file]) {
-        grouped[result.file] = [];
-      }
-      grouped[result.file].push(result);
+    // Check for assessment field
+    const assessmentMatch = riContent.match(/assessment:\s*([\w-]+)/);
+    if (!assessmentMatch) {
+        result.add('TS-QA-003', `ri-fi-${prx}-${num}.md is missing 'assessment' field`, riFile, SEVERITY.ERROR);
+        return;
     }
 
-    return grouped;
-  }
+    const assessment = assessmentMatch[1];
 
-  /**
-   * Format results for console output
-   */
-  formatResults(results) {
-    if (results.length === 0) {
-      return '✅ No issues found.';
+    if (assessment === 'update-required') {
+        // Check for regression_tests field
+        if (!riContent.includes('regression_tests:')) {
+            result.add('TS-QA-003', `ri-fi-${prx}-${num}.md has assessment: update-required but no regression_tests listed`, riFile, SEVERITY.ERROR);
+        } else {
+            // Check that listed rt files exist
+            const rtMatches = riContent.match(/rt-f-[A-Z]{3,4}-\d{3}[\w-]*\.md/g) || [];
+            for (const rtFile of rtMatches) {
+                const rtFound = findRegressionTest(workspaceDir, prx, rtFile);
+                if (!rtFound) {
+                    result.add('TS-QA-003', `ri-fi-${prx}-${num}.md lists ${rtFile} but file does not exist`, riFile, SEVERITY.ERROR);
+                }
+            }
+        }
+    } else if (assessment === 'no-impact') {
+        // Check for rationale
+        if (!riContent.includes('rationale:') || !/rationale:\s*\S/.test(riContent)) {
+            result.add('TS-QA-003', `ri-fi-${prx}-${num}.md has assessment: no-impact but no rationale provided`, riFile, SEVERITY.ERROR);
+        }
+    }
+}
+
+/**
+ * Find a regression test file in products
+ */
+function findRegressionTest(workspaceDir, prx, rtFilename) {
+    const productsDir = path.join(workspaceDir, 'products');
+    if (!fs.existsSync(productsDir)) return false;
+
+    const products = fs.readdirSync(productsDir, { withFileTypes: true })
+        .filter(d => d.isDirectory())
+        .map(d => d.name);
+
+    for (const prod of products) {
+        const rtDir = path.join(productsDir, prod, 'qa', 'regression-tests');
+        if (fs.existsSync(rtDir)) {
+            const rtPath = path.join(rtDir, rtFilename);
+            if (fs.existsSync(rtPath)) return true;
+        }
     }
 
-    const lines = [];
-    const grouped = this.groupByFile(results);
-
-    for (const [file, fileResults] of Object.entries(grouped)) {
-      lines.push(`\n📄 ${path.relative(this.workspaceDir, file)}`);
-
-      for (const result of fileResults) {
-        const icon = result.severity === SEVERITY.ERROR || result.severity === SEVERITY.BLOCKER
-          ? '❌'
-          : result.severity === SEVERITY.WARNING
-            ? '⚠️'
-            : 'ℹ️';
-
-        lines.push(`   ${icon} [${result.ruleId}] ${result.message}`);
-        lines.push(`      Owner: ${result.owner}`);
-      }
-    }
-
-    // Summary
-    const errors = results.filter(r => r.severity === SEVERITY.ERROR || r.severity === SEVERITY.BLOCKER).length;
-    const warnings = results.filter(r => r.severity === SEVERITY.WARNING).length;
-    const info = results.filter(r => r.severity === SEVERITY.INFO).length;
-
-    lines.push('\n' + '─'.repeat(60));
-    lines.push(`Summary: ${errors} errors, ${warnings} warnings, ${info} info`);
-
-    return lines.join('\n');
-  }
+    return false;
 }
 
 // =============================================================================
-// Exports
+// MAIN LINTER
 // =============================================================================
+
+/**
+ * Lint a TeamSpec workspace
+ * @param {string} workspaceDir - Path to workspace root
+ * @param {Object} options - Linting options
+ * @param {string} options.project - Specific project to lint
+ * @param {string} options.rule - Specific rule to check
+ * @returns {LintResult}
+ */
+function lint(workspaceDir, options = {}) {
+    const result = new LintResult();
+
+    // Load registry for patterns (if available)
+    const registry = loadRegistry(workspaceDir);
+
+    // Lint products
+    const productsDir = path.join(workspaceDir, 'products');
+    if (fs.existsSync(productsDir)) {
+        const products = fs.readdirSync(productsDir, { withFileTypes: true })
+            .filter(d => d.isDirectory())
+            .map(d => d.name);
+
+        for (const productId of products) {
+            lintProduct(workspaceDir, productId, result, options);
+        }
+    }
+
+    // Lint projects
+    const projectsDir = path.join(workspaceDir, 'projects');
+    if (fs.existsSync(projectsDir)) {
+        const projects = fs.readdirSync(projectsDir, { withFileTypes: true })
+            .filter(d => d.isDirectory())
+            .map(d => d.name);
+
+        for (const projectId of projects) {
+            if (options.project && options.project !== projectId) continue;
+            lintProject(workspaceDir, projectId, result, options);
+        }
+    }
+
+    return result;
+}
+
+/**
+ * Lint a product folder
+ */
+function lintProduct(workspaceDir, productId, result, options) {
+    const productDir = path.join(workspaceDir, 'products', productId);
+
+    // TS-PROD-001: Product registered
+    if (!options.rule || options.rule === 'TS-PROD-001') {
+        checkProductRegistered(workspaceDir, productId, result);
+    }
+
+    // TS-PROD-002: product.yml validation
+    if (!options.rule || options.rule === 'TS-PROD-002') {
+        const productConfig = checkProductYml(productDir, productId, result);
+
+        if (productConfig) {
+            // Lint features naming
+            const featuresDir = path.join(productDir, 'features');
+            if (fs.existsSync(featuresDir)) {
+                const features = fs.readdirSync(featuresDir)
+                    .filter(f => f.endsWith('.md') && f !== 'features-index.md' && f !== 'story-ledger.md');
+
+                for (const feature of features) {
+                    checkArtifactNaming(path.join(featuresDir, feature), 'feature', result);
+                }
+            }
+
+            // Lint regression tests naming
+            const rtDir = path.join(productDir, 'qa', 'regression-tests');
+            if (fs.existsSync(rtDir)) {
+                const rtFiles = fs.readdirSync(rtDir).filter(f => f.endsWith('.md'));
+                for (const rt of rtFiles) {
+                    checkArtifactNaming(path.join(rtDir, rt), 'product-regression-test', result);
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Lint a project folder
+ */
+function lintProject(workspaceDir, projectId, result, options) {
+    const projectDir = path.join(workspaceDir, 'projects', projectId);
+
+    // TS-PROJ-001: Project registered
+    if (!options.rule || options.rule === 'TS-PROJ-001') {
+        checkProjectRegistered(workspaceDir, projectId, result);
+    }
+
+    // TS-PROJ-002: project.yml validation
+    let projectConfig = null;
+    if (!options.rule || options.rule === 'TS-PROJ-002') {
+        projectConfig = checkProjectYml(projectDir, projectId, result);
+    } else {
+        projectConfig = parseConfigYaml(path.join(projectDir, 'project.yml'));
+    }
+
+    // TS-DOD-003: Canon sync check
+    if (projectConfig && (!options.rule || options.rule === 'TS-DOD-003')) {
+        checkCanonSync(projectConfig, projectDir, result);
+    }
+
+    // Lint Feature-Increments
+    const fiDir = path.join(projectDir, 'feature-increments');
+    if (fs.existsSync(fiDir)) {
+        const fiFiles = fs.readdirSync(fiDir).filter(f => f.endsWith('.md') && f !== 'increments-index.md');
+
+        for (const fi of fiFiles) {
+            const fiPath = path.join(fiDir, fi);
+
+            // TS-FI-001: AS-IS/TO-BE sections
+            if (!options.rule || options.rule === 'TS-FI-001') {
+                checkFIContent(fiPath, result);
+            }
+
+            // TS-FI-002: Feature link
+            if (!options.rule || options.rule === 'TS-FI-002') {
+                checkFIFeatureLink(fiPath, workspaceDir, result);
+            }
+
+            // TS-NAMING-FI
+            if (!options.rule || options.rule === 'TS-NAMING-FI') {
+                checkArtifactNaming(fiPath, 'feature-increment', result);
+            }
+
+            // TS-QA-001: Test coverage (for deployed projects)
+            if (projectConfig?.status === 'deployed' || projectConfig?.deployed_date) {
+                if (!options.rule || options.rule === 'TS-QA-001') {
+                    checkFITestCoverage(fiPath, projectDir, result);
+                }
+            }
+
+            // TS-QA-003: Regression impact
+            if (projectConfig?.status === 'deployed' || projectConfig?.deployed_date) {
+                if (!options.rule || options.rule === 'TS-QA-003') {
+                    checkRegressionImpact(fiPath, projectDir, workspaceDir, result);
+                }
+            }
+        }
+    }
+
+    // Lint Epics
+    const epicsDir = path.join(projectDir, 'epics');
+    if (fs.existsSync(epicsDir)) {
+        const epics = fs.readdirSync(epicsDir)
+            .filter(f => f.endsWith('.md') && f !== 'epics-index.md');
+
+        for (const epic of epics) {
+            const epicPath = path.join(epicsDir, epic);
+
+            // TS-EPIC-001: Naming
+            if (!options.rule || options.rule === 'TS-EPIC-001') {
+                checkEpicNaming(epicPath, result);
+            }
+        }
+    }
+
+    // Lint Stories
+    const storiesDir = path.join(projectDir, 'stories');
+    if (fs.existsSync(storiesDir)) {
+        const storyFolders = ['backlog', 'ready-to-refine', 'ready-to-develop', 'deferred', 'out-of-scope'];
+
+        for (const folder of storyFolders) {
+            const folderPath = path.join(storiesDir, folder);
+            if (!fs.existsSync(folderPath)) continue;
+
+            const stories = fs.readdirSync(folderPath).filter(f => f.endsWith('.md') && f !== 'README.md');
+
+            for (const story of stories) {
+                const storyPath = path.join(folderPath, story);
+
+                // TS-STORY-001: Epic link
+                if (!options.rule || options.rule === 'TS-STORY-001') {
+                    checkStoryEpicLink(storyPath, projectDir, result);
+                }
+
+                // TS-STORY-002: Delta language
+                if (!options.rule || options.rule === 'TS-STORY-002') {
+                    checkStoryDelta(storyPath, result);
+                }
+            }
+        }
+    }
+
+    // Lint stories in sprint folders
+    const sprintsDir = path.join(projectDir, 'sprints');
+    if (fs.existsSync(sprintsDir)) {
+        const sprints = fs.readdirSync(sprintsDir, { withFileTypes: true })
+            .filter(d => d.isDirectory() && d.name.startsWith('sprint-'))
+            .map(d => d.name);
+
+        for (const sprint of sprints) {
+            const sprintDir = path.join(sprintsDir, sprint);
+            const stories = fs.readdirSync(sprintDir)
+                .filter(f => f.startsWith('s-') && f.endsWith('.md'));
+
+            for (const story of stories) {
+                const storyPath = path.join(sprintDir, story);
+
+                // TS-STORY-001
+                if (!options.rule || options.rule === 'TS-STORY-001') {
+                    checkStoryEpicLink(storyPath, projectDir, result);
+                }
+
+                // TS-DOD-001: Done stories need verified AC
+                if (!options.rule || options.rule === 'TS-DOD-001') {
+                    checkDoneStoryAC(storyPath, result);
+                }
+            }
+        }
+    }
+
+    // Lint test cases naming
+    const tcDir = path.join(projectDir, 'qa', 'test-cases');
+    if (fs.existsSync(tcDir)) {
+        const tcFiles = fs.readdirSync(tcDir).filter(f => f.endsWith('.md'));
+        for (const tc of tcFiles) {
+            checkArtifactNaming(path.join(tcDir, tc), 'project-test-case', result);
+        }
+    }
+
+    // Lint bug reports naming
+    const bugDir = path.join(projectDir, 'qa', 'bug-reports');
+    if (fs.existsSync(bugDir)) {
+        const bugFiles = fs.readdirSync(bugDir).filter(f => f.endsWith('.md'));
+        for (const bug of bugFiles) {
+            checkArtifactNaming(path.join(bugDir, bug), 'bug-report', result);
+        }
+    }
+}
+
+/**
+ * Format lint results for console output
+ */
+function formatResults(result, verbose = false) {
+    const output = [];
+    const summary = result.getSummary();
+
+    if (summary.total === 0) {
+        output.push('✅ No lint errors found');
+        return output.join('\n');
+    }
+
+    // Group by file
+    const byFile = {};
+    for (const item of result.getAll()) {
+        if (!byFile[item.file]) byFile[item.file] = [];
+        byFile[item.file].push(item);
+    }
+
+    for (const [file, items] of Object.entries(byFile)) {
+        output.push(`\n📄 ${file}`);
+        for (const item of items) {
+            const icon = item.severity === SEVERITY.ERROR || item.severity === SEVERITY.BLOCKER
+                ? '❌'
+                : item.severity === SEVERITY.WARNING
+                    ? '⚠️'
+                    : 'ℹ️';
+            output.push(`  ${icon} [${item.rule}] ${item.message}`);
+        }
+    }
+
+    output.push('\n---');
+    output.push(`Summary: ${summary.errors} errors, ${summary.warnings} warnings, ${summary.info} info`);
+
+    if (result.hasBlockers()) {
+        output.push('🚫 BLOCKERS found - cannot proceed');
+    } else if (result.hasErrors()) {
+        output.push('❌ Lint check FAILED');
+    } else {
+        output.push('✅ Lint check passed (warnings only)');
+    }
+
+    return output.join('\n');
+}
+
+// =============================================================================
+// CLI INTEGRATION
+// =============================================================================
+
+/**
+ * Run linter from CLI
+ */
+function runLint(targetDir, options = {}) {
+    console.log(`\n🔍 Linting TeamSpec workspace: ${targetDir}\n`);
+
+    const result = lint(targetDir, options);
+    console.log(formatResults(result, options.verbose));
+
+    return result.hasErrors() ? 1 : 0;
+}
 
 module.exports = {
-  Linter,
-  rules,
-  SEVERITY,
-  NAMING_PATTERNS,
-  NAMING_PATTERNS_V2,
-  NAMING_PATTERNS_V4,
-  findProjects,
-  findProducts,
-  detectWorkspaceVersion,
+    lint,
+    runLint,
+    formatResults,
+    LintResult,
+    SEVERITY,
+    NAMING_PATTERNS,
+    // Export individual checks for testing
+    checkProductRegistered,
+    checkProductYml,
+    checkProjectRegistered,
+    checkProjectYml,
+    checkFIContent,
+    checkFIFeatureLink,
+    checkEpicNaming,
+    checkStoryEpicLink,
+    checkStoryDelta,
+    checkDoneStoryAC,
+    checkCanonSync,
+    checkFITestCoverage,
+    checkRegressionImpact,
+    checkArtifactNaming
 };

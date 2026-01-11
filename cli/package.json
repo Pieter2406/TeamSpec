@@ -54,5 +54,8 @@
     "README.md",
     "LICENSE"
   ],
-  "preferGlobal": true
+  "preferGlobal": true,
+  "dependencies": {
+    "yaml": "^2.8.2"
+  }
 }

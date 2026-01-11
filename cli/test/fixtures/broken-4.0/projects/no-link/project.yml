@@ -1,4 +1,7 @@
-# Broken: project without linked product
-project-id: no-link
-name: No Link Project
-# product: MISSING -- should trigger TS-PROJ rule
+# Project Configuration (4.0)
+# Broken: project without target_products
+project:
+  id: "no-link"
+  name: "No Link Project"
+  status: "active"
+  # target_products: MISSING -- should trigger TS-PROJ rule

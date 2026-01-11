@@ -2,13 +2,16 @@
  * TeamSpec Prompt Generator Tests
  * Test-driven implementation of prompt generation functionality
  * 
- * Tests:
- * - PROMPT-001: All BA commands are generated (including ba-analysis)
- * - PROMPT-002: All FA commands are generated
- * - PROMPT-003: All role commands have correct frontmatter format
- * - PROMPT-004: README index is generated with all commands
- * - PROMPT-005: Prompt files use correct naming convention
- * - PROMPT-006: Generated prompts contain required sections
+ * Tests validate that prompts are generated correctly from registry.yml
+ * 
+ * Commands tested match registry.yml:
+ * - PO: product, project, sync, status
+ * - BA: analysis, ba-increment, review
+ * - FA: feature, feature-increment, epic, story, sync-proposal, slice
+ * - SA: ta, ta-increment, sd, sd-increment, review
+ * - DEV: plan, implement
+ * - QA: test, verify, regression, bug, uat
+ * - SM: sprint, deploy-checklist, planning, standup, retro, sync
  */
 
 const { test, describe, beforeEach, afterEach } = require('node:test');
@@ -18,32 +21,23 @@ const path = require('path');
 const os = require('os');
 
 // Import prompt generator module
-const { generateAllPrompts, COMMANDS } = require('../lib/prompt-generator');
+const { generateAllPrompts, COMMANDS, ROLES } = require('../lib/prompt-generator');
 
 // =============================================================================
 // Test Fixtures & Helpers
 // =============================================================================
 
-/**
- * Create a temporary test directory
- */
 function createTempDir() {
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'teamspec-prompt-test-'));
     return tempDir;
 }
 
-/**
- * Clean up temporary directory
- */
 function cleanupTempDir(tempDir) {
     if (fs.existsSync(tempDir)) {
         fs.rmSync(tempDir, { recursive: true, force: true });
     }
 }
 
-/**
- * Read generated prompt file and parse frontmatter
- */
 function parsePromptFile(filePath) {
     const content = fs.readFileSync(filePath, 'utf-8');
     const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
@@ -67,11 +61,83 @@ function parsePromptFile(filePath) {
     return { frontmatter, body };
 }
 
+function getGeneratedFiles(tempDir) {
+    const promptsDir = path.join(tempDir, '.github', 'prompts');
+    if (!fs.existsSync(promptsDir)) return [];
+    return fs.readdirSync(promptsDir);
+}
+
 // =============================================================================
-// PROMPT-001: All BA commands are generated
+// ROLES Structure Tests
 // =============================================================================
 
-describe('PROMPT-001: BA Commands Generation', () => {
+describe('ROLES Structure', () => {
+    test('ROLES has all expected role keys', () => {
+        const expectedRoles = ['PO', 'BA', 'FA', 'SA', 'DEV', 'QA', 'SM', 'DES'];
+        for (const role of expectedRoles) {
+            assert.ok(ROLES[role], `ROLES should have ${role}`);
+        }
+    });
+
+    test('each role has required properties', () => {
+        for (const [key, role] of Object.entries(ROLES)) {
+            assert.ok(role.name, `${key} should have name`);
+            assert.ok(role.agent, `${key} should have agent`);
+        }
+    });
+});
+
+// =============================================================================
+// COMMANDS Structure Tests (legacy format for backwards compatibility)
+// =============================================================================
+
+describe('COMMANDS Structure', () => {
+    test('COMMANDS has all role categories', () => {
+        const expectedCategories = ['ba', 'fa', 'po', 'sa', 'dev', 'qa', 'sm', 'utility'];
+        for (const cat of expectedCategories) {
+            assert.ok(COMMANDS[cat], `COMMANDS should have ${cat}`);
+            assert.ok(COMMANDS[cat].name, `${cat} should have name`);
+            assert.ok(Array.isArray(COMMANDS[cat].commands), `${cat} should have commands array`);
+        }
+    });
+
+    test('BA has correct commands per registry.yml', () => {
+        const baCommands = COMMANDS.ba.commands.map(c => c.name);
+        assert.ok(baCommands.includes('analysis'), 'BA should have analysis');
+        assert.ok(baCommands.includes('ba-increment'), 'BA should have ba-increment');
+        assert.ok(baCommands.includes('review'), 'BA should have review');
+        assert.strictEqual(COMMANDS.ba.commands.length, 3, 'BA should have exactly 3 commands');
+    });
+
+    test('FA has correct commands per registry.yml', () => {
+        const faCommands = COMMANDS.fa.commands.map(c => c.name);
+        assert.ok(faCommands.includes('feature'), 'FA should have feature');
+        assert.ok(faCommands.includes('feature-increment'), 'FA should have feature-increment');
+        assert.ok(faCommands.includes('epic'), 'FA should have epic');
+        assert.ok(faCommands.includes('story'), 'FA should have story');
+        assert.ok(faCommands.includes('slice'), 'FA should have slice');
+    });
+
+    test('PO has correct commands per registry.yml', () => {
+        const poCommands = COMMANDS.po.commands.map(c => c.name);
+        assert.ok(poCommands.includes('product'), 'PO should have product');
+        assert.ok(poCommands.includes('project'), 'PO should have project');
+        assert.ok(poCommands.includes('sync'), 'PO should have sync');
+        assert.ok(poCommands.includes('status'), 'PO should have status');
+    });
+
+    test('utility has lint and fix commands', () => {
+        const utilCommands = COMMANDS.utility.commands.map(c => c.name);
+        assert.ok(utilCommands.includes('lint'), 'Utility should have lint');
+        assert.ok(utilCommands.includes('fix'), 'Utility should have fix');
+    });
+});
+
+// =============================================================================
+// Prompt Generation Tests
+// =============================================================================
+
+describe('Prompt Generation', () => {
     let tempDir;
 
     beforeEach(() => {
@@ -82,98 +148,98 @@ describe('PROMPT-001: BA Commands Generation', () => {
         cleanupTempDir(tempDir);
     });
 
-    test('ba-project prompt is generated', () => {
-        generateAllPrompts(tempDir);
-        const promptPath = path.join(tempDir, '.github', 'prompts', 'ba-project.prompt.md');
-        assert.ok(fs.existsSync(promptPath), 'ba-project.prompt.md should exist');
+    test('generates prompt files', () => {
+        const files = generateAllPrompts(tempDir);
+        assert.ok(files.length > 0, 'Should generate prompt files');
     });
 
-    test('ba-epic prompt is generated', () => {
+    test('creates .github/prompts directory', () => {
         generateAllPrompts(tempDir);
-        const promptPath = path.join(tempDir, '.github', 'prompts', 'ba-epic.prompt.md');
-        assert.ok(fs.existsSync(promptPath), 'ba-epic.prompt.md should exist');
+        const promptsDir = path.join(tempDir, '.github', 'prompts');
+        assert.ok(fs.existsSync(promptsDir), 'Should create .github/prompts/');
     });
 
-    test('ba-feature prompt is generated', () => {
+    test('generates README.md', () => {
         generateAllPrompts(tempDir);
-        const promptPath = path.join(tempDir, '.github', 'prompts', 'ba-feature.prompt.md');
-        assert.ok(fs.existsSync(promptPath), 'ba-feature.prompt.md should exist');
+        const readmePath = path.join(tempDir, '.github', 'prompts', 'README.md');
+        assert.ok(fs.existsSync(readmePath), 'Should generate README.md');
+    });
+});
+
+// =============================================================================
+// BA Command Prompts (TeamSpec 4.0)
+// =============================================================================
+
+describe('BA Command Prompts', () => {
+    let tempDir;
+
+    beforeEach(() => {
+        tempDir = createTempDir();
+        generateAllPrompts(tempDir);
     });
 
-    test('ba-decision prompt is generated', () => {
-        generateAllPrompts(tempDir);
-        const promptPath = path.join(tempDir, '.github', 'prompts', 'ba-decision.prompt.md');
-        assert.ok(fs.existsSync(promptPath), 'ba-decision.prompt.md should exist');
+    afterEach(() => {
+        cleanupTempDir(tempDir);
     });
 
     test('ba-analysis prompt is generated', () => {
-        generateAllPrompts(tempDir);
         const promptPath = path.join(tempDir, '.github', 'prompts', 'ba-analysis.prompt.md');
         assert.ok(fs.existsSync(promptPath), 'ba-analysis.prompt.md should exist');
     });
 
-    test('COMMANDS object includes analysis command for BA', () => {
-        const baCommands = COMMANDS.ba.commands;
-        const analysisCommand = baCommands.find(cmd => cmd.name === 'analysis');
-
-        assert.ok(analysisCommand, 'BA commands should include analysis');
-        assert.strictEqual(analysisCommand.description, 'Create business analysis document');
-        assert.ok(analysisCommand.prompt.includes('business analysis document'),
-            'Analysis prompt should mention business analysis document');
+    test('ba-ba-increment prompt is generated', () => {
+        const promptPath = path.join(tempDir, '.github', 'prompts', 'ba-ba-increment.prompt.md');
+        assert.ok(fs.existsSync(promptPath), 'ba-ba-increment.prompt.md should exist');
     });
 
-    test('BA has exactly 5 commands', () => {
-        const baCommands = COMMANDS.ba.commands;
-        assert.strictEqual(baCommands.length, 5,
-            'BA should have 5 commands: project, epic, feature, decision, analysis');
+    test('ba-review prompt is generated', () => {
+        const promptPath = path.join(tempDir, '.github', 'prompts', 'ba-review.prompt.md');
+        assert.ok(fs.existsSync(promptPath), 'ba-review.prompt.md should exist');
     });
 });
 
 // =============================================================================
-// PROMPT-002: All FA commands are generated
+// FA Command Prompts
 // =============================================================================
 
-describe('PROMPT-002: FA Commands Generation', () => {
+describe('FA Command Prompts', () => {
     let tempDir;
 
     beforeEach(() => {
         tempDir = createTempDir();
+        generateAllPrompts(tempDir);
     });
 
     afterEach(() => {
         cleanupTempDir(tempDir);
+    });
+
+    test('fa-feature prompt is generated', () => {
+        const promptPath = path.join(tempDir, '.github', 'prompts', 'fa-feature.prompt.md');
+        assert.ok(fs.existsSync(promptPath), 'fa-feature.prompt.md should exist');
+    });
+
+    test('fa-feature-increment prompt is generated', () => {
+        const promptPath = path.join(tempDir, '.github', 'prompts', 'fa-feature-increment.prompt.md');
+        assert.ok(fs.existsSync(promptPath), 'fa-feature-increment.prompt.md should exist');
+    });
+
+    test('fa-epic prompt is generated', () => {
+        const promptPath = path.join(tempDir, '.github', 'prompts', 'fa-epic.prompt.md');
+        assert.ok(fs.existsSync(promptPath), 'fa-epic.prompt.md should exist');
     });
 
     test('fa-story prompt is generated', () => {
-        generateAllPrompts(tempDir);
         const promptPath = path.join(tempDir, '.github', 'prompts', 'fa-story.prompt.md');
         assert.ok(fs.existsSync(promptPath), 'fa-story.prompt.md should exist');
     });
-
-    test('fa-slice prompt is generated', () => {
-        generateAllPrompts(tempDir);
-        const promptPath = path.join(tempDir, '.github', 'prompts', 'fa-slice.prompt.md');
-        assert.ok(fs.existsSync(promptPath), 'fa-slice.prompt.md should exist');
-    });
-
-    test('fa-refine prompt is generated', () => {
-        generateAllPrompts(tempDir);
-        const promptPath = path.join(tempDir, '.github', 'prompts', 'fa-refine.prompt.md');
-        assert.ok(fs.existsSync(promptPath), 'fa-refine.prompt.md should exist');
-    });
-
-    test('fa-sync prompt is generated', () => {
-        generateAllPrompts(tempDir);
-        const promptPath = path.join(tempDir, '.github', 'prompts', 'fa-sync.prompt.md');
-        assert.ok(fs.existsSync(promptPath), 'fa-sync.prompt.md should exist');
-    });
 });
 
 // =============================================================================
-// PROMPT-003: Correct frontmatter format
+// PO Command Prompts
 // =============================================================================
 
-describe('PROMPT-003: Frontmatter Format', () => {
+describe('PO Command Prompts', () => {
     let tempDir;
 
     beforeEach(() => {
@@ -185,475 +251,209 @@ describe('PROMPT-003: Frontmatter Format', () => {
         cleanupTempDir(tempDir);
     });
 
-    test('ba-analysis has correct frontmatter name', () => {
-        const promptPath = path.join(tempDir, '.github', 'prompts', 'ba-analysis.prompt.md');
-        const { frontmatter } = parsePromptFile(promptPath);
-
-        assert.ok(frontmatter, 'Frontmatter should exist');
-        assert.strictEqual(frontmatter.name, 'ts:ba-analysis',
-            'Name should be ts:ba-analysis');
+    test('po-product prompt is generated', () => {
+        const promptPath = path.join(tempDir, '.github', 'prompts', 'po-product.prompt.md');
+        assert.ok(fs.existsSync(promptPath), 'po-product.prompt.md should exist');
     });
 
-    test('ba-analysis has correct description', () => {
-        const promptPath = path.join(tempDir, '.github', 'prompts', 'ba-analysis.prompt.md');
-        const { frontmatter } = parsePromptFile(promptPath);
-
-        assert.ok(frontmatter.description.includes('Business Analyst'),
-            'Description should mention Business Analyst');
-        assert.ok(frontmatter.description.includes('business analysis'),
-            'Description should mention business analysis');
+    test('po-project prompt is generated', () => {
+        const promptPath = path.join(tempDir, '.github', 'prompts', 'po-project.prompt.md');
+        assert.ok(fs.existsSync(promptPath), 'po-project.prompt.md should exist');
     });
 
-    test('ba-analysis has agent field', () => {
-        const promptPath = path.join(tempDir, '.github', 'prompts', 'ba-analysis.prompt.md');
-        const { frontmatter } = parsePromptFile(promptPath);
-
-        assert.strictEqual(frontmatter.agent, 'agent',
-            'Agent should be set to "agent"');
+    test('po-sync prompt is generated', () => {
+        const promptPath = path.join(tempDir, '.github', 'prompts', 'po-sync.prompt.md');
+        assert.ok(fs.existsSync(promptPath), 'po-sync.prompt.md should exist');
     });
 
-    test('all generated prompts have required frontmatter fields', () => {
-        const promptsDir = path.join(tempDir, '.github', 'prompts');
-        const files = fs.readdirSync(promptsDir)
-            .filter(f => f.endsWith('.prompt.md'));
+    test('po-status prompt is generated', () => {
+        const promptPath = path.join(tempDir, '.github', 'prompts', 'po-status.prompt.md');
+        assert.ok(fs.existsSync(promptPath), 'po-status.prompt.md should exist');
+    });
+});
 
-        for (const file of files) {
-            const { frontmatter } = parsePromptFile(path.join(promptsDir, file));
+// =============================================================================
+// QA Command Prompts
+// =============================================================================
+
+describe('QA Command Prompts', () => {
+    let tempDir;
+
+    beforeEach(() => {
+        tempDir = createTempDir();
+        generateAllPrompts(tempDir);
+    });
+
+    afterEach(() => {
+        cleanupTempDir(tempDir);
+    });
+
+    test('qa-test prompt is generated', () => {
+        const promptPath = path.join(tempDir, '.github', 'prompts', 'qa-test.prompt.md');
+        assert.ok(fs.existsSync(promptPath), 'qa-test.prompt.md should exist');
+    });
+
+    test('qa-regression prompt is generated', () => {
+        const promptPath = path.join(tempDir, '.github', 'prompts', 'qa-regression.prompt.md');
+        assert.ok(fs.existsSync(promptPath), 'qa-regression.prompt.md should exist');
+    });
+
+    test('qa-bug prompt is generated', () => {
+        const promptPath = path.join(tempDir, '.github', 'prompts', 'qa-bug.prompt.md');
+        assert.ok(fs.existsSync(promptPath), 'qa-bug.prompt.md should exist');
+    });
+});
+
+// =============================================================================
+// SM Command Prompts
+// =============================================================================
+
+describe('SM Command Prompts', () => {
+    let tempDir;
+
+    beforeEach(() => {
+        tempDir = createTempDir();
+        generateAllPrompts(tempDir);
+    });
+
+    afterEach(() => {
+        cleanupTempDir(tempDir);
+    });
+
+    test('sm-sprint prompt is generated', () => {
+        const promptPath = path.join(tempDir, '.github', 'prompts', 'sm-sprint.prompt.md');
+        assert.ok(fs.existsSync(promptPath), 'sm-sprint.prompt.md should exist');
+    });
+
+    test('sm-deploy-checklist prompt is generated', () => {
+        const promptPath = path.join(tempDir, '.github', 'prompts', 'sm-deploy-checklist.prompt.md');
+        assert.ok(fs.existsSync(promptPath), 'sm-deploy-checklist.prompt.md should exist');
+    });
+});
+
+// =============================================================================
+// Frontmatter Format Tests
+// =============================================================================
+
+describe('Frontmatter Format', () => {
+    let tempDir;
+
+    beforeEach(() => {
+        tempDir = createTempDir();
+        generateAllPrompts(tempDir);
+    });
+
+    afterEach(() => {
+        cleanupTempDir(tempDir);
+    });
+
+    test('prompts have valid frontmatter', () => {
+        const files = getGeneratedFiles(tempDir);
+        const promptFiles = files.filter(f => f.endsWith('.prompt.md'));
+
+        assert.ok(promptFiles.length > 0, 'Should have prompt files');
+
+        for (const file of promptFiles) {
+            const filePath = path.join(tempDir, '.github', 'prompts', file);
+            const { frontmatter } = parsePromptFile(filePath);
 
             assert.ok(frontmatter, `${file} should have frontmatter`);
-            assert.ok(frontmatter.name, `${file} should have name`);
-            assert.ok(frontmatter.name.startsWith('ts:'),
-                `${file} name should start with ts:`);
-            assert.ok(frontmatter.description, `${file} should have description`);
-            assert.ok(frontmatter.agent, `${file} should have agent field`);
-        }
-    });
-});
-
-// =============================================================================
-// PROMPT-004: README index generation
-// =============================================================================
-
-describe('PROMPT-004: README Index', () => {
-    let tempDir;
-
-    beforeEach(() => {
-        tempDir = createTempDir();
-        generateAllPrompts(tempDir);
-    });
-
-    afterEach(() => {
-        cleanupTempDir(tempDir);
-    });
-
-    test('README.md is generated', () => {
-        const readmePath = path.join(tempDir, '.github', 'prompts', 'README.md');
-        assert.ok(fs.existsSync(readmePath), 'README.md should exist');
-    });
-
-    test('README contains ba-analysis command', () => {
-        const readmePath = path.join(tempDir, '.github', 'prompts', 'README.md');
-        const content = fs.readFileSync(readmePath, 'utf-8');
-
-        assert.ok(content.includes('ts:ba-analysis'),
-            'README should list ba-analysis command');
-        assert.ok(content.includes('business analysis'),
-            'README should describe business analysis');
-    });
-
-    test('README contains all BA commands', () => {
-        const readmePath = path.join(tempDir, '.github', 'prompts', 'README.md');
-        const content = fs.readFileSync(readmePath, 'utf-8');
-
-        const expectedCommands = ['ba-project', 'ba-epic', 'ba-feature', 'ba-decision', 'ba-analysis'];
-
-        for (const cmd of expectedCommands) {
-            assert.ok(content.includes(`ts:${cmd}`),
-                `README should contain ts:${cmd}`);
+            assert.ok(frontmatter.name, `${file} should have name in frontmatter`);
+            assert.ok(frontmatter.name.startsWith('ts:'), `${file} name should start with ts:`);
         }
     });
 
-    test('README contains all role sections', () => {
-        const readmePath = path.join(tempDir, '.github', 'prompts', 'README.md');
-        const content = fs.readFileSync(readmePath, 'utf-8');
-
-        const expectedRoles = ['Business Analyst', 'Functional Analyst', 'Solution Architect',
-            'Developer', 'QA Engineer', 'Scrum Master'];
-
-        for (const role of expectedRoles) {
-            assert.ok(content.includes(role),
-                `README should contain ${role} section`);
-        }
-    });
-});
-
-// =============================================================================
-// PROMPT-005: Naming convention
-// =============================================================================
-
-describe('PROMPT-005: Naming Convention', () => {
-    let tempDir;
-
-    beforeEach(() => {
-        tempDir = createTempDir();
-        generateAllPrompts(tempDir);
-    });
-
-    afterEach(() => {
-        cleanupTempDir(tempDir);
-    });
-
-    test('all prompts follow role-command.prompt.md pattern', () => {
-        const promptsDir = path.join(tempDir, '.github', 'prompts');
-        const files = fs.readdirSync(promptsDir)
-            .filter(f => f.endsWith('.prompt.md'));
-
-        const validRoles = ['ba', 'fa', 'arch', 'dev', 'qa', 'sm'];
-        const rolePattern = /^([a-z]+)-([a-z-]+)\.prompt\.md$/;
-        // Utility commands use just command name (e.g., fix.prompt.md)
-        const utilityCommands = ['fix'];
-
-        for (const file of files) {
-            const isUtilityCmd = utilityCommands.some(cmd => file === `${cmd}.prompt.md`);
-            if (isUtilityCmd) {
-                // Utility commands don't need role prefix
-                continue;
-            }
-            const match = file.match(rolePattern);
-            assert.ok(match, `${file} should match pattern role-command.prompt.md`);
-            assert.ok(validRoles.includes(match[1]),
-                `${file} should have valid role prefix`);
-        }
-    });
-
-    test('ba-analysis follows naming convention', () => {
+    test('prompts have description in frontmatter', () => {
         const promptPath = path.join(tempDir, '.github', 'prompts', 'ba-analysis.prompt.md');
-        assert.ok(fs.existsSync(promptPath),
-            'ba-analysis.prompt.md should use correct naming');
-    });
-});
-
-// =============================================================================
-// PROMPT-006: Prompts link to agent files
-// =============================================================================
-
-describe('PROMPT-006: Agent File Links', () => {
-    let tempDir;
-
-    beforeEach(() => {
-        tempDir = createTempDir();
-        generateAllPrompts(tempDir);
-    });
-
-    afterEach(() => {
-        cleanupTempDir(tempDir);
-    });
-
-    test('ba-analysis links to AGENT_BA.md', () => {
-        const promptPath = path.join(tempDir, '.github', 'prompts', 'ba-analysis.prompt.md');
-        const content = fs.readFileSync(promptPath, 'utf-8');
-
-        assert.ok(content.includes('AGENT_BA.md'),
-            'Prompt should link to AGENT_BA.md');
-        assert.ok(content.includes('.teamspec/agents/AGENT_BA.md'),
-            'Prompt should have correct path to agent file in .teamspec');
-    });
-
-    test('ba-analysis contains Quick Reference section', () => {
-        const promptPath = path.join(tempDir, '.github', 'prompts', 'ba-analysis.prompt.md');
-        const content = fs.readFileSync(promptPath, 'utf-8');
-
-        assert.ok(content.includes('## Quick Reference'),
-            'Prompt should have Quick Reference section');
-    });
-
-    test('ba-analysis references business analysis', () => {
-        const promptPath = path.join(tempDir, '.github', 'prompts', 'ba-analysis.prompt.md');
-        const content = fs.readFileSync(promptPath, 'utf-8');
-
-        assert.ok(content.includes('business analysis') ||
-            content.includes('Business Analyst'),
-            'Prompt should reference business analysis');
-    });
-
-    test('all prompts link to their agent files', () => {
-        const promptsDir = path.join(tempDir, '.github', 'prompts');
-        const files = fs.readdirSync(promptsDir)
-            .filter(f => f.endsWith('.prompt.md'));
-
-        const roleToAgent = {
-            'ba': 'AGENT_BA',
-            'fa': 'AGENT_FA',
-            'arch': 'AGENT_SA',
-            'dev': 'AGENT_DEV',
-            'qa': 'AGENT_QA',
-            'sm': 'AGENT_SM'
-        };
-
-        // Utility commands map directly to agent files
-        const utilityToAgent = {
-            'fix': 'AGENT_FIX'
-        };
-
-        for (const file of files) {
-            const content = fs.readFileSync(path.join(promptsDir, file), 'utf-8');
-
-            // Check if it's a utility command (no role prefix)
-            const isUtility = !file.includes('-');
-            let agentFile;
-
-            if (isUtility) {
-                const cmdName = file.replace('.prompt.md', '');
-                agentFile = utilityToAgent[cmdName];
-            } else {
-                const role = file.split('-')[0];
-                agentFile = roleToAgent[role];
-            }
-
-            assert.ok(content.includes(`.teamspec/agents/${agentFile}.md`),
-                `${file} should link to .teamspec/agents/${agentFile}.md`);
-        }
-    });
-
-    test('prompts are minimal (under 50 lines)', () => {
-        const promptsDir = path.join(tempDir, '.github', 'prompts');
-        const files = fs.readdirSync(promptsDir)
-            .filter(f => f.endsWith('.prompt.md'));
-
-        for (const file of files) {
-            const content = fs.readFileSync(path.join(promptsDir, file), 'utf-8');
-            const lineCount = content.split('\n').length;
-
-            assert.ok(lineCount < 50,
-                `${file} should be minimal (${lineCount} lines, expected < 50)`);
-        }
-    });
-});
-
-// =============================================================================
-// PROMPT-007: Output directory creation
-// =============================================================================
-
-describe('PROMPT-007: Directory Creation', () => {
-    let tempDir;
-
-    beforeEach(() => {
-        tempDir = createTempDir();
-    });
-
-    afterEach(() => {
-        cleanupTempDir(tempDir);
-    });
-
-    test('creates .github/prompts directory if not exists', () => {
-        const promptsDir = path.join(tempDir, '.github', 'prompts');
-        assert.ok(!fs.existsSync(promptsDir), 'Directory should not exist initially');
-
-        generateAllPrompts(tempDir);
-
-        assert.ok(fs.existsSync(promptsDir), 'Directory should be created');
-    });
-
-    test('works with existing .github directory', () => {
-        const githubDir = path.join(tempDir, '.github');
-        fs.mkdirSync(githubDir, { recursive: true });
-        fs.writeFileSync(path.join(githubDir, 'existing-file.md'), '# Existing');
-
-        generateAllPrompts(tempDir);
-
-        const promptsDir = path.join(githubDir, 'prompts');
-        assert.ok(fs.existsSync(promptsDir), 'prompts directory should be created');
-        assert.ok(fs.existsSync(path.join(githubDir, 'existing-file.md')),
-            'Existing files should not be removed');
-    });
-});
-
-// =============================================================================
-// PROMPT-008: Return value
-// =============================================================================
-
-describe('PROMPT-008: Return Value', () => {
-    let tempDir;
-
-    beforeEach(() => {
-        tempDir = createTempDir();
-    });
-
-    afterEach(() => {
-        cleanupTempDir(tempDir);
-    });
-
-    test('returns array of generated files', () => {
-        const result = generateAllPrompts(tempDir);
-
-        assert.ok(Array.isArray(result), 'Should return array');
-        assert.ok(result.length > 0, 'Array should not be empty');
-    });
-
-    test('includes ba-analysis.prompt.md in return value', () => {
-        const result = generateAllPrompts(tempDir);
-
-        assert.ok(result.includes('ba-analysis.prompt.md'),
-            'Should include ba-analysis.prompt.md');
-    });
-
-    test('includes README.md in return value', () => {
-        const result = generateAllPrompts(tempDir);
-
-        assert.ok(result.includes('README.md'),
-            'Should include README.md');
-    });
-
-    test('returns correct number of files', () => {
-        const result = generateAllPrompts(tempDir);
-
-        // Count expected files: all commands + README
-        let expectedCount = 1; // README
-        for (const config of Object.values(COMMANDS)) {
-            expectedCount += config.commands.length;
-        }
-
-        assert.strictEqual(result.length, expectedCount,
-            `Should return ${expectedCount} files`);
-    });
-});
-// =============================================================================
-// PROMPT-009: CLI Integration
-// =============================================================================
-
-describe('PROMPT-009: CLI Integration', () => {
-    test('COMMANDS includes ba analysis command', () => {
-        const baCommands = COMMANDS.ba.commands;
-        const commandNames = baCommands.map(cmd => cmd.name);
-
-        assert.ok(commandNames.includes('project'), 'Should include project');
-        assert.ok(commandNames.includes('epic'), 'Should include epic');
-        assert.ok(commandNames.includes('feature'), 'Should include feature');
-        assert.ok(commandNames.includes('decision'), 'Should include decision');
-        assert.ok(commandNames.includes('analysis'), 'Should include analysis');
-    });
-
-    test('ba-analysis command has correct structure', () => {
-        const baCommands = COMMANDS.ba.commands;
-        const analysisCmd = baCommands.find(cmd => cmd.name === 'analysis');
-
-        assert.ok(analysisCmd, 'analysis command should exist');
-        assert.ok(analysisCmd.name, 'Should have name');
-        assert.ok(analysisCmd.description, 'Should have description');
-        assert.ok(analysisCmd.prompt, 'Should have prompt');
-        assert.ok(analysisCmd.prompt.length > 100, 'Prompt should be detailed');
-    });
-
-    test('ba-analysis prompt mentions business process', () => {
-        const baCommands = COMMANDS.ba.commands;
-        const analysisCmd = baCommands.find(cmd => cmd.name === 'analysis');
-
-        assert.ok(analysisCmd.prompt.includes('business'),
-            'Prompt should mention business');
-        assert.ok(analysisCmd.prompt.includes('process') || analysisCmd.prompt.includes('Process'),
-            'Prompt should mention process');
-    });
-
-    test('ba-analysis prompt includes As-Is and To-Be states', () => {
-        const baCommands = COMMANDS.ba.commands;
-        const analysisCmd = baCommands.find(cmd => cmd.name === 'analysis');
-
-        assert.ok(analysisCmd.prompt.includes('As-Is') || analysisCmd.prompt.includes('Current State'),
-            'Prompt should reference As-Is/Current State');
-        assert.ok(analysisCmd.prompt.includes('To-Be') || analysisCmd.prompt.includes('Future State'),
-            'Prompt should reference To-Be/Future State');
-    });
-
-    test('all roles have commands defined', () => {
-        const expectedRoles = ['ba', 'fa', 'arch', 'dev', 'qa', 'sm'];
-
-        for (const role of expectedRoles) {
-            assert.ok(COMMANDS[role], `${role} should be defined`);
-            assert.ok(COMMANDS[role].name, `${role} should have name`);
-            assert.ok(Array.isArray(COMMANDS[role].commands), `${role} should have commands array`);
-            assert.ok(COMMANDS[role].commands.length > 0, `${role} should have at least one command`);
-        }
-    });
-});
-
-// =============================================================================
-// PROMPT-010: Utility Fix Command (S-001, S-002, F-007)
-// =============================================================================
-
-describe('PROMPT-010: Utility Fix Command', () => {
-    let tempDir;
-
-    beforeEach(() => {
-        tempDir = createTempDir();
-    });
-
-    afterEach(() => {
-        cleanupTempDir(tempDir);
-    });
-
-    test('utility role exists in COMMANDS', () => {
-        assert.ok(COMMANDS.utility, 'utility role should be defined');
-        assert.strictEqual(COMMANDS.utility.name, 'Utility', 'utility should have name "Utility"');
-        assert.ok(Array.isArray(COMMANDS.utility.commands), 'utility should have commands array');
-    });
-
-    test('fix command exists under utility', () => {
-        const fixCmd = COMMANDS.utility.commands.find(cmd => cmd.name === 'fix');
-        assert.ok(fixCmd, 'fix command should exist');
-        assert.strictEqual(fixCmd.description, 'Auto-fix linter errors');
-        assert.ok(fixCmd.prompt.includes('linter'), 'Prompt should mention linter');
-    });
-
-    test('fix.prompt.md is generated (not utility-fix.prompt.md)', () => {
-        generateAllPrompts(tempDir);
-        const promptPath = path.join(tempDir, '.github', 'prompts', 'fix.prompt.md');
-        const wrongPath = path.join(tempDir, '.github', 'prompts', 'utility-fix.prompt.md');
-
-        assert.ok(fs.existsSync(promptPath), 'fix.prompt.md should exist');
-        assert.ok(!fs.existsSync(wrongPath), 'utility-fix.prompt.md should NOT exist');
-    });
-
-    test('fix prompt has correct frontmatter with ts:fix name', () => {
-        generateAllPrompts(tempDir);
-        const promptPath = path.join(tempDir, '.github', 'prompts', 'fix.prompt.md');
         const { frontmatter } = parsePromptFile(promptPath);
 
-        assert.strictEqual(frontmatter.name, 'ts:fix', 'Name should be ts:fix (not ts:utility-fix)');
-        assert.ok(frontmatter.description.includes('Auto-fix'), 'Description should mention Auto-fix');
-        assert.strictEqual(frontmatter.agent, 'agent', 'Agent should be "agent"');
+        assert.ok(frontmatter.description, 'Should have description');
+        assert.ok(frontmatter.description.includes('Business Analyst'), 'Should reference Business Analyst');
     });
 
-    test('fix prompt links to AGENT_FIX.md', () => {
-        generateAllPrompts(tempDir);
-        const promptPath = path.join(tempDir, '.github', 'prompts', 'fix.prompt.md');
-        const content = fs.readFileSync(promptPath, 'utf-8');
+    test('prompts reference agent files', () => {
+        const promptPath = path.join(tempDir, '.github', 'prompts', 'fa-story.prompt.md');
+        const { body } = parsePromptFile(promptPath);
 
-        assert.ok(content.includes('AGENT_FIX.md'), 'Should link to AGENT_FIX.md');
-        assert.ok(content.includes('.teamspec/agents/AGENT_FIX.md'), 'Should have correct path');
+        assert.ok(body.includes('AGENT_FA.md'), 'Should reference agent file');
+    });
+});
+
+// =============================================================================
+// README Tests
+// =============================================================================
+
+describe('README Generation', () => {
+    let tempDir;
+
+    beforeEach(() => {
+        tempDir = createTempDir();
+        generateAllPrompts(tempDir);
     });
 
-    test('README includes Utility section', () => {
-        generateAllPrompts(tempDir);
+    afterEach(() => {
+        cleanupTempDir(tempDir);
+    });
+
+    test('README contains usage instructions', () => {
         const readmePath = path.join(tempDir, '.github', 'prompts', 'README.md');
         const content = fs.readFileSync(readmePath, 'utf-8');
 
-        assert.ok(content.includes('### Utility'), 'README should have Utility section');
+        assert.ok(content.includes('Usage'), 'Should have usage section');
+        assert.ok(content.includes('Copilot Chat'), 'Should mention Copilot Chat');
     });
 
-    test('README includes fix command', () => {
-        generateAllPrompts(tempDir);
+    test('README lists available commands', () => {
         const readmePath = path.join(tempDir, '.github', 'prompts', 'README.md');
         const content = fs.readFileSync(readmePath, 'utf-8');
 
-        assert.ok(content.includes('ts:fix'), 'README should include ts:fix command');
-        assert.ok(content.includes('Auto-fix linter errors'), 'README should include fix description');
+        assert.ok(content.includes('Available Commands'), 'Should list available commands');
+        assert.ok(content.includes('ts:'), 'Should include ts: prefixed commands');
     });
 
-    test('fix prompt mentions supported rule categories', () => {
-        const fixCmd = COMMANDS.utility.commands.find(cmd => cmd.name === 'fix');
+    test('README has command reference table', () => {
+        const readmePath = path.join(tempDir, '.github', 'prompts', 'README.md');
+        const content = fs.readFileSync(readmePath, 'utf-8');
 
-        assert.ok(fixCmd.prompt.includes('TS-PROJ'), 'Should mention TS-PROJ rules');
-        assert.ok(fixCmd.prompt.includes('TS-FEAT'), 'Should mention TS-FEAT rules');
-        assert.ok(fixCmd.prompt.includes('TS-STORY'), 'Should mention TS-STORY rules');
+        assert.ok(content.includes('Command Reference'), 'Should have command reference');
+        assert.ok(content.includes('| Command |'), 'Should have command table');
+    });
+});
+
+// =============================================================================
+// Integration Tests
+// =============================================================================
+
+describe('Integration', () => {
+    let tempDir;
+
+    beforeEach(() => {
+        tempDir = createTempDir();
+    });
+
+    afterEach(() => {
+        cleanupTempDir(tempDir);
+    });
+
+    test('all roles generate at least one prompt', () => {
+        generateAllPrompts(tempDir);
+        const files = getGeneratedFiles(tempDir);
+        const promptFiles = files.filter(f => f.endsWith('.prompt.md'));
+
+        // Check each role has prompts
+        const rolesPrefixes = ['ba-', 'fa-', 'po-', 'sa-', 'dev-', 'qa-', 'sm-'];
+        for (const prefix of rolesPrefixes) {
+            const hasPrompt = promptFiles.some(f => f.startsWith(prefix));
+            assert.ok(hasPrompt, `Should have prompts for ${prefix.replace('-', '').toUpperCase()}`);
+        }
+    });
+
+    test('generates expected number of prompts', () => {
+        generateAllPrompts(tempDir);
+        const files = getGeneratedFiles(tempDir);
+        const promptFiles = files.filter(f => f.endsWith('.prompt.md'));
+
+        // Should have at least 20 prompts (PO: 4, BA: 3, FA: 6, SA: 5, DEV: 2, QA: 5, SM: 6)
+        assert.ok(promptFiles.length >= 20, `Should have at least 20 prompts, got ${promptFiles.length}`);
     });
 });

@@ -1,22 +1,22 @@
 /**
  * TeamSpec Linter Tests
- * Test-driven implementation of all linter rules
+ * Test-driven validation of TeamSpec 4.0 lint rules
  * 
- * Rules tested:
+ * Tests:
+ * - TS-PROD-001: Product folder must be registered
+ * - TS-PROD-002: product.yml required with PRX
  * - TS-PROJ-001: Project folder must be registered
  * - TS-PROJ-002: project.yml required with minimum metadata
- * - TS-FEAT-001: Feature file required for any story link
- * - TS-FEAT-002: Feature must include canon sections
- * - TS-FEAT-003: Feature IDs must be unique within project
- * - TS-STORY-001: Story must link to feature
- * - TS-STORY-002: Story must describe delta-only behavior
- * - TS-STORY-003: Acceptance Criteria must be present and testable
- * - TS-STORY-004: Only SM can assign sprint
- * - TS-STORY-005: Ready for Development requires DoR checklist complete
- * - TS-ADR-001: Feature marked "Architecture Required" must have ADR
- * - TS-ADR-002: ADR must link to feature(s)
- * - TS-DEVPLAN-001: Story in sprint must have dev plan
- * - TS-DOD-001: Story cannot be Done if behavior changed and Canon not updated
+ * - TS-FI-001: Feature-Increment must have AS-IS and TO-BE sections
+ * - TS-FI-002: Feature-Increment must link to target Feature
+ * - TS-EPIC-001: Epic file naming convention
+ * - TS-STORY-001: Story must link to Epic via filename
+ * - TS-STORY-002: Story describes delta, not full behavior
+ * - TS-NAMING-*: Artifact naming conventions
+ * - TS-DOD-001: Story must have all AC verified
+ * - TS-DOD-003: Product sync after deployment
+ * - TS-QA-001: Deployed Feature-Increment must have test coverage
+ * - TS-QA-003: Regression impact must be recorded for each FI
  */
 
 const { test, describe, beforeEach, afterEach } = require('node:test');
@@ -26,1273 +26,870 @@ const path = require('path');
 const os = require('os');
 
 // Import linter module
-const { 
-  Linter,
-  rules,
-  SEVERITY
+const {
+    lint,
+    runLint,
+    formatResults,
+    LintResult,
+    SEVERITY,
+    NAMING_PATTERNS,
+    checkProductRegistered,
+    checkProductYml,
+    checkProjectRegistered,
+    checkProjectYml,
+    checkFIContent,
+    checkFIFeatureLink,
+    checkEpicNaming,
+    checkStoryEpicLink,
+    checkStoryDelta,
+    checkDoneStoryAC,
+    checkCanonSync,
+    checkFITestCoverage,
+    checkRegressionImpact,
+    checkArtifactNaming
 } = require('../lib/linter');
 
 // =============================================================================
 // Test Fixtures & Helpers
 // =============================================================================
 
+const FIXTURES_DIR = path.join(__dirname, 'fixtures');
+const VALID_FIXTURE = path.join(FIXTURES_DIR, 'valid-4.0');
+const BROKEN_FIXTURE = path.join(FIXTURES_DIR, 'broken-4.0');
+
 /**
- * Create a temporary test project structure
+ * Create a temporary test directory with custom structure
  */
-function createTestProject(baseDir, structure = {}) {
-  const projectDir = path.join(baseDir, 'projects', 'test-project');
-  
-  // Create base directories
-  const dirs = [
-    'projects',
-    'projects/test-project',
-    'projects/test-project/features',
-    'projects/test-project/stories/backlog',
-    'projects/test-project/stories/ready-to-refine',
-    'projects/test-project/stories/ready-for-development',
-    'projects/test-project/adr',
-    'projects/test-project/decisions',
-    'projects/test-project/dev-plans',
-    'projects/test-project/qa/test-cases',
-    'projects/test-project/sprints',
-  ];
-  
-  for (const dir of dirs) {
-    fs.mkdirSync(path.join(baseDir, dir), { recursive: true });
-  }
-  
-  // Create projects-index.md if not overridden
-  if (!structure['projects/projects-index.md']) {
-    fs.writeFileSync(
-      path.join(baseDir, 'projects', 'projects-index.md'),
-      `# Projects Index\n\n| ID | Name | Status |\n|-----|------|--------|\n| test-project | Test Project | active |\n`
-    );
-  }
-  
-  // Create files from structure
-  for (const [filePath, content] of Object.entries(structure)) {
-    const fullPath = path.join(baseDir, filePath);
-    fs.mkdirSync(path.dirname(fullPath), { recursive: true });
-    fs.writeFileSync(fullPath, content);
-  }
-  
-  return projectDir;
+function createTempDir() {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'teamspec-linter-test-'));
+    return tempDir;
 }
 
 /**
- * Valid feature content for testing
+ * Clean up temporary directory
  */
-const VALID_FEATURE = `# Feature: F-001 — User Authentication
-
-## Purpose
-Allow users to securely log into the system.
-
-## Scope
-Login, logout, session management.
-
-## Actors
-- End User
-- System Administrator
-
-## Main Flow
-1. User enters credentials
-2. System validates credentials
-3. Session is created
-
-## Business Rules
-- Passwords must be at least 8 characters
-- Sessions expire after 30 minutes
-
-## Edge Cases
-- Invalid credentials: Show error message
-- Account locked: Show lockout message
-
-## Non-Goals
-- Social login (future feature)
-
-## Change Log
-| Date | Story | Change |
-|------|-------|--------|
-| 2026-01-01 | Initial | Created feature |
-`;
+function cleanupTempDir(tempDir) {
+    if (fs.existsSync(tempDir)) {
+        fs.rmSync(tempDir, { recursive: true, force: true });
+    }
+}
 
 /**
- * Valid story content for testing
+ * Create a minimal valid product structure
  */
-const VALID_STORY = `# Story: S-001 — Add Password Reset
+function createValidProduct(targetDir, productId, prefix) {
+    const productDir = path.join(targetDir, 'products', productId);
+    fs.mkdirSync(path.join(productDir, 'features'), { recursive: true });
+    fs.mkdirSync(path.join(productDir, 'qa', 'regression-tests'), { recursive: true });
 
-## Linked Features
-- [F-001 — User Authentication](../features/F-001-user-authentication.md)
+    // product.yml
+    fs.writeFileSync(
+        path.join(productDir, 'product.yml'),
+        `product:
+  id: "${productId}"
+  name: "Test Product"
+  prefix: "${prefix}"
+  status: active
+`,
+        'utf-8'
+    );
 
-## User Story
-As a user
-I want to reset my password
-So that I can regain access to my account
+    // products-index.md
+    const productsIndexPath = path.join(targetDir, 'products', 'products-index.md');
+    if (!fs.existsSync(productsIndexPath)) {
+        fs.writeFileSync(productsIndexPath, `# Products Index\n\n| Prefix | ID | Name |\n|--------|-----|------|\n| ${prefix} | ${productId} | Test Product |\n`, 'utf-8');
+    }
 
-## Behavior Delta
+    return productDir;
+}
 
-### Before (current behavior):
-No password reset functionality exists.
+/**
+ * Create a minimal valid project structure
+ */
+function createValidProject(targetDir, projectId, targetProducts = []) {
+    const projectDir = path.join(targetDir, 'projects', projectId);
+    fs.mkdirSync(path.join(projectDir, 'feature-increments'), { recursive: true });
+    fs.mkdirSync(path.join(projectDir, 'epics'), { recursive: true });
+    fs.mkdirSync(path.join(projectDir, 'stories', 'backlog'), { recursive: true });
+    fs.mkdirSync(path.join(projectDir, 'qa', 'test-cases'), { recursive: true });
+    fs.mkdirSync(path.join(projectDir, 'qa', 'regression-impact'), { recursive: true });
 
-### After (new behavior):
-Users can request a password reset email and set a new password.
+    // project.yml
+    const targetProductsYaml = targetProducts.length > 0
+        ? `\n  target_products:\n    - ${targetProducts.join('\n    - ')}`
+        : '';
+
+    fs.writeFileSync(
+        path.join(projectDir, 'project.yml'),
+        `project:
+  id: "${projectId}"
+  name: "Test Project"
+  status: active${targetProductsYaml}
+`,
+        'utf-8'
+    );
+
+    return projectDir;
+}
+
+// =============================================================================
+// LintResult Class Tests
+// =============================================================================
+
+describe('LintResult Class', () => {
+    test('should initialize with empty arrays', () => {
+        const result = new LintResult();
+        assert.deepStrictEqual(result.errors, []);
+        assert.deepStrictEqual(result.warnings, []);
+        assert.deepStrictEqual(result.info, []);
+    });
+
+    test('should add errors correctly', () => {
+        const result = new LintResult();
+        result.add('TS-TEST', 'Test error', '/test/file.md', SEVERITY.ERROR);
+
+        assert.strictEqual(result.errors.length, 1);
+        assert.strictEqual(result.errors[0].rule, 'TS-TEST');
+        assert.strictEqual(result.errors[0].message, 'Test error');
+    });
+
+    test('should add warnings correctly', () => {
+        const result = new LintResult();
+        result.add('TS-TEST', 'Test warning', '/test/file.md', SEVERITY.WARNING);
+
+        assert.strictEqual(result.warnings.length, 1);
+    });
+
+    test('hasErrors should return true when errors exist', () => {
+        const result = new LintResult();
+        result.add('TS-TEST', 'Error', '/test.md', SEVERITY.ERROR);
+
+        assert.strictEqual(result.hasErrors(), true);
+    });
+
+    test('hasBlockers should return true when blockers exist', () => {
+        const result = new LintResult();
+        result.add('TS-TEST', 'Blocker', '/test.md', SEVERITY.BLOCKER);
+
+        assert.strictEqual(result.hasBlockers(), true);
+    });
+
+    test('getSummary should return correct counts', () => {
+        const result = new LintResult();
+        result.add('TS-1', 'Error', '/a.md', SEVERITY.ERROR);
+        result.add('TS-2', 'Warning', '/b.md', SEVERITY.WARNING);
+        result.add('TS-3', 'Info', '/c.md', SEVERITY.INFO);
+
+        const summary = result.getSummary();
+        assert.strictEqual(summary.errors, 1);
+        assert.strictEqual(summary.warnings, 1);
+        assert.strictEqual(summary.info, 1);
+        assert.strictEqual(summary.total, 3);
+    });
+});
+
+// =============================================================================
+// Naming Patterns Tests
+// =============================================================================
+
+describe('Naming Patterns', () => {
+    test('feature pattern should match valid filenames', () => {
+        assert.ok(NAMING_PATTERNS.feature.test('f-ACME-001-user-login.md'));
+        assert.ok(NAMING_PATTERNS.feature.test('f-TST-123-some-feature.md'));
+        assert.ok(!NAMING_PATTERNS.feature.test('F-ACME-001-user-login.md')); // Uppercase F
+        assert.ok(!NAMING_PATTERNS.feature.test('f-acme-001-test.md')); // lowercase prefix
+    });
+
+    test('feature-increment pattern should match valid filenames', () => {
+        assert.ok(NAMING_PATTERNS['feature-increment'].test('fi-ACME-001-oauth.md'));
+        assert.ok(!NAMING_PATTERNS['feature-increment'].test('FI-ACME-001-oauth.md'));
+    });
+
+    test('epic pattern should match valid filenames', () => {
+        assert.ok(NAMING_PATTERNS.epic.test('epic-ACME-001-auth.md'));
+        assert.ok(!NAMING_PATTERNS.epic.test('EPIC-001-auth.md'));
+        assert.ok(!NAMING_PATTERNS.epic.test('epic-001-auth.md')); // Missing PRX
+    });
+
+    test('story pattern should match valid filenames', () => {
+        assert.ok(NAMING_PATTERNS.story.test('s-e001-001-add-button.md'));
+        assert.ok(NAMING_PATTERNS.story.test('s-e123-456-test.md'));
+        assert.ok(!NAMING_PATTERNS.story.test('S-001-test.md')); // Missing epic link
+        assert.ok(!NAMING_PATTERNS.story.test('s-001-test.md')); // Missing epic number
+    });
+
+    test('dev-plan pattern should match valid filenames', () => {
+        assert.ok(NAMING_PATTERNS['dev-plan'].test('dp-e001-s001-implementation.md'));
+        assert.ok(!NAMING_PATTERNS['dev-plan'].test('dp-001-implementation.md'));
+    });
+
+    test('project-test-case pattern should match valid filenames', () => {
+        assert.ok(NAMING_PATTERNS['project-test-case'].test('tc-fi-ACME-001-oauth-tests.md'));
+        assert.ok(!NAMING_PATTERNS['project-test-case'].test('tc-ACME-001-tests.md'));
+    });
+
+    test('regression-impact pattern should match valid filenames', () => {
+        assert.ok(NAMING_PATTERNS['regression-impact'].test('ri-fi-ACME-001.md'));
+        assert.ok(!NAMING_PATTERNS['regression-impact'].test('ri-fi-ACME-001-extra.md')); // Should be exact
+    });
+});
+
+// =============================================================================
+// Product Rules Tests (TS-PROD-*)
+// =============================================================================
+
+describe('TS-PROD-001: Product folder must be registered', () => {
+    let tempDir;
+
+    beforeEach(() => {
+        tempDir = createTempDir();
+    });
+
+    afterEach(() => {
+        cleanupTempDir(tempDir);
+    });
+
+    test('should pass when product is registered', () => {
+        createValidProduct(tempDir, 'test-product', 'TST');
+        const result = new LintResult();
+        checkProductRegistered(tempDir, 'test-product', result);
+
+        assert.strictEqual(result.errors.length, 0);
+    });
+
+    test('should fail when products-index.md missing', () => {
+        const productDir = path.join(tempDir, 'products', 'test-product');
+        fs.mkdirSync(productDir, { recursive: true });
+
+        const result = new LintResult();
+        checkProductRegistered(tempDir, 'test-product', result);
+
+        // Warning for missing index (not error)
+        assert.ok(result.warnings.some(w => w.rule === 'TS-PROD-001'));
+    });
+});
+
+describe('TS-PROD-002: product.yml required with PRX', () => {
+    let tempDir;
+
+    beforeEach(() => {
+        tempDir = createTempDir();
+    });
+
+    afterEach(() => {
+        cleanupTempDir(tempDir);
+    });
+
+    test('should pass with valid product.yml', () => {
+        const productDir = createValidProduct(tempDir, 'test-product', 'TST');
+        const result = new LintResult();
+        const config = checkProductYml(productDir, 'test-product', result);
+
+        assert.strictEqual(result.errors.length, 0);
+        assert.ok(config);
+    });
+
+    test('should fail when product.yml is missing', () => {
+        const productDir = path.join(tempDir, 'products', 'test-product');
+        fs.mkdirSync(productDir, { recursive: true });
+
+        const result = new LintResult();
+        checkProductYml(productDir, 'test-product', result);
+
+        assert.ok(result.errors.some(e => e.message.includes('missing')));
+    });
+
+    test('should fail when prefix is missing', () => {
+        const productDir = path.join(tempDir, 'products', 'test-product');
+        fs.mkdirSync(productDir, { recursive: true });
+        fs.writeFileSync(
+            path.join(productDir, 'product.yml'),
+            `product:
+  id: "test-product"
+  name: "Test"
+  status: active
+`,
+            'utf-8'
+        );
+
+        const result = new LintResult();
+        checkProductYml(productDir, 'test-product', result);
+
+        assert.ok(result.errors.some(e => e.message.includes('prefix')));
+    });
+
+    test('should fail when PRX format is invalid', () => {
+        const productDir = path.join(tempDir, 'products', 'test-product');
+        fs.mkdirSync(productDir, { recursive: true });
+        fs.writeFileSync(
+            path.join(productDir, 'product.yml'),
+            `product:
+  id: "test-product"
+  name: "Test"
+  prefix: "lowercase"
+  status: active
+`,
+            'utf-8'
+        );
+
+        const result = new LintResult();
+        checkProductYml(productDir, 'test-product', result);
+
+        assert.ok(result.errors.some(e => e.message.includes('does not match pattern')));
+    });
+});
+
+// =============================================================================
+// Project Rules Tests (TS-PROJ-*)
+// =============================================================================
+
+describe('TS-PROJ-002: project.yml required with minimum metadata', () => {
+    let tempDir;
+
+    beforeEach(() => {
+        tempDir = createTempDir();
+    });
+
+    afterEach(() => {
+        cleanupTempDir(tempDir);
+    });
+
+    test('should pass with valid project.yml', () => {
+        const projectDir = createValidProject(tempDir, 'test-project', ['test-product']);
+        const result = new LintResult();
+        const config = checkProjectYml(projectDir, 'test-project', result);
+
+        assert.strictEqual(result.errors.length, 0);
+        assert.ok(config);
+    });
+
+    test('should fail when project.yml is missing', () => {
+        const projectDir = path.join(tempDir, 'projects', 'test-project');
+        fs.mkdirSync(projectDir, { recursive: true });
+
+        const result = new LintResult();
+        checkProjectYml(projectDir, 'test-project', result);
+
+        assert.ok(result.errors.some(e => e.message.includes('missing')));
+    });
+
+    test('should fail when status is missing', () => {
+        const projectDir = path.join(tempDir, 'projects', 'test-project');
+        fs.mkdirSync(projectDir, { recursive: true });
+        fs.writeFileSync(
+            path.join(projectDir, 'project.yml'),
+            `project:
+  id: "test-project"
+  name: "Test"
+`,
+            'utf-8'
+        );
+
+        const result = new LintResult();
+        checkProjectYml(projectDir, 'test-project', result);
+
+        assert.ok(result.errors.some(e => e.message.includes('status')));
+    });
+});
+
+// =============================================================================
+// Feature-Increment Rules Tests (TS-FI-*)
+// =============================================================================
+
+describe('TS-FI-001: Feature-Increment must have AS-IS and TO-BE sections', () => {
+    let tempDir;
+
+    beforeEach(() => {
+        tempDir = createTempDir();
+    });
+
+    afterEach(() => {
+        cleanupTempDir(tempDir);
+    });
+
+    test('should pass with valid FI content', () => {
+        const fiDir = path.join(tempDir, 'feature-increments');
+        fs.mkdirSync(fiDir, { recursive: true });
+
+        const fiPath = path.join(fiDir, 'fi-TST-001-test.md');
+        fs.writeFileSync(fiPath, `# Feature Increment
+
+## AS-IS
+Current behavior.
+
+## TO-BE
+New behavior.
+`, 'utf-8');
+
+        const result = new LintResult();
+        checkFIContent(fiPath, result);
+
+        assert.strictEqual(result.errors.length, 0);
+    });
+
+    test('should pass with numbered sections', () => {
+        const fiDir = path.join(tempDir, 'feature-increments');
+        fs.mkdirSync(fiDir, { recursive: true });
+
+        const fiPath = path.join(fiDir, 'fi-TST-001-test.md');
+        fs.writeFileSync(fiPath, `# Feature Increment
+
+## 2. AS-IS (Current State)
+Current behavior.
+
+## 3. TO-BE (Proposed State)
+New behavior.
+`, 'utf-8');
+
+        const result = new LintResult();
+        checkFIContent(fiPath, result);
+
+        assert.strictEqual(result.errors.length, 0);
+    });
+
+    test('should fail when AS-IS is missing', () => {
+        const fiDir = path.join(tempDir, 'feature-increments');
+        fs.mkdirSync(fiDir, { recursive: true });
+
+        const fiPath = path.join(fiDir, 'fi-TST-001-test.md');
+        fs.writeFileSync(fiPath, `# Feature Increment
+
+## TO-BE
+New behavior.
+`, 'utf-8');
+
+        const result = new LintResult();
+        checkFIContent(fiPath, result);
+
+        assert.ok(result.errors.some(e => e.message.includes('AS-IS')));
+    });
+
+    test('should fail when TO-BE is missing', () => {
+        const fiDir = path.join(tempDir, 'feature-increments');
+        fs.mkdirSync(fiDir, { recursive: true });
+
+        const fiPath = path.join(fiDir, 'fi-TST-001-test.md');
+        fs.writeFileSync(fiPath, `# Feature Increment
+
+## AS-IS
+Current behavior.
+`, 'utf-8');
+
+        const result = new LintResult();
+        checkFIContent(fiPath, result);
+
+        assert.ok(result.errors.some(e => e.message.includes('TO-BE')));
+    });
+});
+
+describe('TS-FI-002: Feature-Increment must link to target Feature', () => {
+    let tempDir;
+
+    beforeEach(() => {
+        tempDir = createTempDir();
+    });
+
+    afterEach(() => {
+        cleanupTempDir(tempDir);
+    });
+
+    test('should pass when FI references existing feature', () => {
+        // Create product with feature
+        createValidProduct(tempDir, 'test-product', 'TST');
+        const featuresDir = path.join(tempDir, 'products', 'test-product', 'features');
+        fs.writeFileSync(path.join(featuresDir, 'f-TST-001-test-feature.md'), '# Feature\n', 'utf-8');
+
+        // Create FI
+        const fiDir = path.join(tempDir, 'feature-increments');
+        fs.mkdirSync(fiDir, { recursive: true });
+        const fiPath = path.join(fiDir, 'fi-TST-001-test.md');
+        fs.writeFileSync(fiPath, `# Feature Increment
+
+Target Feature: f-TST-001
+
+## AS-IS
+Current behavior.
+
+## TO-BE
+New behavior.
+`, 'utf-8');
+
+        const result = new LintResult();
+        checkFIFeatureLink(fiPath, tempDir, result);
+
+        assert.strictEqual(result.errors.length, 0);
+    });
+
+    test('should fail when FI has no feature reference', () => {
+        const fiDir = path.join(tempDir, 'feature-increments');
+        fs.mkdirSync(fiDir, { recursive: true });
+        const fiPath = path.join(fiDir, 'fi-TST-001-test.md');
+        fs.writeFileSync(fiPath, `# Feature Increment
+
+No feature reference here.
+
+## AS-IS
+Current behavior.
+
+## TO-BE
+New behavior.
+`, 'utf-8');
+
+        const result = new LintResult();
+        checkFIFeatureLink(fiPath, tempDir, result);
+
+        assert.ok(result.errors.some(e => e.message.includes('does not reference')));
+    });
+});
+
+// =============================================================================
+// Epic Rules Tests (TS-EPIC-*)
+// =============================================================================
+
+describe('TS-EPIC-001: Epic file naming convention', () => {
+    let tempDir;
+
+    beforeEach(() => {
+        tempDir = createTempDir();
+    });
+
+    afterEach(() => {
+        cleanupTempDir(tempDir);
+    });
+
+    test('should pass with valid epic naming', () => {
+        const epicDir = path.join(tempDir, 'epics');
+        fs.mkdirSync(epicDir, { recursive: true });
+        const epicPath = path.join(epicDir, 'epic-TST-001-test.md');
+        fs.writeFileSync(epicPath, '# Epic\n', 'utf-8');
+
+        const result = new LintResult();
+        checkEpicNaming(epicPath, result);
+
+        assert.strictEqual(result.errors.length, 0);
+    });
+
+    test('should fail with uppercase EPIC', () => {
+        const epicDir = path.join(tempDir, 'epics');
+        fs.mkdirSync(epicDir, { recursive: true });
+        const epicPath = path.join(epicDir, 'EPIC-001-test.md');
+        fs.writeFileSync(epicPath, '# Epic\n', 'utf-8');
+
+        const result = new LintResult();
+        checkEpicNaming(epicPath, result);
+
+        assert.ok(result.errors.some(e => e.rule === 'TS-EPIC-001'));
+    });
+
+    test('should fail without PRX in name', () => {
+        const epicDir = path.join(tempDir, 'epics');
+        fs.mkdirSync(epicDir, { recursive: true });
+        const epicPath = path.join(epicDir, 'epic-001-test.md');
+        fs.writeFileSync(epicPath, '# Epic\n', 'utf-8');
+
+        const result = new LintResult();
+        checkEpicNaming(epicPath, result);
+
+        assert.ok(result.errors.some(e => e.rule === 'TS-EPIC-001'));
+    });
+});
+
+// =============================================================================
+// Story Rules Tests (TS-STORY-*)
+// =============================================================================
+
+describe('TS-STORY-001: Story must link to Epic via filename', () => {
+    let tempDir;
+
+    beforeEach(() => {
+        tempDir = createTempDir();
+    });
+
+    afterEach(() => {
+        cleanupTempDir(tempDir);
+    });
+
+    test('should pass with valid story naming linking to existing epic', () => {
+        const projectDir = createValidProject(tempDir, 'test-project');
+
+        // Create epic
+        fs.writeFileSync(
+            path.join(projectDir, 'epics', 'epic-TST-001-test.md'),
+            '# Epic\n',
+            'utf-8'
+        );
+
+        // Create story
+        const storyPath = path.join(projectDir, 'stories', 'backlog', 's-e001-001-test.md');
+        fs.writeFileSync(storyPath, '# Story\n', 'utf-8');
+
+        const result = new LintResult();
+        checkStoryEpicLink(storyPath, projectDir, result);
+
+        assert.strictEqual(result.errors.length, 0);
+    });
+
+    test('should fail with invalid story naming', () => {
+        const projectDir = createValidProject(tempDir, 'test-project');
+
+        const storyPath = path.join(projectDir, 'stories', 'backlog', 'S-001-test.md');
+        fs.writeFileSync(storyPath, '# Story\n', 'utf-8');
+
+        const result = new LintResult();
+        checkStoryEpicLink(storyPath, projectDir, result);
+
+        assert.ok(result.errors.some(e => e.rule === 'TS-STORY-001'));
+    });
+
+    test('should fail when epic does not exist', () => {
+        const projectDir = createValidProject(tempDir, 'test-project');
+
+        const storyPath = path.join(projectDir, 'stories', 'backlog', 's-e999-001-test.md');
+        fs.writeFileSync(storyPath, '# Story\n', 'utf-8');
+
+        const result = new LintResult();
+        checkStoryEpicLink(storyPath, projectDir, result);
+
+        assert.ok(result.errors.some(e => e.message.includes('non-existent epic')));
+    });
+});
+
+describe('TS-STORY-002: Story describes delta, not full behavior', () => {
+    let tempDir;
+
+    beforeEach(() => {
+        tempDir = createTempDir();
+    });
+
+    afterEach(() => {
+        cleanupTempDir(tempDir);
+    });
+
+    test('should pass with delta language', () => {
+        const storyDir = path.join(tempDir, 'stories');
+        fs.mkdirSync(storyDir, { recursive: true });
+        const storyPath = path.join(storyDir, 's-e001-001-test.md');
+        fs.writeFileSync(storyPath, `# Story
+
+This story adds OAuth login capability.
+`, 'utf-8');
+
+        const result = new LintResult();
+        checkStoryDelta(storyPath, result);
+
+        assert.strictEqual(result.warnings.length, 0);
+    });
+
+    test('should pass with FI reference', () => {
+        const storyDir = path.join(tempDir, 'stories');
+        fs.mkdirSync(storyDir, { recursive: true });
+        const storyPath = path.join(storyDir, 's-e001-001-test.md');
+        fs.writeFileSync(storyPath, `# Story
+
+Implements fi-TST-001-oauth-login.
+`, 'utf-8');
+
+        const result = new LintResult();
+        checkStoryDelta(storyPath, result);
+
+        assert.strictEqual(result.warnings.length, 0);
+    });
+
+    test('should warn without delta language or FI reference', () => {
+        const storyDir = path.join(tempDir, 'stories');
+        fs.mkdirSync(storyDir, { recursive: true });
+        const storyPath = path.join(storyDir, 's-e001-001-test.md');
+        fs.writeFileSync(storyPath, `# Story
+
+The system should display a login page.
+`, 'utf-8');
+
+        const result = new LintResult();
+        checkStoryDelta(storyPath, result);
+
+        assert.ok(result.warnings.some(w => w.rule === 'TS-STORY-002'));
+    });
+});
+
+// =============================================================================
+// DoD Rules Tests (TS-DOD-*)
+// =============================================================================
+
+describe('TS-DOD-001: Story must have all AC verified', () => {
+    let tempDir;
+
+    beforeEach(() => {
+        tempDir = createTempDir();
+    });
+
+    afterEach(() => {
+        cleanupTempDir(tempDir);
+    });
+
+    test('should pass when all AC are verified', () => {
+        const storyPath = path.join(tempDir, 's-e001-001-test.md');
+        fs.writeFileSync(storyPath, `# Story
 
 ## Acceptance Criteria
-- [ ] User can request password reset from login page
-- [ ] Reset email is sent within 5 minutes
-- [ ] Reset link expires after 24 hours
+- [x] AC-1: Login button displayed
+- [x] AC-2: OAuth redirect works
+`, 'utf-8');
 
-## Impact
-- [x] Adds Behavior
+        const result = new LintResult();
+        checkDoneStoryAC(storyPath, result);
 
-## Notes
-Implementation details go here.
-`;
-
-/**
- * Valid ADR content for testing
- */
-const VALID_ADR = `# ADR-001: Use JWT for Authentication
-
-## Status
-Accepted
-
-## Context
-We need a stateless authentication mechanism.
-
-## Decision
-Use JWT tokens for authentication.
-
-## Consequences
-- Stateless authentication
-- Token expiry management needed
-
-## Related Features
-- [F-001 — User Authentication](../features/F-001-user-authentication.md)
-`;
-
-// =============================================================================
-// Test Suite: Project Rules (TS-PROJ)
-// =============================================================================
-
-describe('TS-PROJ: Project Rules', () => {
-  let tempDir;
-  let linter;
-  
-  beforeEach(() => {
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'teamspec-test-'));
-    linter = new Linter(tempDir);
-  });
-  
-  afterEach(() => {
-    fs.rmSync(tempDir, { recursive: true, force: true });
-  });
-  
-  describe('TS-PROJ-001: Project folder must be registered', () => {
-    test('passes when project is in projects-index.md', async () => {
-      createTestProject(tempDir, {
-        'projects/projects-index.md': `# Projects\n| ID | Name |\n|-----|------|\n| test-project | Test |\n`,
-        'projects/test-project/project.yml': 'project_id: test-project\nname: Test\nstatus: active\nstakeholders: []\nroles: []',
-      });
-      
-      const results = await linter.runRule('TS-PROJ-001');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR);
-      assert.strictEqual(errors.length, 0, 'Should have no errors');
+        assert.strictEqual(result.errors.length, 0);
     });
-    
-    test('fails when project is not in projects-index.md', async () => {
-      createTestProject(tempDir, {
-        'projects/projects-index.md': `# Projects\n| ID | Name |\n|-----|------|\n`,
-        'projects/test-project/project.yml': 'project_id: test-project\nname: Test\nstatus: active\nstakeholders: []\nroles: []',
-      });
-      
-      const results = await linter.runRule('TS-PROJ-001');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR);
-      assert.strictEqual(errors.length, 1, 'Should have 1 error');
-      assert.match(errors[0].message, /not registered/i);
+
+    test('should fail when AC are not verified', () => {
+        const storyPath = path.join(tempDir, 's-e001-001-test.md');
+        fs.writeFileSync(storyPath, `# Story
+
+## Acceptance Criteria
+- [x] AC-1: Login button displayed
+- [ ] AC-2: OAuth redirect works
+`, 'utf-8');
+
+        const result = new LintResult();
+        checkDoneStoryAC(storyPath, result);
+
+        assert.ok(result.errors.some(e => e.rule === 'TS-DOD-001'));
     });
-  });
-  
-  describe('TS-PROJ-002: project.yml required with minimum metadata', () => {
-    test('passes with all required fields', async () => {
-      createTestProject(tempDir, {
-        'projects/test-project/project.yml': `
-project_id: test-project
-name: Test Project
-status: active
-stakeholders:
-  - name: John Doe
-    role: Product Owner
-roles:
-  - BA
-  - DEV
-`,
-      });
-      
-      const results = await linter.runRule('TS-PROJ-002');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR);
-      assert.strictEqual(errors.length, 0, 'Should have no errors');
+});
+
+describe('TS-DOD-003: Product sync after deployment', () => {
+    let tempDir;
+
+    beforeEach(() => {
+        tempDir = createTempDir();
     });
-    
-    test('fails when project.yml is missing', async () => {
-      // Create test project structure without project.yml
-      createTestProject(tempDir, {
-        // No project.yml provided - should be missing
-      });
-      
-      const results = await linter.runRule('TS-PROJ-002');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR);
-      assert.strictEqual(errors.length, 1, 'Should have 1 error');
-      assert.match(errors[0].message, /project\.yml.*missing/i);
+
+    afterEach(() => {
+        cleanupTempDir(tempDir);
     });
-    
-    test('fails when required fields are missing', async () => {
-      createTestProject(tempDir, {
-        'projects/test-project/project.yml': `
-project_id: test-project
-name: Test Project
-`,
-      });
-      
-      const results = await linter.runRule('TS-PROJ-002');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR);
-      assert.ok(errors.length > 0, 'Should have errors for missing fields');
-      assert.match(errors[0].message, /missing.*field/i);
+
+    test('should pass when not deployed', () => {
+        const projectDir = path.join(tempDir, 'projects', 'test');
+        fs.mkdirSync(projectDir, { recursive: true });
+
+        const result = new LintResult();
+        checkCanonSync({ status: 'active' }, projectDir, result);
+
+        assert.strictEqual(result.errors.length, 0);
     });
-  });
+
+    test('should fail when deployed but not synced', () => {
+        const projectDir = path.join(tempDir, 'projects', 'test');
+        fs.mkdirSync(projectDir, { recursive: true });
+
+        const result = new LintResult();
+        checkCanonSync({ deployed_date: '2024-01-01' }, projectDir, result);
+
+        assert.ok(result.errors.some(e => e.rule === 'TS-DOD-003'));
+        assert.ok(result.errors.some(e => e.severity === SEVERITY.BLOCKER));
+    });
+
+    test('should pass when deployed and synced', () => {
+        const projectDir = path.join(tempDir, 'projects', 'test');
+        fs.mkdirSync(projectDir, { recursive: true });
+
+        const result = new LintResult();
+        checkCanonSync({ deployed_date: '2024-01-01', canon_synced: '2024-01-01' }, projectDir, result);
+
+        assert.strictEqual(result.errors.length, 0);
+    });
 });
 
 // =============================================================================
-// Test Suite: Feature Rules (TS-FEAT)
+// Full Integration Tests with Fixtures
 // =============================================================================
 
-describe('TS-FEAT: Feature Rules', () => {
-  let tempDir;
-  let linter;
-  
-  beforeEach(() => {
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'teamspec-test-'));
-    linter = new Linter(tempDir);
-  });
-  
-  afterEach(() => {
-    fs.rmSync(tempDir, { recursive: true, force: true });
-  });
-  
-  describe('TS-FEAT-001: Feature file required for story link', () => {
-    test('passes when linked feature exists', async () => {
-      createTestProject(tempDir, {
-        'projects/test-project/features/F-001-user-auth.md': VALID_FEATURE,
-        'projects/test-project/stories/backlog/S-001-add-reset.md': VALID_STORY,
-      });
-      
-      const results = await linter.runRule('TS-FEAT-001');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR);
-      assert.strictEqual(errors.length, 0, 'Should have no errors');
+describe('Integration: Valid Fixture', () => {
+    test('should pass lint on valid-4.0 fixture', () => {
+        // Skip if fixture doesn't exist
+        if (!fs.existsSync(VALID_FIXTURE)) {
+            console.log('Skipping: valid-4.0 fixture not found');
+            return;
+        }
+
+        const result = lint(VALID_FIXTURE);
+        const summary = result.getSummary();
+
+        // Valid fixture should have no errors (warnings may exist)
+        assert.strictEqual(summary.errors, 0, `Expected 0 errors but got ${summary.errors}: ${JSON.stringify(result.errors)}`);
     });
-    
-    test('fails when linked feature does not exist', async () => {
-      createTestProject(tempDir, {
-        'projects/test-project/stories/backlog/S-001-add-reset.md': `# Story: S-001\n\n## Linked Features\n- [F-999 — Missing Feature](../features/F-999-missing.md)\n\n## Behavior Delta\n\n### Before:\nNothing\n\n### After:\nSomething\n\n## Acceptance Criteria\n- [ ] Works`,
-      });
-      
-      const results = await linter.runRule('TS-FEAT-001');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR);
-      assert.strictEqual(errors.length, 1, 'Should have 1 error');
-      assert.match(errors[0].message, /F-999.*not found/i);
+});
+
+describe('Integration: Broken Fixture', () => {
+    test('should find errors in broken-4.0 fixture', () => {
+        // Skip if fixture doesn't exist
+        if (!fs.existsSync(BROKEN_FIXTURE)) {
+            console.log('Skipping: broken-4.0 fixture not found');
+            return;
+        }
+
+        const result = lint(BROKEN_FIXTURE);
+        const summary = result.getSummary();
+
+        // Broken fixture should have errors
+        assert.ok(summary.errors > 0, 'Expected errors in broken fixture');
+
+        // Check specific expected errors
+        const rules = result.errors.map(e => e.rule);
+
+        // Should catch missing prefix (TS-PROD-002)
+        assert.ok(rules.includes('TS-PROD-002') || result.errors.some(e => e.message.includes('prefix')),
+            'Should catch missing prefix');
     });
-  });
-  
-  describe('TS-FEAT-002: Feature must include canon sections', () => {
-    test('passes with all required sections', async () => {
-      createTestProject(tempDir, {
-        'projects/test-project/features/F-001-user-auth.md': VALID_FEATURE,
-      });
-      
-      const results = await linter.runRule('TS-FEAT-002');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR);
-      assert.strictEqual(errors.length, 0, 'Should have no errors');
+
+    test('should catch wrong naming conventions', () => {
+        if (!fs.existsSync(BROKEN_FIXTURE)) {
+            console.log('Skipping: broken-4.0 fixture not found');
+            return;
+        }
+
+        const result = lint(BROKEN_FIXTURE);
+
+        // Should catch naming issues
+        const namingErrors = result.errors.filter(e =>
+            e.rule.startsWith('TS-NAMING') ||
+            e.message.includes('naming convention')
+        );
+
+        assert.ok(namingErrors.length > 0, 'Should catch naming convention errors');
     });
-    
-    test('fails when required sections are missing', async () => {
-      createTestProject(tempDir, {
-        'projects/test-project/features/F-001-incomplete.md': `# Feature: F-001 — Incomplete\n\n## Purpose\nSome purpose\n`,
-      });
-      
-      const results = await linter.runRule('TS-FEAT-002');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR);
-      assert.ok(errors.length > 0, 'Should have errors for missing sections');
-      assert.match(errors[0].message, /missing.*section/i);
-    });
-  });
-  
-  describe('TS-FEAT-003: Feature IDs must be unique', () => {
-    test('passes with unique feature IDs', async () => {
-      createTestProject(tempDir, {
-        'projects/test-project/features/F-001-auth.md': VALID_FEATURE,
-        'projects/test-project/features/F-002-profile.md': VALID_FEATURE.replace(/F-001/g, 'F-002').replace('User Authentication', 'User Profile'),
-      });
-      
-      const results = await linter.runRule('TS-FEAT-003');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR);
-      assert.strictEqual(errors.length, 0, 'Should have no errors');
-    });
-    
-    test('fails with duplicate feature IDs', async () => {
-      createTestProject(tempDir, {
-        'projects/test-project/features/F-001-auth.md': VALID_FEATURE,
-        'projects/test-project/features/F-001-duplicate.md': VALID_FEATURE,
-      });
-      
-      const results = await linter.runRule('TS-FEAT-003');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR);
-      assert.strictEqual(errors.length, 1, 'Should have 1 error');
-      assert.match(errors[0].message, /duplicate.*F-001/i);
-    });
-  });
 });
 
 // =============================================================================
-// Test Suite: Story Rules (TS-STORY)
+// Format Results Tests
 // =============================================================================
 
-describe('TS-STORY: Story Rules', () => {
-  let tempDir;
-  let linter;
-  
-  beforeEach(() => {
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'teamspec-test-'));
-    linter = new Linter(tempDir);
-  });
-  
-  afterEach(() => {
-    fs.rmSync(tempDir, { recursive: true, force: true });
-  });
-  
-  describe('TS-STORY-001: Story must link to feature', () => {
-    test('passes when story has feature link', async () => {
-      createTestProject(tempDir, {
-        'projects/test-project/features/F-001-auth.md': VALID_FEATURE,
-        'projects/test-project/stories/backlog/S-001-story.md': VALID_STORY,
-      });
-      
-      const results = await linter.runRule('TS-STORY-001');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR);
-      assert.strictEqual(errors.length, 0, 'Should have no errors');
-    });
-    
-    test('fails when story has no feature link', async () => {
-      createTestProject(tempDir, {
-        'projects/test-project/stories/backlog/S-001-no-link.md': `# Story: S-001 — No Feature Link\n\n## User Story\nAs a user...\n\n## Behavior Delta\n\n### Before:\nNothing\n\n### After:\nSomething\n\n## Acceptance Criteria\n- [ ] Works`,
-      });
-      
-      const results = await linter.runRule('TS-STORY-001');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR);
-      assert.strictEqual(errors.length, 1, 'Should have 1 error');
-      assert.match(errors[0].message, /no.*feature.*link/i);
-    });
-  });
-  
-  describe('TS-STORY-002: Story must describe delta-only behavior', () => {
-    test('passes with Before/After sections', async () => {
-      createTestProject(tempDir, {
-        'projects/test-project/stories/backlog/S-001-delta.md': VALID_STORY,
-      });
-      
-      const results = await linter.runRule('TS-STORY-002');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR);
-      assert.strictEqual(errors.length, 0, 'Should have no errors');
-    });
-    
-    test('fails without Before/After sections', async () => {
-      createTestProject(tempDir, {
-        'projects/test-project/stories/backlog/S-001-no-delta.md': `# Story: S-001\n\n## Linked Features\n- F-001\n\n## User Story\nAs a user...\n\n## Acceptance Criteria\n- [ ] Works`,
-      });
-      
-      const results = await linter.runRule('TS-STORY-002');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR);
-      assert.strictEqual(errors.length, 1, 'Should have 1 error');
-      assert.match(errors[0].message, /before.*after|delta/i);
-    });
-    
-    test('fails with forbidden full-spec headings', async () => {
-      createTestProject(tempDir, {
-        'projects/test-project/stories/backlog/S-001-full-spec.md': `# Story: S-001\n\n## Linked Features\n- F-001\n\n## Full Specification\nThis is a full spec, not a delta.\n\n## Before:\nOld\n\n## After:\nNew\n\n## Acceptance Criteria\n- [ ] Works`,
-      });
-      
-      const results = await linter.runRule('TS-STORY-002');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR);
-      assert.ok(errors.length > 0, 'Should have error for full spec');
-      assert.match(errors[0].message, /full specification|forbidden/i);
-    });
-  });
-  
-  describe('TS-STORY-003: Acceptance Criteria must be present and testable', () => {
-    test('passes with valid AC', async () => {
-      createTestProject(tempDir, {
-        'projects/test-project/stories/backlog/S-001-good-ac.md': VALID_STORY,
-      });
-      
-      const results = await linter.runRule('TS-STORY-003');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR);
-      assert.strictEqual(errors.length, 0, 'Should have no errors');
-    });
-    
-    test('fails without AC section', async () => {
-      createTestProject(tempDir, {
-        'projects/test-project/stories/backlog/S-001-no-ac.md': `# Story: S-001\n\n## Linked Features\n- F-001\n\n## Before:\nOld\n\n## After:\nNew`,
-      });
-      
-      const results = await linter.runRule('TS-STORY-003');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR);
-      assert.strictEqual(errors.length, 1, 'Should have 1 error');
-      assert.match(errors[0].message, /acceptance criteria.*missing/i);
-    });
-    
-    test('fails with TBD placeholders', async () => {
-      createTestProject(tempDir, {
-        'projects/test-project/stories/backlog/S-001-tbd.md': `# Story: S-001\n\n## Linked Features\n- F-001\n\n## Before:\nOld\n\n## After:\nNew\n\n## Acceptance Criteria\n- [ ] TBD`,
-      });
-      
-      const results = await linter.runRule('TS-STORY-003');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR);
-      assert.strictEqual(errors.length, 1, 'Should have 1 error');
-      assert.match(errors[0].message, /placeholder|TBD/i);
-    });
-  });
-  
-  describe('TS-STORY-004: Only SM can assign sprint', () => {
-    test('passes when sprint assigned by SM', async () => {
-      createTestProject(tempDir, {
-        'projects/test-project/stories/ready-for-development/S-001-sprint.md': `# Story: S-001\n\n**Sprint:** 5\n**Assigned By:** Role: SM\n\n## Linked Features\n- F-001\n\n## Before:\nOld\n\n## After:\nNew\n\n## Acceptance Criteria\n- [ ] Works`,
-      });
-      
-      const results = await linter.runRule('TS-STORY-004');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR);
-      assert.strictEqual(errors.length, 0, 'Should have no errors');
-    });
-    
-    test('fails when sprint assigned without SM role', async () => {
-      createTestProject(tempDir, {
-        'projects/test-project/stories/ready-for-development/S-001-bad-assign.md': `# Story: S-001\n\n**Sprint:** 5\n**Assigned By:** DEV (not SM)\n\n## Linked Features\n- F-001\n\n## Before:\nOld\n\n## After:\nNew\n\n## Acceptance Criteria\n- [ ] Works`,
-      });
-      
-      const results = await linter.runRule('TS-STORY-004');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR);
-      assert.strictEqual(errors.length, 1, 'Should have 1 error');
-      assert.match(errors[0].message, /SM.*assign|sprint.*SM/i);
-    });
-    
-    test('skips stories without sprint assignment', async () => {
-      createTestProject(tempDir, {
-        'projects/test-project/stories/backlog/S-001-no-sprint.md': VALID_STORY,
-      });
-      
-      const results = await linter.runRule('TS-STORY-004');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR);
-      assert.strictEqual(errors.length, 0, 'Should have no errors');
-    });
-  });
-  
-  describe('TS-STORY-005: DoR checklist complete for Ready for Development', () => {
-    test('passes when DoR checklist is complete', async () => {
-      createTestProject(tempDir, {
-        'projects/test-project/stories/ready-for-development/S-001-ready.md': `# Story: S-001\n\n**Status:** Ready for Development\n\n## Linked Features\n- F-001\n\n## Before:\nOld\n\n## After:\nNew\n\n## Acceptance Criteria\n- [ ] Works\n\n## DoR Checklist\n- [x] Feature link exists\n- [x] AC are testable\n- [x] Story reviewed`,
-      });
-      
-      const results = await linter.runRule('TS-STORY-005');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR);
-      assert.strictEqual(errors.length, 0, 'Should have no errors');
-    });
-    
-    test('fails when DoR items are unchecked', async () => {
-      createTestProject(tempDir, {
-        // Story in ready-for-development folder should have complete DoR
-        'projects/test-project/stories/ready-for-development/S-001-not-ready.md': `# Story: S-001\n\n## Linked Features\n- F-001\n\n## Before:\nOld\n\n## After:\nNew\n\n## Acceptance Criteria\n- [ ] Works\n\n## DoR Checklist\n- [x] Feature link exists\n- [ ] AC are testable\n- [x] Story reviewed`,
-      });
-      
-      const results = await linter.runRule('TS-STORY-005');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR);
-      assert.strictEqual(errors.length, 1, 'Should have 1 error');
-      assert.match(errors[0].message, /DoR.*incomplete|unchecked/i);
-    });
-  });
-});
+describe('formatResults', () => {
+    test('should format empty results', () => {
+        const result = new LintResult();
+        const formatted = formatResults(result);
 
-// =============================================================================
-// Test Suite: ADR Rules (TS-ADR)
-// =============================================================================
-
-describe('TS-ADR: ADR Rules', () => {
-  let tempDir;
-  let linter;
-  
-  beforeEach(() => {
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'teamspec-test-'));
-    linter = new Linter(tempDir);
-  });
-  
-  afterEach(() => {
-    fs.rmSync(tempDir, { recursive: true, force: true });
-  });
-  
-  describe('TS-ADR-001: ADR required when architecture marked', () => {
-    test('passes when ADR exists for architecture-marked story', async () => {
-      createTestProject(tempDir, {
-        'projects/test-project/features/F-001-auth.md': VALID_FEATURE,
-        'projects/test-project/adr/ADR-001-jwt.md': VALID_ADR,
-        'projects/test-project/stories/backlog/S-001-arch.md': `# Story: S-001\n\n## Linked Features\n- F-001\n\n- [x] ADR Required\n\nRelated: ADR-001\n\n## Before:\nOld\n\n## After:\nNew\n\n## Acceptance Criteria\n- [ ] Works`,
-      });
-      
-      const results = await linter.runRule('TS-ADR-001');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR);
-      assert.strictEqual(errors.length, 0, 'Should have no errors');
+        assert.ok(formatted.includes('No lint errors'));
     });
-    
-    test('fails when ADR required but not linked', async () => {
-      createTestProject(tempDir, {
-        'projects/test-project/stories/backlog/S-001-missing-adr.md': `# Story: S-001\n\n## Linked Features\n- F-001\n\n- [x] ADR Required\n\n## Before:\nOld\n\n## After:\nNew\n\n## Acceptance Criteria\n- [ ] Works`,
-      });
-      
-      const results = await linter.runRule('TS-ADR-001');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR);
-      assert.strictEqual(errors.length, 1, 'Should have 1 error');
-      assert.match(errors[0].message, /ADR.*required|missing.*ADR/i);
+
+    test('should format errors with file grouping', () => {
+        const result = new LintResult();
+        result.add('TS-TEST-1', 'Error 1', '/path/to/file.md', SEVERITY.ERROR);
+        result.add('TS-TEST-2', 'Error 2', '/path/to/file.md', SEVERITY.ERROR);
+
+        const formatted = formatResults(result);
+
+        assert.ok(formatted.includes('/path/to/file.md'));
+        assert.ok(formatted.includes('TS-TEST-1'));
+        assert.ok(formatted.includes('TS-TEST-2'));
     });
-  });
-  
-  describe('TS-ADR-002: ADR must link to features', () => {
-    test('passes when ADR links to feature', async () => {
-      createTestProject(tempDir, {
-        'projects/test-project/adr/ADR-001-jwt.md': VALID_ADR,
-      });
-      
-      const results = await linter.runRule('TS-ADR-002');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR);
-      assert.strictEqual(errors.length, 0, 'Should have no errors');
+
+    test('should show blocker message when blockers exist', () => {
+        const result = new LintResult();
+        result.add('TS-DOD-003', 'Blocker', '/file.md', SEVERITY.BLOCKER);
+
+        const formatted = formatResults(result);
+
+        assert.ok(formatted.includes('BLOCKERS'));
     });
-    
-    test('fails when ADR has no feature link', async () => {
-      createTestProject(tempDir, {
-        'projects/test-project/adr/ADR-001-no-link.md': `# ADR-001: Some Decision\n\n## Status\nAccepted\n\n## Context\nSome context.\n\n## Decision\nSome decision.`,
-      });
-      
-      const results = await linter.runRule('TS-ADR-002');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR);
-      assert.strictEqual(errors.length, 1, 'Should have 1 error');
-      assert.match(errors[0].message, /ADR.*link.*feature|feature.*link/i);
-    });
-  });
-});
-
-// =============================================================================
-// Test Suite: Dev Plan Rules (TS-DEVPLAN)
-// =============================================================================
-
-describe('TS-DEVPLAN: Dev Plan Rules', () => {
-  let tempDir;
-  let linter;
-  
-  beforeEach(() => {
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'teamspec-test-'));
-    linter = new Linter(tempDir);
-  });
-  
-  afterEach(() => {
-    fs.rmSync(tempDir, { recursive: true, force: true });
-  });
-  
-  describe('TS-DEVPLAN-001: Story in sprint must have dev plan', () => {
-    test('passes when dev plan exists for sprint story', async () => {
-      createTestProject(tempDir, {
-        'projects/test-project/stories/ready-for-development/S-001-sprint.md': `# Story: S-001\n\n**Status:** In Sprint\n\n## Linked Features\n- F-001\n\n## Before:\nOld\n\n## After:\nNew\n\n## Acceptance Criteria\n- [ ] Works`,
-        'projects/test-project/dev-plans/story-001-tasks.md': `# Dev Plan: S-001\n\n## Tasks\n- [ ] Task 1`,
-      });
-      
-      const results = await linter.runRule('TS-DEVPLAN-001');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR);
-      assert.strictEqual(errors.length, 0, 'Should have no errors');
-    });
-    
-    test('fails when dev plan missing for sprint story', async () => {
-      createTestProject(tempDir, {
-        'projects/test-project/stories/ready-for-development/S-001-no-plan.md': `# Story: S-001\n\n**Status:** In Sprint\n\n## Linked Features\n- F-001\n\n## Before:\nOld\n\n## After:\nNew\n\n## Acceptance Criteria\n- [ ] Works`,
-      });
-      
-      const results = await linter.runRule('TS-DEVPLAN-001');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR);
-      assert.strictEqual(errors.length, 1, 'Should have 1 error');
-      assert.match(errors[0].message, /dev.*plan.*missing/i);
-    });
-  });
-});
-
-// =============================================================================
-// Test Suite: DoD Rules (TS-DOD)
-// =============================================================================
-
-describe('TS-DOD: Definition of Done Rules', () => {
-  let tempDir;
-  let linter;
-  
-  beforeEach(() => {
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'teamspec-test-'));
-    linter = new Linter(tempDir);
-  });
-  
-  afterEach(() => {
-    fs.rmSync(tempDir, { recursive: true, force: true });
-  });
-  
-  describe('TS-DOD-001: Canon must be updated when behavior changes', () => {
-    test('passes when DoD checklist shows canon updated', async () => {
-      createTestProject(tempDir, {
-        'projects/test-project/features/F-001-auth.md': `${VALID_FEATURE}\n| 2026-01-07 | S-001 | Added password reset |`,
-        'projects/test-project/stories/ready-for-development/S-001-done.md': `# Story: S-001\n\n**Status:** Done\n\n## Linked Features\n- F-001\n\n## Impact\n- [x] Adds Behavior\n\n## Before:\nOld\n\n## After:\nNew\n\n## Acceptance Criteria\n- [x] Works\n\n## DoD Checklist\n- [x] Code complete\n- [x] Tests pass\n- [x] Feature Canon updated`,
-      });
-      
-      const results = await linter.runRule('TS-DOD-001');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR || r.severity === SEVERITY.BLOCKER);
-      assert.strictEqual(errors.length, 0, 'Should have no errors');
-    });
-    
-    test('fails when behavior changed but canon not updated', async () => {
-      createTestProject(tempDir, {
-        'projects/test-project/stories/ready-for-development/S-001-not-synced.md': `# Story: S-001\n\n**Status:** Done\n\n## Linked Features\n- F-001\n\n## Impact\n- [x] Adds Behavior\n\n## Before:\nOld\n\n## After:\nNew\n\n## Acceptance Criteria\n- [x] Works\n\n## DoD Checklist\n- [x] Code complete\n- [x] Tests pass\n- [ ] Feature Canon updated`,
-      });
-      
-      const results = await linter.runRule('TS-DOD-001');
-      const blockers = results.filter(r => r.severity === SEVERITY.BLOCKER);
-      assert.strictEqual(blockers.length, 1, 'Should have 1 blocker');
-      assert.match(blockers[0].message, /canon.*not.*updated|feature.*sync/i);
-    });
-  });
-});
-
-// =============================================================================
-// Test Suite: Full Linter Run
-// =============================================================================
-
-describe('Linter: Full Project Scan', () => {
-  let tempDir;
-  let linter;
-  
-  beforeEach(() => {
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'teamspec-test-'));
-    linter = new Linter(tempDir);
-  });
-  
-  afterEach(() => {
-    fs.rmSync(tempDir, { recursive: true, force: true });
-  });
-  
-  test('runs all rules on valid project with no errors', async () => {
-    createTestProject(tempDir, {
-      'projects/projects-index.md': `# Projects\n| ID | Name |\n|-----|------|\n| test-project | Test |\n`,
-      'projects/test-project/project.yml': 'project_id: test-project\nname: Test\nstatus: active\nstakeholders: []\nroles: [BA, DEV]',
-      'projects/test-project/features/F-001-auth.md': VALID_FEATURE,
-      'projects/test-project/stories/backlog/S-001-story.md': VALID_STORY,
-    });
-    
-    const results = await linter.run();
-    const errors = results.filter(r => r.severity === SEVERITY.ERROR || r.severity === SEVERITY.BLOCKER);
-    assert.strictEqual(errors.length, 0, `Should have no errors, got: ${JSON.stringify(errors, null, 2)}`);
-  });
-  
-  test('reports multiple errors for invalid project', async () => {
-    createTestProject(tempDir, {
-      'projects/projects-index.md': `# Projects\n| ID | Name |\n|-----|------|\n`,
-      'projects/test-project/project.yml': 'project_id: test-project',
-      'projects/test-project/stories/backlog/S-001-bad.md': `# Story: S-001\n\n## No features linked\n\n## No delta format\n\nTBD placeholder`,
-    });
-    
-    const results = await linter.run();
-    const errors = results.filter(r => r.severity === SEVERITY.ERROR || r.severity === SEVERITY.BLOCKER);
-    assert.ok(errors.length >= 3, `Should have at least 3 errors, got ${errors.length}`);
-  });
-  
-  test('returns results grouped by file', async () => {
-    createTestProject(tempDir, {
-      'projects/test-project/stories/backlog/S-001-bad.md': `# Story: S-001\n\nTBD`,
-    });
-    
-    const results = await linter.run();
-    const byFile = linter.groupByFile(results);
-    
-    assert.ok(Object.keys(byFile).length > 0, 'Should have grouped results');
-  });
-  
-  test('supports filtering by project', async () => {
-    // Create two projects
-    fs.mkdirSync(path.join(tempDir, 'projects', 'project-a', 'stories', 'backlog'), { recursive: true });
-    fs.mkdirSync(path.join(tempDir, 'projects', 'project-b', 'stories', 'backlog'), { recursive: true });
-    
-    fs.writeFileSync(
-      path.join(tempDir, 'projects', 'project-a', 'stories', 'backlog', 'S-001.md'),
-      '# Story\nTBD'
-    );
-    fs.writeFileSync(
-      path.join(tempDir, 'projects', 'project-b', 'stories', 'backlog', 'S-002.md'),
-      '# Story\nTBD'
-    );
-    
-    const resultsA = await linter.run({ project: 'project-a' });
-    const resultsB = await linter.run({ project: 'project-b' });
-    
-    // Results should be filtered to respective projects
-    const filesA = [...new Set(resultsA.map(r => r.file))];
-    const filesB = [...new Set(resultsB.map(r => r.file))];
-    
-    assert.ok(filesA.every(f => f.includes('project-a')), 'Project A results should only contain project-a files');
-    assert.ok(filesB.every(f => f.includes('project-b')), 'Project B results should only contain project-b files');
-  });
-});
-
-// =============================================================================
-// Test Suite: Naming Convention Validation
-// =============================================================================
-
-describe('Naming Conventions (from PROJECT_STRUCTURE.yml)', () => {
-  let tempDir;
-  let linter;
-  
-  beforeEach(() => {
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'teamspec-test-'));
-    linter = new Linter(tempDir);
-  });
-  
-  afterEach(() => {
-    fs.rmSync(tempDir, { recursive: true, force: true });
-  });
-  
-  test('validates feature naming pattern', async () => {
-    createTestProject(tempDir, {
-      'projects/test-project/features/bad-name.md': VALID_FEATURE,
-    });
-    
-    const results = await linter.run();
-    const warnings = results.filter(r => r.ruleId === 'TS-NAMING-FEATURE');
-    assert.ok(warnings.length > 0, 'Should warn about invalid feature naming');
-  });
-  
-  test('validates story naming pattern', async () => {
-    createTestProject(tempDir, {
-      'projects/test-project/stories/backlog/bad-story-name.md': VALID_STORY,
-    });
-    
-    const results = await linter.run();
-    const warnings = results.filter(r => r.ruleId === 'TS-NAMING-STORY');
-    assert.ok(warnings.length > 0, 'Should warn about invalid story naming');
-  });
-  
-  test('validates dev-plan naming pattern', async () => {
-    createTestProject(tempDir, {
-      'projects/test-project/dev-plans/bad-plan.md': '# Bad plan',
-    });
-    
-    const results = await linter.run();
-    const warnings = results.filter(r => r.ruleId === 'TS-NAMING-DEVPLAN');
-    assert.ok(warnings.length > 0, 'Should warn about invalid dev-plan naming');
-  });
-  
-  test('accepts valid naming patterns', async () => {
-    createTestProject(tempDir, {
-      'projects/test-project/features/F-001-user-auth.md': VALID_FEATURE,
-      'projects/test-project/stories/backlog/S-001-add-reset.md': VALID_STORY,
-      'projects/test-project/dev-plans/story-001-tasks.md': '# Dev Plan\n\n## Tasks\n- [ ] Task 1',
-      'projects/test-project/adr/ADR-001-jwt.md': VALID_ADR,
-    });
-    
-    const results = await linter.run();
-    const namingWarnings = results.filter(r => r.ruleId?.startsWith('TS-NAMING'));
-    assert.strictEqual(namingWarnings.length, 0, 'Should have no naming warnings');
-  });
-});
-
-// =============================================================================
-// Test Suite: CLI Integration
-// =============================================================================
-
-describe('CLI: teamspec lint command', () => {
-  // Note: These tests verify the CLI interface exists and works
-  // Full CLI tests would be integration tests
-  
-  test('Linter exports required functions', () => {
-    assert.ok(typeof Linter === 'function', 'Linter should be a constructor');
-    assert.ok(typeof rules === 'object', 'rules should be exported');
-    assert.ok(typeof SEVERITY === 'object', 'SEVERITY should be exported');
-  });
-  
-  test('Linter instance has required methods', () => {
-    const linter = new Linter('/tmp');
-    assert.ok(typeof linter.run === 'function', 'linter.run should exist');
-    assert.ok(typeof linter.runRule === 'function', 'linter.runRule should exist');
-    assert.ok(typeof linter.groupByFile === 'function', 'linter.groupByFile should exist');
-  });
-});
-
-// =============================================================================
-// TeamSpec 4.0 Test Suite: Version Detection
-// =============================================================================
-
-describe('TS-4.0: Version Detection', () => {
-  let tempDir;
-  let linter;
-  
-  beforeEach(() => {
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'teamspec-v4-test-'));
-    linter = new Linter(tempDir);
-  });
-  
-  afterEach(() => {
-    fs.rmSync(tempDir, { recursive: true, force: true });
-  });
-  
-  test('detects 2.0 workspace (features in project)', () => {
-    // Create 2.0 structure
-    createTestProject(tempDir, {
-      'projects/test-project/features/F-001-test.md': VALID_FEATURE,
-    });
-    
-    const version = linter.getWorkspaceVersion();
-    assert.strictEqual(version, '2.0', 'Should detect 2.0 workspace');
-  });
-  
-  test('detects 4.0 workspace (products folder with product.yml)', () => {
-    // Create 4.0 structure
-    fs.mkdirSync(path.join(tempDir, 'products', 'test-product', 'features'), { recursive: true });
-    fs.writeFileSync(
-      path.join(tempDir, 'products', 'test-product', 'product.yml'),
-      'product:\n  id: "test-product"\n  prefix: "TST"\n  name: "Test Product"\n  status: active\n'
-    );
-    
-    const version = linter.getWorkspaceVersion();
-    assert.strictEqual(version, '4.0', 'Should detect 4.0 workspace');
-  });
-  
-  test('defaults to 2.0 for empty workspace', () => {
-    const version = linter.getWorkspaceVersion();
-    assert.strictEqual(version, '2.0', 'Should default to 2.0');
-  });
-});
-
-// =============================================================================
-// TeamSpec 4.0 Test Suite: Product Rules (TS-PROD)
-// =============================================================================
-
-describe('TS-4.0: Product Rules (TS-PROD)', () => {
-  let tempDir;
-  let linter;
-  
-  beforeEach(() => {
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'teamspec-v4-test-'));
-    linter = new Linter(tempDir);
-  });
-  
-  afterEach(() => {
-    fs.rmSync(tempDir, { recursive: true, force: true });
-  });
-  
-  /**
-   * Create a 4.0 product structure
-   */
-  function createTestProduct(baseDir, productId, productContent = {}) {
-    const productDir = path.join(baseDir, 'products', productId);
-    fs.mkdirSync(path.join(productDir, 'features'), { recursive: true });
-    fs.mkdirSync(path.join(productDir, 'business-analysis'), { recursive: true });
-    fs.mkdirSync(path.join(productDir, 'solution-designs'), { recursive: true });
-    fs.mkdirSync(path.join(productDir, 'technical-architecture'), { recursive: true });
-    fs.mkdirSync(path.join(productDir, 'decisions'), { recursive: true });
-    
-    // Create product.yml
-    const defaultProductYml = `product:
-  id: "${productId}"
-  prefix: "TST"
-  name: "Test Product"
-  status: active
-  owner: "Test Owner"
-`;
-    fs.writeFileSync(
-      path.join(productDir, 'product.yml'),
-      productContent['product.yml'] || defaultProductYml
-    );
-    
-    // Create products-index.md
-    if (!fs.existsSync(path.join(baseDir, 'products', 'products-index.md'))) {
-      fs.writeFileSync(
-        path.join(baseDir, 'products', 'products-index.md'),
-        `# Products Index\n\n| Prefix | ID | Name | Status |\n|--------|-----|------|--------|\n| TST | ${productId} | Test Product | active |\n`
-      );
-    }
-    
-    // Create any additional files
-    for (const [filePath, content] of Object.entries(productContent)) {
-      if (filePath === 'product.yml') continue;
-      const fullPath = path.join(productDir, filePath);
-      fs.mkdirSync(path.dirname(fullPath), { recursive: true });
-      fs.writeFileSync(fullPath, content);
-    }
-    
-    return productDir;
-  }
-  
-  describe('TS-PROD-001: Product folder must be registered', () => {
-    test('passes when product is in products-index.md', async () => {
-      createTestProduct(tempDir, 'test-product');
-      
-      const results = await linter.runRule('TS-PROD-001');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR);
-      assert.strictEqual(errors.length, 0, 'Should have no errors');
-    });
-    
-    test('fails when product is not in products-index.md', async () => {
-      createTestProduct(tempDir, 'unregistered-product');
-      // Overwrite the index to not include the product
-      fs.writeFileSync(
-        path.join(tempDir, 'products', 'products-index.md'),
-        '# Products Index\n\n| Prefix | ID | Name |\n|--------|-----|------|\n'
-      );
-      
-      const results = await linter.runRule('TS-PROD-001');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR);
-      assert.strictEqual(errors.length, 1, 'Should have 1 error');
-      assert.match(errors[0].message, /not registered/i);
-    });
-  });
-  
-  describe('TS-PROD-002: product.yml required with minimum metadata', () => {
-    test('passes with all required fields', async () => {
-      createTestProduct(tempDir, 'test-product', {
-        'product.yml': `product:
-  id: "test-product"
-  prefix: "TST"
-  name: "Test Product"
-  status: active
-  owner: "Test Owner"
-`
-      });
-      
-      const results = await linter.runRule('TS-PROD-002');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR);
-      assert.strictEqual(errors.length, 0, 'Should have no errors');
-    });
-    
-    test('fails with invalid prefix format', async () => {
-      createTestProduct(tempDir, 'test-product', {
-        'product.yml': `product:
-  id: "test-product"
-  prefix: "ts"
-  name: "Test Product"
-  status: active
-`
-      });
-      
-      const results = await linter.runRule('TS-PROD-002');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR);
-      assert.ok(errors.length > 0, 'Should have errors');
-      assert.ok(errors.some(e => e.message.includes('prefix')), 'Should have prefix error');
-    });
-  });
-  
-  describe('TS-PROD-004: Product features-index.md required', () => {
-    test('passes when features-index.md exists', async () => {
-      createTestProduct(tempDir, 'test-product', {
-        'features/features-index.md': '# Features Index\n'
-      });
-      
-      const results = await linter.runRule('TS-PROD-004');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR);
-      assert.strictEqual(errors.length, 0, 'Should have no errors');
-    });
-    
-    test('fails when features-index.md is missing', async () => {
-      createTestProduct(tempDir, 'test-product');
-      
-      const results = await linter.runRule('TS-PROD-004');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR);
-      assert.strictEqual(errors.length, 1, 'Should have 1 error');
-      assert.match(errors[0].message, /features-index.md/i);
-    });
-  });
-  
-  describe('TS-PROD-005: Product story-ledger.md required', () => {
-    test('passes when story-ledger.md exists', async () => {
-      createTestProduct(tempDir, 'test-product', {
-        'features/story-ledger.md': '# Story Ledger\n'
-      });
-      
-      const results = await linter.runRule('TS-PROD-005');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR);
-      assert.strictEqual(errors.length, 0, 'Should have no errors');
-    });
-    
-    test('fails when story-ledger.md is missing', async () => {
-      createTestProduct(tempDir, 'test-product');
-      
-      const results = await linter.runRule('TS-PROD-005');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR);
-      assert.strictEqual(errors.length, 1, 'Should have 1 error');
-      assert.match(errors[0].message, /story-ledger.md/i);
-    });
-  });
-});
-
-// =============================================================================
-// TeamSpec 4.0 Test Suite: Feature-Increment Rules (TS-FI)
-// =============================================================================
-
-describe('TS-4.0: Feature-Increment Rules (TS-FI)', () => {
-  let tempDir;
-  let linter;
-  
-  beforeEach(() => {
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'teamspec-v4-test-'));
-    linter = new Linter(tempDir);
-  });
-  
-  afterEach(() => {
-    fs.rmSync(tempDir, { recursive: true, force: true });
-  });
-  
-  /**
-   * Create a 4.0 project with feature-increments
-   */
-  function createTestProject4(baseDir, projectId, files = {}) {
-    const projectDir = path.join(baseDir, 'projects', projectId);
-    fs.mkdirSync(path.join(projectDir, 'feature-increments'), { recursive: true });
-    fs.mkdirSync(path.join(projectDir, 'epics'), { recursive: true });
-    fs.mkdirSync(path.join(projectDir, 'stories', 'backlog'), { recursive: true });
-    fs.mkdirSync(path.join(projectDir, 'stories', 'ready-to-refine'), { recursive: true });
-    fs.mkdirSync(path.join(projectDir, 'stories', 'ready-to-develop'), { recursive: true });
-    
-    // Also create a product (for 4.0 detection)
-    fs.mkdirSync(path.join(baseDir, 'products', 'test-product', 'features'), { recursive: true });
-    fs.writeFileSync(
-      path.join(baseDir, 'products', 'test-product', 'product.yml'),
-      'product:\n  id: "test-product"\n  prefix: "TST"\n  name: "Test Product"\n  status: active\n'
-    );
-    
-    // Create project.yml
-    fs.writeFileSync(
-      path.join(projectDir, 'project.yml'),
-      `project:
-  id: "${projectId}"
-  name: "Test Project"
-  status: active
-  target_products:
-    - test-product
-`
-    );
-    
-    // Create any additional files
-    for (const [filePath, content] of Object.entries(files)) {
-      const fullPath = path.join(projectDir, filePath);
-      fs.mkdirSync(path.dirname(fullPath), { recursive: true });
-      fs.writeFileSync(fullPath, content);
-    }
-    
-    return projectDir;
-  }
-  
-  describe('TS-FI-002: Feature-Increment must have AS-IS and TO-BE sections', () => {
-    test('passes with AS-IS and TO-BE sections', async () => {
-      createTestProject4(tempDir, 'test-project', {
-        'feature-increments/fi-TST-001-test.md': `# Feature Increment
-
-## Target Product
-test-product (TST)
-
-## Target Feature
-f-TST-001-test
-
-## AS-IS
-Current behavior description
-
-## TO-BE
-New behavior description
-`
-      });
-      
-      const results = await linter.runRule('TS-FI-002');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR);
-      assert.strictEqual(errors.length, 0, 'Should have no errors');
-    });
-    
-    test('fails without AS-IS section', async () => {
-      createTestProject4(tempDir, 'test-project', {
-        'feature-increments/fi-TST-001-test.md': `# Feature Increment
-
-## Target Product
-test-product (TST)
-
-## TO-BE
-New behavior description
-`
-      });
-      
-      const results = await linter.runRule('TS-FI-002');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR);
-      assert.ok(errors.length > 0, 'Should have errors');
-      assert.ok(errors.some(e => e.message.includes('AS-IS')), 'Should have AS-IS error');
-    });
-    
-    test('fails without TO-BE section', async () => {
-      createTestProject4(tempDir, 'test-project', {
-        'feature-increments/fi-TST-001-test.md': `# Feature Increment
-
-## Target Product
-test-product (TST)
-
-## AS-IS
-Current behavior description
-`
-      });
-      
-      const results = await linter.runRule('TS-FI-002');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR);
-      assert.ok(errors.length > 0, 'Should have errors');
-      assert.ok(errors.some(e => e.message.includes('TO-BE')), 'Should have TO-BE error');
-    });
-  });
-});
-
-// =============================================================================
-// TeamSpec 4.0 Test Suite: Epic Rules (TS-EPIC)
-// =============================================================================
-
-describe('TS-4.0: Epic Rules (TS-EPIC)', () => {
-  let tempDir;
-  let linter;
-  
-  beforeEach(() => {
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'teamspec-v4-test-'));
-    linter = new Linter(tempDir);
-  });
-  
-  afterEach(() => {
-    fs.rmSync(tempDir, { recursive: true, force: true });
-  });
-  
-  /**
-   * Create a 4.0 project with epics
-   */
-  function createTestProject4(baseDir, projectId, files = {}) {
-    const projectDir = path.join(baseDir, 'projects', projectId);
-    fs.mkdirSync(path.join(projectDir, 'feature-increments'), { recursive: true });
-    fs.mkdirSync(path.join(projectDir, 'epics'), { recursive: true });
-    fs.mkdirSync(path.join(projectDir, 'stories', 'backlog'), { recursive: true });
-    
-    // Also create a product (for 4.0 detection)
-    fs.mkdirSync(path.join(baseDir, 'products', 'test-product', 'features'), { recursive: true });
-    fs.writeFileSync(
-      path.join(baseDir, 'products', 'test-product', 'product.yml'),
-      'product:\n  id: "test-product"\n  prefix: "TST"\n  name: "Test Product"\n  status: active\n'
-    );
-    
-    // Create project.yml
-    fs.writeFileSync(
-      path.join(projectDir, 'project.yml'),
-      `project:
-  id: "${projectId}"
-  name: "Test Project"
-  status: active
-  target_products:
-    - test-product
-`
-    );
-    
-    // Create any additional files
-    for (const [filePath, content] of Object.entries(files)) {
-      const fullPath = path.join(projectDir, filePath);
-      fs.mkdirSync(path.dirname(fullPath), { recursive: true });
-      fs.writeFileSync(fullPath, content);
-    }
-    
-    return projectDir;
-  }
-  
-  describe('TS-EPIC-001: Epic must link to Feature-Increments', () => {
-    test('passes with Feature-Increment link', async () => {
-      createTestProject4(tempDir, 'test-project', {
-        'epics/epic-TST-001-test.md': `# Epic
-
-## Feature-Increments
-- fi-TST-001-test
-
-## TO-BE
-Target state description
-`
-      });
-      
-      const results = await linter.runRule('TS-EPIC-001');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR);
-      assert.strictEqual(errors.length, 0, 'Should have no errors');
-    });
-    
-    test('fails without Feature-Increment link', async () => {
-      createTestProject4(tempDir, 'test-project', {
-        'epics/epic-TST-001-test.md': `# Epic
-
-## TO-BE
-Target state description
-`
-      });
-      
-      const results = await linter.runRule('TS-EPIC-001');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR);
-      assert.ok(errors.length > 0, 'Should have errors');
-      assert.match(errors[0].message, /Feature-Increment/i);
-    });
-  });
-  
-  describe('TS-EPIC-002: Epic must define TO-BE state', () => {
-    test('passes with TO-BE section', async () => {
-      createTestProject4(tempDir, 'test-project', {
-        'epics/epic-TST-001-test.md': `# Epic
-
-## Feature-Increments
-- fi-TST-001-test
-
-## TO-BE
-Target state description
-`
-      });
-      
-      const results = await linter.runRule('TS-EPIC-002');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR);
-      assert.strictEqual(errors.length, 0, 'Should have no errors');
-    });
-    
-    test('passes with Business Value section', async () => {
-      createTestProject4(tempDir, 'test-project', {
-        'epics/epic-TST-001-test.md': `# Epic
-
-## Feature-Increments
-- fi-TST-001-test
-
-## Business Value
-Value proposition description
-`
-      });
-      
-      const results = await linter.runRule('TS-EPIC-002');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR);
-      assert.strictEqual(errors.length, 0, 'Should have no errors');
-    });
-    
-    test('fails without TO-BE or Business Value section', async () => {
-      createTestProject4(tempDir, 'test-project', {
-        'epics/epic-TST-001-test.md': `# Epic
-
-## Feature-Increments
-- fi-TST-001-test
-`
-      });
-      
-      const results = await linter.runRule('TS-EPIC-002');
-      const errors = results.filter(r => r.severity === SEVERITY.ERROR);
-      assert.ok(errors.length > 0, 'Should have errors');
-      assert.match(errors[0].message, /TO-BE|Business Value/i);
-    });
-  });
 });
