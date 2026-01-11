@@ -85,13 +85,13 @@ structure:
           example: "ta-DIT-001-database-schema.md"
         
         # QA - Regression (Product-level)
-        - path: "qa/regression/"
-          name: "Regression Test Sets"
+        - path: "qa/regression-tests/"
+          name: "Regression Tests"
           owner: "QA"
-          purpose: "Product-level regression suites"
+          purpose: "Product-level regression test suites per feature"
           lifespan: "Permanent"
-          naming_pattern: "reg-PRX-set\\.md"
-          example: "reg-DIT-set.md"
+          naming_pattern: "rt-f-PRX-NNN-[a-z-]+\\.md"
+          example: "rt-f-DIT-001-user-login-regression.md"
         
         # Product Decisions
         - path: "decisions/"
@@ -253,23 +253,26 @@ structure:
           lifespan: "Project duration"
           subfolders:
             - path: "test-cases/"
-              description: "Feature test cases"
-              naming_pattern: "tc-f-PRX-NNN-test-cases\\.md"
-              example: "tc-f-DIT-001-test-cases.md"
-              test_id_pattern: "tc-f-PRX-NNN-YYY"
-              test_id_example: "tc-f-DIT-001-003"
-            - path: "bugs/"
-              description: "Bug reports linked to stories"
-              naming_pattern: "bug-eNNN-sYYY-ZZZ\\.md"
-              example: "bug-e001-s003-001.md"
-              pattern_explanation:
-                eNNN: "Epic number"
-                sYYY: "Story sequence"
-                ZZZ: "Bug sequence"
+              description: "Feature-Increment test cases"
+              naming_pattern: "tc-fi-PRX-NNN-[a-z-]+\\.md"
+              example: "tc-fi-DIT-001-oauth-login-tests.md"
+              targets: "fi-PRX-NNN (Feature-Increment)"
+            - path: "bug-reports/"
+              description: "Bug reports found during project testing"
+              naming_pattern: "bug-{project-id}-NNN-[a-z-]+\\.md"
+              example: "bug-q1-auth-042-oauth-timeout.md"
+              note: "NNN is unique within project"
             - path: "uat/"
               description: "UAT packs for stakeholder validation"
-              naming_pattern: "uat-f-PRX-NNN\\.md"
-              example: "uat-f-DIT-001.md"
+              naming_pattern: "uat-fi-PRX-NNN\\.md"
+              example: "uat-fi-DIT-001.md"
+              targets: "fi-PRX-NNN (Feature-Increment)"
+            - path: "regression-impact/"
+              description: "Regression impact assessment at deployment gate"
+              naming_pattern: "ri-fi-PRX-NNN\\.md"
+              example: "ri-fi-DIT-001.md"
+              lint_rule: "TS-QA-003"
+              note: "Required at deployment gate - either update rt-f-* or record no-impact"
         
         # Sprints
         - path: "sprints/"
@@ -356,13 +359,14 @@ role_responsibilities:
   QA:
     description: "QA Engineer"
     owns:
-      - "products/*/qa/regression/"
+      - "products/*/qa/regression-tests/"
       - "projects/*/qa/"
     operations:
-      - "Design test cases"
+      - "Design test cases for Feature-Increments"
       - "Create and manage bug reports"
       - "Create UAT packs"
-      - "Maintain regression test sets"
+      - "Maintain product regression tests"
+      - "Record regression impact at deployment gate"
       - "Validate acceptance criteria"
 
   SM:
@@ -393,7 +397,7 @@ naming_conventions:
     solution_design: "sd-PRX-NNN"
     tech_architecture: "ta-PRX-NNN"
     product_decision: "dec-PRX-NNN"
-    regression_set: "reg-PRX"
+    regression_test: "rt-f-PRX-NNN"
     
     # Project-level
     feature_increment: "fi-PRX-NNN"
@@ -404,10 +408,10 @@ naming_conventions:
     story: "s-eNNN-YYY"
     project_decision: "dec-NNN"
     dev_plan: "dp-eNNN-sYYY"
-    test_case_file: "tc-f-PRX-NNN"
-    test_case_id: "tc-f-PRX-NNN-YYY"
-    uat_pack: "uat-f-PRX-NNN"
-    bug_report: "bug-eNNN-sYYY-ZZZ"
+    test_case_file: "tc-fi-PRX-NNN"
+    regression_impact: "ri-fi-PRX-NNN"
+    uat_pack: "uat-fi-PRX-NNN"
+    bug_report: "bug-{project-id}-NNN"
     sprint: "sprint-N"
   
   file_examples:
@@ -415,8 +419,10 @@ naming_conventions:
     feature_increment: "fi-DIT-001-oauth-login.md"
     story: "s-e001-003-add-google-button.md"
     dev_plan: "dp-e001-s003-tasks.md"
-    bug_report: "bug-e001-s003-001.md"
-    test_cases: "tc-f-DIT-001-test-cases.md"
+    test_cases: "tc-fi-DIT-001-oauth-login-tests.md"
+    regression_test: "rt-f-DIT-001-user-login-regression.md"
+    regression_impact: "ri-fi-DIT-001.md"
+    bug_report: "bug-q1-auth-042-oauth-timeout.md"
     epic: "epic-DIT-001-authentication.md"
 
 # =============================================================================
@@ -485,11 +491,14 @@ quality_gates:
     - "Documentation updated"
   
   deployment_gate:
-    - "All sprint stories meet DoD"
-    - "All regression tests pass"
-    - "UAT sign-off received"
-    - "Deployment checklist complete"
-    - "Canon sync approved by PO"
+    - "All sprint stories in terminal state (Done/Deferred/Out-of-Scope)"
+    - "All Feature-Increments reviewed"
+    - "Code deployed to production"
+    - "Feature toggles enabled (or N/A)"
+    - "Smoke tests passed in production"
+    - "QA sign-off obtained"
+    - "Regression impact recorded (ri-fi-* with assessment)"
+    - "PO approval obtained"
 
 # =============================================================================
 # CROSS-REFERENCE RULES
