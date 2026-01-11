@@ -1,7 +1,10 @@
-# TeamSpec 4.0 Folder Structure Encoding - YAML Reference
-# This file encodes the Product/Project folder structure for use in AI prompts and automation
+# TeamSpec 4.0 Folder Structure Encoding
+# Encodes the physical folder hierarchy for AI prompts and tooling
 # Version: 4.0
 # Last Updated: 2026-01-11
+#
+# NOTE: Role ownership, artifact naming, and gates are defined in registry.yml
+# This file focuses ONLY on folder paths and hierarchy
 
 # =============================================================================
 # CORE CONCEPT: Products vs Projects
@@ -15,551 +18,114 @@ structure:
   # ---------------------------------------------------------------------------
   products:
     path: "products/"
-    description: "Production truth container - canonical artifacts"
-    owner: "PO"
     
     product_folder:
       path: "products/{product-id}/"
-      description: "Individual product (e.g., digital-invoicing/)"
       files:
-        - name: "product.yml"
-          description: "Product identity including PRX prefix"
-          owner: "PO"
-          required: true
-        - name: "README.md"
-          description: "Product overview"
-          owner: "PO"
+        - "product.yml"
+        - "README.md"
       
       subfolders:
-        # Business Analysis (Product-level)
         - path: "business-analysis/"
-          name: "Business Analysis"
-          owner: "BA"
-          purpose: "Product-level business context (market, personas, goals)"
-          lifespan: "Permanent, canonical"
-          naming_pattern: "ba-PRX-NNN-[a-z-]+\\.md"
-          example: "ba-DIT-001-market-overview.md"
-        
-        # Feature Canon (Product-level)
         - path: "features/"
-          name: "Feature Canon"
-          owner: "FA"
-          purpose: "Single source of truth for AS-IS system behavior"
-          lifespan: "Permanent, canonical"
           key_files:
-            - name: "features-index.md"
-              description: "Master index of all features"
-            - name: "story-ledger.md"
-              description: "History of all stories that modified this product"
-          naming_pattern: "f-PRX-NNN-[a-z-]+\\.md"
-          example: "f-DIT-001-user-authentication.md"
-          sections:
-            - "Purpose"
-            - "Personas"
-            - "User Flows"
-            - "Business Rules"
-            - "Edge Cases"
-            - "Acceptance Criteria"
-            - "Change Log"
-          rules:
-            - "Features describe current (AS-IS) behavior only"
-            - "Updated ONLY after successful deployment"
-            - "All other artifacts reference Feature Canon"
-        
-        # Solution Designs (Product-level)
+            - "features-index.md"
+            - "story-ledger.md"
         - path: "solution-designs/"
-          name: "Solution Design"
-          owner: "SA"
-          purpose: "Technical design - HOW the system is built"
-          lifespan: "Permanent, canonical"
-          naming_pattern: "sd-PRX-NNN-[a-z-]+\\.md"
-          example: "sd-DIT-001-api-design.md"
-        
-        # Technical Architecture (Product-level)
         - path: "technical-architecture/"
-          name: "Technical Architecture"
-          owner: "SA"
-          purpose: "Architecture decisions and patterns"
-          lifespan: "Permanent, canonical"
-          naming_pattern: "ta-PRX-NNN-[a-z-]+\\.md"
-          example: "ta-DIT-001-database-schema.md"
-        
-        # QA - Regression (Product-level)
         - path: "qa/regression-tests/"
-          name: "Regression Tests"
-          owner: "QA"
-          purpose: "Product-level regression test suites per feature"
-          lifespan: "Permanent"
-          naming_pattern: "rt-f-PRX-NNN-[a-z-]+\\.md"
-          example: "rt-f-DIT-001-user-login-regression.md"
-        
-        # Product Decisions
         - path: "decisions/"
-          name: "Product Decisions"
-          owner: "PO"
-          purpose: "Strategic product decisions"
-          lifespan: "Permanent"
-          naming_pattern: "dec-PRX-NNN-[a-z-]+\\.md"
-          example: "dec-DIT-001-pricing-model.md"
 
   # ---------------------------------------------------------------------------
   # PROJECTS - Change Proposals
   # ---------------------------------------------------------------------------
   projects:
     path: "projects/"
-    description: "Change proposal container - time-bound work"
-    owner: "PO"
     
     project_folder:
       path: "projects/{project-id}/"
-      description: "Individual project (e.g., q1-2026-oauth-integration/)"
       files:
-        - name: "project.yml"
-          description: "Project identity, target_products, PRX mapping"
-          owner: "PO"
-          required: true
-        - name: "README.md"
-          description: "Project overview"
-          owner: "PO"
+        - "project.yml"
+        - "README.md"
       
       subfolders:
-        # Business Analysis Increments
         - path: "business-analysis-increments/"
-          name: "BA Increments"
-          owner: "BA"
-          purpose: "Proposed business analysis for changes"
-          lifespan: "Project duration, syncs to product BA"
-          naming_pattern: "bai-PRX-NNN-[a-z-]+\\.md"
-          example: "bai-DIT-001-oauth-business-case.md"
-        
-        # Feature Increments
         - path: "feature-increments/"
-          name: "Feature Increments"
-          owner: "FA"
-          purpose: "Proposed feature changes (TO-BE state)"
-          lifespan: "Project duration, syncs to Feature Canon"
           key_files:
-            - name: "increments-index.md"
-              description: "Index of all feature-increments"
-          naming_pattern: "fi-PRX-NNN-[a-z-]+\\.md"
-          example: "fi-DIT-001-oauth-login.md"
-          rules:
-            - "Describes proposed changes, not current state"
-            - "Syncs to Feature Canon after successful deployment"
-        
-        # Solution Design Increments
+            - "increments-index.md"
         - path: "solution-design-increments/"
-          name: "SD Increments"
-          owner: "SA"
-          purpose: "Proposed design changes"
-          lifespan: "Project duration, syncs to product SD"
-          naming_pattern: "sdi-PRX-NNN-[a-z-]+\\.md"
-          example: "sdi-DIT-001-oauth-api.md"
-        
-        # Technical Architecture Increments
         - path: "technical-architecture-increments/"
-          name: "TA Increments"
-          owner: "SA"
-          purpose: "Proposed architecture changes"
-          lifespan: "Project duration, syncs to product TA"
-          naming_pattern: "tai-PRX-NNN-[a-z-]+\\.md"
-          example: "tai-DIT-001-redis-cache.md"
-        
-        # Epics
         - path: "epics/"
-          name: "Epics"
-          owner: "FA"
-          purpose: "Story containers linking to Feature-Increments"
-          lifespan: "Project duration"
           key_files:
-            - name: "epics-index.md"
-              description: "Index of all epics"
-          naming_pattern: "epic-PRX-NNN-[a-z-]+\\.md"
-          example: "epic-DIT-001-authentication-overhaul.md"
-        
-        # Stories
+            - "epics-index.md"
         - path: "stories/"
-          name: "User Stories"
-          owner: "FA"
-          purpose: "Executable deltas describing changes"
-          lifespan: "Project duration"
-          naming_pattern: "s-eNNN-YYY-[a-z-]+\\.md"
-          example: "s-e001-003-add-google-login-button.md"
-          pattern_explanation:
-            eNNN: "Epic number (e001 = epic 1)"
-            YYY: "Story sequence within epic"
           workflow_subfolders:
-            - path: "backlog/"
-              description: "New stories, not yet refined"
-              owner: "FA"
-              workflow_order: 1
-            - path: "ready-to-refine/"
-              description: "Ready for team refinement"
-              owner: "FA → DEV"
-              workflow_order: 2
-            - path: "ready-to-develop/"
-              description: "DoR complete, ready for sprint"
-              owner: "DEV → SM"
-              workflow_order: 3
-            - path: "deferred/"
-              description: "Deferred to future"
-              owner: "FA"
-              terminal: true
-            - path: "out-of-scope/"
-              description: "Removed from scope"
-              owner: "FA"
-              terminal: true
-          sections:
-            - "Epic Link (required)"
-            - "Feature-Increment Link (required)"
-            - "Before (current state reference)"
-            - "After (proposed change)"
-            - "Impact (which Canon sections affected)"
-            - "Acceptance Criteria"
-        
-        # Project Decisions
+            - "backlog/"
+            - "ready-to-refine/"
+            - "ready-to-develop/"
+            - "deferred/"
+            - "out-of-scope/"
         - path: "decisions/"
-          name: "Project Decisions"
-          owner: "PO"
-          purpose: "Project-level decisions (scope, timeline, priorities)"
-          lifespan: "Project duration"
-          naming_pattern: "dec-NNN-[a-z-]+\\.md"
-          example: "dec-001-scope-reduction.md"
-        
-        # Dev Plans
         - path: "dev-plans/"
-          name: "Development Plans"
-          owner: "DEV"
-          purpose: "Technical implementation plans for stories"
-          lifespan: "Story duration"
-          naming_pattern: "dp-eNNN-sYYY-[a-z-]+\\.md"
-          example: "dp-e001-s003-tasks.md"
-          pattern_explanation:
-            dp: "Dev plan prefix"
-            eNNN: "Epic number (explicit e= prefix)"
-            sYYY: "Story sequence (explicit s= prefix)"
-          sections:
-            - "Story reference"
-            - "Estimated Effort"
-            - "Task Breakdown"
-            - "Affected Files/Components"
-            - "Testing Strategy"
-        
-        # QA (Project-level)
         - path: "qa/"
-          name: "QA Artifacts"
-          owner: "QA"
-          purpose: "Test design and execution"
-          lifespan: "Project duration"
           subfolders:
-            - path: "test-cases/"
-              description: "Feature-Increment test cases"
-              naming_pattern: "tc-fi-PRX-NNN-[a-z-]+\\.md"
-              example: "tc-fi-DIT-001-oauth-login-tests.md"
-              targets: "fi-PRX-NNN (Feature-Increment)"
-            - path: "bug-reports/"
-              description: "Bug reports found during project testing"
-              naming_pattern: "bug-{project-id}-NNN-[a-z-]+\\.md"
-              example: "bug-q1-auth-042-oauth-timeout.md"
-              note: "NNN is unique within project"
-            - path: "uat/"
-              description: "UAT packs for stakeholder validation"
-              naming_pattern: "uat-fi-PRX-NNN\\.md"
-              example: "uat-fi-DIT-001.md"
-              targets: "fi-PRX-NNN (Feature-Increment)"
-            - path: "regression-impact/"
-              description: "Regression impact assessment at deployment gate"
-              naming_pattern: "ri-fi-PRX-NNN\\.md"
-              example: "ri-fi-DIT-001.md"
-              lint_rule: "TS-QA-003"
-              note: "Required at deployment gate - either update rt-f-* or record no-impact"
-        
-        # Sprints
+            - "test-cases/"
+            - "bug-reports/"
+            - "uat/"
+            - "regression-impact/"
         - path: "sprints/"
-          name: "Sprint Management"
-          owner: "SM"
-          purpose: "Sprint tracking and execution"
-          lifespan: "Sprint duration"
           key_files:
-            - name: "active-sprint.md"
-              description: "Pointer to current sprint"
+            - "active-sprint.md"
           sprint_folder:
-            naming_pattern: "sprint-N/"
-            example: "sprint-3/"
+            pattern: "sprint-N/"
             files:
               - "sprint-goal.md"
               - "committed-stories.md"
               - "retrospective.md"
 
 # =============================================================================
-# ROLE RESPONSIBILITIES
+# STORY WORKFLOW FOLDERS
 # =============================================================================
-role_responsibilities:
-  PO:
-    description: "Product Owner"
-    owns:
-      - "products/{product-id}/ (creation)"
-      - "projects/{project-id}/ (creation)"
-      - "products/*/decisions/"
-      - "projects/*/decisions/"
-    operations:
-      - "Create products and assign PRX prefix"
-      - "Create projects and link to target products"
-      - "Make prioritization and scope decisions"
-      - "Approve Canon sync after deployment"
-
-  BA:
-    description: "Business Analyst"
-    owns:
-      - "products/*/business-analysis/"
-      - "projects/*/business-analysis-increments/"
-    operations:
-      - "Create and maintain business analysis"
-      - "Create BA increments for proposed changes"
-      - "Sync BA increments to product BA after deployment"
-
-  FA:
-    description: "Functional Analyst"
-    owns:
-      - "products/*/features/"
-      - "projects/*/feature-increments/"
-      - "projects/*/epics/"
-      - "projects/*/stories/"
-    operations:
-      - "Maintain Feature Canon (AS-IS)"
-      - "Create Feature-Increments (TO-BE)"
-      - "Create and manage epics"
-      - "Create stories in backlog/"
-      - "Move stories through workflow"
-      - "Sync Feature-Increments to Canon after deployment"
-
-  SA:
-    description: "Solution Architect"
-    owns:
-      - "products/*/solution-designs/"
-      - "products/*/technical-architecture/"
-      - "projects/*/solution-design-increments/"
-      - "projects/*/technical-architecture-increments/"
-    operations:
-      - "Maintain solution designs"
-      - "Create architecture decisions"
-      - "Create SD/TA increments for proposed changes"
-      - "Sync increments to product after deployment"
-
-  DEV:
-    description: "Developer"
-    owns:
-      - "projects/*/dev-plans/"
-    operations:
-      - "Create development plans"
-      - "Move stories from ready-to-refine/ to ready-to-develop/"
-      - "Implement code"
-      - "Generate structured commits"
-
-  QA:
-    description: "QA Engineer"
-    owns:
-      - "products/*/qa/regression-tests/"
-      - "projects/*/qa/"
-    operations:
-      - "Design test cases for Feature-Increments"
-      - "Create and manage bug reports"
-      - "Create UAT packs"
-      - "Maintain product regression tests"
-      - "Record regression impact at deployment gate"
-      - "Validate acceptance criteria"
-
-  SM:
-    description: "Scrum Master"
-    owns:
-      - "projects/*/sprints/"
-    operations:
-      - "Create sprint folders"
-      - "Manage active-sprint.md"
-      - "Move stories to sprints"
-      - "Track velocity"
-      - "Facilitate ceremonies"
-      - "Manage deployment checklist"
+# Stories move between folders based on workflow state
+story_workflow_folders:
+  - folder: "stories/backlog/"
+    state: "backlog"
+    next: "stories/ready-to-refine/"
+    
+  - folder: "stories/ready-to-refine/"
+    state: "ready-to-refine"
+    next: "stories/ready-to-develop/"
+    
+  - folder: "stories/ready-to-develop/"
+    state: "ready-to-develop"
+    next: "sprints/sprint-N/"
+    
+  - folder: "sprints/sprint-N/"
+    state: "in-sprint"
+    next: "completed (archived)"
+    
+  # Terminal states
+  - folder: "stories/deferred/"
+    state: "deferred"
+    terminal: true
+    
+  - folder: "stories/out-of-scope/"
+    state: "out-of-scope"
+    terminal: true
 
 # =============================================================================
-# NAMING CONVENTIONS
+# CANON SYNC FOLDER MAPPINGS
 # =============================================================================
-naming_conventions:
-  prx:
-    description: "Product Prefix - 2-4 uppercase characters"
-    examples: ["DIT", "CPRT", "BILL", "CRM"]
-    usage: "Used in ALL artifact IDs related to that product"
-  
-  identifier_patterns:
-    # Product-level
-    feature: "f-PRX-NNN"
-    business_analysis: "ba-PRX-NNN"
-    solution_design: "sd-PRX-NNN"
-    tech_architecture: "ta-PRX-NNN"
-    product_decision: "dec-PRX-NNN"
-    regression_test: "rt-f-PRX-NNN"
+# Post-deployment, project artifacts sync to product folders
+canon_sync_paths:
+  - from: "projects/{project-id}/feature-increments/"
+    to: "products/{product-id}/features/"
     
-    # Project-level
-    feature_increment: "fi-PRX-NNN"
-    ba_increment: "bai-PRX-NNN"
-    sd_increment: "sdi-PRX-NNN"
-    ta_increment: "tai-PRX-NNN"
-    epic: "epic-PRX-NNN"
-    story: "s-eNNN-YYY"
-    project_decision: "dec-NNN"
-    dev_plan: "dp-eNNN-sYYY"
-    test_case_file: "tc-fi-PRX-NNN"
-    regression_impact: "ri-fi-PRX-NNN"
-    uat_pack: "uat-fi-PRX-NNN"
-    bug_report: "bug-{project-id}-NNN"
-    sprint: "sprint-N"
-  
-  file_examples:
-    feature: "f-DIT-001-user-authentication.md"
-    feature_increment: "fi-DIT-001-oauth-login.md"
-    story: "s-e001-003-add-google-button.md"
-    dev_plan: "dp-e001-s003-tasks.md"
-    test_cases: "tc-fi-DIT-001-oauth-login-tests.md"
-    regression_test: "rt-f-DIT-001-user-login-regression.md"
-    regression_impact: "ri-fi-DIT-001.md"
-    bug_report: "bug-q1-auth-042-oauth-timeout.md"
-    epic: "epic-DIT-001-authentication.md"
-
-# =============================================================================
-# WORKFLOW STATES
-# =============================================================================
-workflow_states:
-  story_workflow:
-    - state: "backlog"
-      location: "stories/backlog/"
-      owner: "FA"
-      transitions_to: "ready-to-refine"
-      trigger: "Initial review complete"
+  - from: "projects/{project-id}/business-analysis-increments/"
+    to: "products/{product-id}/business-analysis/"
     
-    - state: "ready-to-refine"
-      location: "stories/ready-to-refine/"
-      owner: "FA → DEV"
-      transitions_to: "ready-to-develop"
-      trigger: "Refinement complete, DoR met"
+  - from: "projects/{project-id}/solution-design-increments/"
+    to: "products/{product-id}/solution-designs/"
     
-    - state: "ready-to-develop"
-      location: "stories/ready-to-develop/"
-      owner: "DEV → SM"
-      transitions_to: "in-sprint"
-      trigger: "Sprint commitment"
-    
-    - state: "in-sprint"
-      location: "sprints/sprint-N/"
-      owner: "DEV"
-      transitions_to: "completed"
-      trigger: "Implementation complete, DoD met"
-    
-    - state: "completed"
-      owner: "FA"
-      action: "Story archived, Canon sync prepared"
-  
-  terminal_states:
-    - state: "deferred"
-      location: "stories/deferred/"
-      owner: "FA"
-      description: "Deferred to future project"
-    
-    - state: "out-of-scope"
-      location: "stories/out-of-scope/"
-      owner: "FA"
-      description: "Removed from project scope"
-
-# =============================================================================
-# QUALITY GATES
-# =============================================================================
-quality_gates:
-  definition_of_ready:
-    - "Linked to Epic"
-    - "Linked to Feature-Increment"
-    - "Before/After/Impact sections complete"
-    - "Acceptance Criteria are testable"
-    - "No TBD or placeholder content"
-    - "Estimate assigned"
-    - "Dev plan exists"
-  
-  definition_of_done:
-    - "All Acceptance Criteria verified"
-    - "Code reviewed and merged"
-    - "All tests passing"
-    - "Bug reports resolved or deferred"
-    - "Canon sync prepared (if behavior changed)"
-    - "Documentation updated"
-  
-  deployment_gate:
-    - "All sprint stories in terminal state (Done/Deferred/Out-of-Scope)"
-    - "All Feature-Increments reviewed"
-    - "Code deployed to production"
-    - "Feature toggles enabled (or N/A)"
-    - "Smoke tests passed in production"
-    - "QA sign-off obtained"
-    - "Regression impact recorded (ri-fi-* with assessment)"
-    - "PO approval obtained"
-
-# =============================================================================
-# CROSS-REFERENCE RULES
-# =============================================================================
-cross_reference_rules:
-  feature_canon:
-    referenced_by:
-      - "Feature-Increments (what they're changing)"
-      - "Stories (via Before section)"
-      - "Test cases (what they validate)"
-    
-  feature_increment:
-    must_link_to:
-      - "Feature Canon (what it's changing)"
-      - "Epics (containing stories)"
-    referenced_by:
-      - "Stories (what they implement)"
-    
-  story:
-    must_link_to:
-      - "Epic (parent container)"
-      - "Feature-Increment (what it implements)"
-    should_link_to:
-      - "Dev plan"
-      - "Test cases"
-    
-  dev_plan:
-    must_link_to:
-      - "Story (which story it implements)"
-    
-  bug_report:
-    must_link_to:
-      - "Story (where bug was found)"
-    should_link_to:
-      - "Test case (which test failed)"
-
-# =============================================================================
-# CANON SYNC RULES
-# =============================================================================
-canon_sync:
-  trigger: "Successful deployment to production"
-  
-  sync_pairs:
-    - from: "projects/*/feature-increments/fi-*.md"
-      to: "products/*/features/f-*.md"
-      owner: "FA"
-    
-    - from: "projects/*/business-analysis-increments/bai-*.md"
-      to: "products/*/business-analysis/ba-*.md"
-      owner: "BA"
-    
-    - from: "projects/*/solution-design-increments/sdi-*.md"
-      to: "products/*/solution-designs/sd-*.md"
-      owner: "SA"
-    
-    - from: "projects/*/technical-architecture-increments/tai-*.md"
-      to: "products/*/technical-architecture/ta-*.md"
-      owner: "SA"
-  
-  rules:
-    - "Canon is NEVER modified directly during development"
-    - "Sync only after successful deployment"
-    - "PO must approve Canon sync"
-    - "Story-ledger updated with all synced stories"
+  - from: "projects/{project-id}/technical-architecture-increments/"
+    to: "products/{product-id}/technical-architecture/"
