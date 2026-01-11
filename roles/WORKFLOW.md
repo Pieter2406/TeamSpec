@@ -1,7 +1,7 @@
 # TeamSpec Workflow & Order of Operations
 
 > **Version:** 2.0  
-> **Last Updated:** 2026-01-07  
+> **Last Updated:** 2026-01-11  
 > **Status:** Canonical Reference
 
 This document defines the **end-to-end workflow** for TeamSpec, including explicit role handoffs and hard gates that enforce the Feature Canon operating model.
@@ -22,24 +22,30 @@ flowchart TD
         P3 --> G3{{"Gate:<br/>Stories Ready"}}
     end
     
-    subgraph "Phase 4-7: Execution"
+    subgraph "Phase 4-6: Execution"
         G3 --> P4["Phase 4<br/>ARCHITECTURE<br/>(SA)"]
         P4 --> G4{{"Gate:<br/>ADR Ready"}}
         G4 --> P5["Phase 5<br/>SPRINT<br/>(SM/DEV)"]
         P5 --> G5{{"Gate:<br/>Sprint Complete"}}
         G5 --> P6["Phase 6<br/>QUALITY<br/>(QA)"]
         P6 --> G6{{"Gate:<br/>Tested"}}
-        G6 --> P7["Phase 7<br/>CANON SYNC<br/>(FA)"]
-        P7 --> G7{{"Gate:<br/>Canon Updated"}}
     end
     
-    subgraph "Phase 8: Release"
-        G7 --> P8["Phase 8<br/>RELEASE<br/>(SM/Team)"]
+    subgraph "Phase 7: Release"
+        G6 --> P7["Phase 7<br/>RELEASE<br/>(SM/Team)"]
+        P7 --> G7{{"Gate:<br/>Deployed"}}
     end
 
-    style P7 fill:#ff6b6b,stroke:#c92a2a,color:#fff
-    style G7 fill:#ff6b6b,stroke:#c92a2a,color:#fff
+    subgraph "Phase 8: Canon Sync (Post-Deployment)"
+        G7 -.-> P8["Phase 8<br/>PRODUCT CANON SYNC<br/>(PO/FA)"]
+        P8 -.-> G8{{"Gate:<br/>Canon Updated"}}
+    end
+
+    style P8 fill:#ff6b6b,stroke:#c92a2a,color:#fff
+    style G8 fill:#ff6b6b,stroke:#c92a2a,color:#fff
 ```
+
+> **Note:** Canon Sync (Phase 8) occurs **after deployment** to production. The Product Canon should only be updated to reflect behavior that is actually deployed and running. This is triggered via `ts:po sync` when the increment is verified in production.
 
 ---
 
@@ -445,104 +451,121 @@ Every bug must be classified as ONE of:
 ### Handoff
 
 ```
-QA → FA: Testing complete, canon sync needed
-         FA must update Feature Canon if behavior changed
+QA → SM: Testing complete, ready for release
+         SM can proceed with release activities
 QA → DEV: Bugs filed for implementation defects
           DEV must fix before Done
 ```
 
 ---
 
-## Phase 7 — Feature Canon Synchronization
-
-**Primary Role:** FA  
-**Supporting Roles:** BA (intent validation), SA (technical impact)  
-**Frequency:** After every story that changes behavior
-
-### Purpose
-
-**THE MOST CRITICAL GATE IN TEAMSPEC**
-
-Ensure Feature Canon reflects implemented behavior.
-
-### Steps
-
-| Step | Action | Owner | Artifact |
-|------|--------|-------|----------|
-| 7.1 | Review completed stories | FA | Story review |
-| 7.2 | Update Feature Canon (if behavior changed) | FA | `/features/F-XXX.md` |
-| 7.3 | Add Change Log entry | FA | Feature Change Log |
-| 7.4 | Update story-ledger.md | FA | `/features/story-ledger.md` |
-| 7.5 | Verify stories remain deltas | FA | Story validation |
-
-### Canon Update Requirements
-
-If story impact is `Adds Behavior` or `Changes Behavior`:
-
-- [ ] Feature Canon updated to reflect new behavior
-- [ ] Change Log entry added with story reference
-- [ ] story-ledger.md updated
-- [ ] Story DoD checkbox "Feature Canon updated" checked
-
-### Gate: Canon Synchronized
-
-**Must be TRUE before story is Done:**
-
-- [ ] Feature Canon reflects current behavior
-- [ ] Change Log references the story
-- [ ] Story-ledger.md updated
-- [ ] DoD checkbox checked
-
-**Linter Rules:** `TS-DOD-001`, `TS-DOD-002`
-
-### Hard Rule
-
-🚫 **Story cannot be marked Done if it changes behavior and Canon is not updated**
-
-### Handoff
-
-```
-FA → BA: Canon updated, may need business validation
-         BA reviews if business attributes changed
-FA → SM: Story is Done
-         SM can close story and update metrics
-```
-
----
-
-## Phase 8 — Review, Release & Learning
+## Phase 7 — Release
 
 **Primary Role:** SM  
 **Supporting Roles:** BA, QA, Stakeholders, Team  
-**Frequency:** Per sprint
+**Frequency:** Per sprint or release cycle
+
+### Purpose
+
+Deploy the increment to production and verify it is working correctly.
 
 ### Steps
 
 | Step | Action | Owner | Artifact |
 |------|--------|-------|----------|
-| 8.1 | Sprint Review | SM | Demo |
-| 8.2 | Validate against Feature Canon | Team | Canon validation |
-| 8.3 | UAT Execution | QA + Stakeholders | UAT results |
-| 8.4 | Stakeholder sign-off | BA | Approval |
-| 8.5 | Retrospective | SM | Retro notes |
-| 8.6 | Close sprint | SM | Sprint archive |
-| 8.7 | Update metrics | SM | Velocity, burndown |
+| 7.1 | Sprint Review | SM | Demo |
+| 7.2 | UAT Execution | QA + Stakeholders | UAT results |
+| 7.3 | Stakeholder sign-off | BA | Approval |
+| 7.4 | Deploy to production | Team | Deployment |
+| 7.5 | Verify deployment | QA + Team | Smoke tests |
+| 7.6 | Retrospective | SM | Retro notes |
+| 7.7 | Close sprint | SM | Sprint archive |
+| 7.8 | Update metrics | SM | Velocity, burndown |
 
-### Gate: Sprint Complete
+### Gate: Deployed
+
+**Must be TRUE before proceeding to Canon Sync:**
 
 - [ ] All committed stories Done
-- [ ] Feature Canon synchronized
 - [ ] UAT passed (if applicable)
+- [ ] Deployment to production successful
+- [ ] Smoke tests passing
 - [ ] Sprint closed
 - [ ] Metrics updated
 
 ### Handoff
 
 ```
-SM → BA: Sprint complete, feedback collected
-        BA may update priorities for next sprint
+SM → PO: Deployment complete, ready for canon sync
+         PO can approve and execute ts:po sync
 SM → Team: Retrospective complete
            Team applies learnings
+```
+
+---
+
+## Phase 8 — Product Canon Synchronization (Post-Deployment)
+
+**Primary Role:** PO (executes), FA (prepares)  
+**Supporting Roles:** BA (intent validation), SA (technical impact)  
+**Frequency:** After deployment to production
+
+### Purpose
+
+**THE MOST CRITICAL GATE IN TEAMSPEC**
+
+Ensure Product Canon reflects the **actually deployed** production behavior.
+
+> **Important:** Canon Sync happens **after deployment**, not before. The Product Canon should only be updated to reflect behavior that is verified to be running in production.
+
+### Steps
+
+| Step | Action | Owner | Artifact |
+|------|--------|-------|----------|
+| 8.1 | Verify deployment is successful | PO | Deployment verification |
+| 8.2 | FA prepares sync proposal | FA | Sync proposal document |
+| 8.3 | Review completed stories | FA | Story review |
+| 8.4 | PO approves canon sync | PO | Approval |
+| 8.5 | Update Product Canon (if behavior changed) | FA | `/products/*/features/f-PRX-XXX.md` |
+| 8.6 | Add Change Log entry | FA | Feature Change Log |
+| 8.7 | Update story-ledger.md | FA | `/products/*/features/story-ledger.md` |
+| 8.8 | Execute `ts:po sync` | PO | Canon updated |
+
+### Canon Update Requirements
+
+If story impact is `Adds Behavior` or `Changes Behavior`:
+
+- [ ] Deployment to production verified
+- [ ] PO approval for canon sync obtained
+- [ ] Feature Canon updated to reflect new behavior
+- [ ] Change Log entry added with story reference
+- [ ] story-ledger.md updated
+
+### Gate: Canon Synchronized
+
+**Must be TRUE for project completion:**
+
+- [ ] Deployment verified in production
+- [ ] PO has approved the sync
+- [ ] Product Canon reflects deployed behavior
+- [ ] Change Log references the stories
+- [ ] Story-ledger.md updated
+- [ ] `ts:po sync` executed
+
+**Linter Rules:** `TS-DOD-001`, `TS-DOD-002`, `TS-DOD-003`
+
+### Hard Rule
+
+🚫 **Product Canon can only be updated after deployment verification**
+🚫 **FA prepares changes; PO executes the sync**
+
+### Handoff
+
+```
+PO → BA: Canon updated, project may be closed
+         BA reviews if business validation needed
+PO → Team: Canon sync complete
+           Product Canon now reflects production state
 ```
 
 ---
@@ -570,8 +593,11 @@ stateDiagram-v2
     READY_FOR_TESTING --> DONE: QA passes<br/>(after testing)
     note right of READY_FOR_TESTING: QA verifies
     
-    DONE --> ARCHIVED: FA archives<br/>(Canon updated)
-    note right of DONE: DoD must pass<br/>including Canon sync
+    DONE --> DEPLOYED: SM releases<br/>(deployed to prod)
+    note right of DONE: DoD must pass
+    
+    DEPLOYED --> ARCHIVED: PO syncs Canon<br/>(after deployment)
+    note right of DEPLOYED: Canon sync post-deployment
     
     ARCHIVED --> [*]
     note right of ARCHIVED: Historical record
@@ -585,8 +611,9 @@ stateDiagram-v2
 | Ready-to-Refine → Ready-for-Dev | DEV refinement + DoR | DEV + Linter |
 | Ready-for-Dev → In Sprint | SM assignment | SM + Linter |
 | In Sprint → Ready for Testing | Dev complete | DEV + Linter |
-| Ready for Testing → Done | QA pass + DoD + Canon sync | QA + FA + Linter |
-| Done → Archived | Canon sync confirmed | FA |
+| Ready for Testing → Done | QA pass + DoD | QA + Linter |
+| Done → Deployed | Release approval | SM + PO |
+| Deployed → Archived | Canon sync after deployment | PO + FA |
 
 ---
 
@@ -627,15 +654,20 @@ flowchart TD
     P7 --> P7c["Bugs classified"]
     P7a & P7b & P7c --> P8
     
-    P8["⭐ CANON SYNC<br/>(FA) ★ CRITICAL ★"]:::critical --> P8a["Feature Canon updated"]
-    P8 --> P8b["Change Log entry"]
-    P8 --> P8c["Story-ledger updated"]
+    P8["🚀 RELEASE<br/>(SM/Team)"] --> P8a["Deployed to production"]
+    P8 --> P8b["Smoke tests passed"]
+    P8 --> P8c["Sprint closed"]
     P8a & P8b & P8c --> P9
     
-    P9["🚀 REVIEW & RELEASE<br/>(SM)"] --> P9a["Sprint closed"]
+    P9["⭐ CANON SYNC<br/>(PO/FA) ★ POST-DEPLOYMENT ★"]:::critical --> P9a["Product Canon updated"]
+    P9 --> P9b["Change Log entry"]
+    P9 --> P9c["Story-ledger updated"]
+    P9a & P9b & P9c --> P10["✅ PROJECT COMPLETE"]
     
     classDef critical fill:#ff6b6b,stroke:#c92a2a,color:#fff,stroke-width:3px
 ```
+
+> **Note:** Canon Sync (P9) occurs **after deployment** to production. The Product Canon should only reflect behavior that is verified to be running in production.
 
 ---
 

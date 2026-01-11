@@ -350,24 +350,30 @@ flowchart TD
         P3 --> G3{{"Gate:<br/>Stories Ready"}}
     end
     
-    subgraph "Phase 4-7: Execution"
+    subgraph "Phase 4-6: Execution"
         G3 --> P4["Phase 4<br/>ARCHITECTURE<br/>(SA)"]
         P4 --> G4{{"Gate:<br/>ADR Ready"}}
         G4 --> P5["Phase 5<br/>SPRINT<br/>(SM/DEV)"]
         P5 --> G5{{"Gate:<br/>Sprint Complete"}}
         G5 --> P6["Phase 6<br/>QUALITY<br/>(QA)"]
         P6 --> G6{{"Gate:<br/>Tested"}}
-        G6 --> P7["Phase 7<br/>CANON SYNC<br/>(FA)"]
-        P7 --> G7{{"Gate:<br/>Canon Updated"}}
     end
     
-    subgraph "Phase 8: Release"
-        G7 --> P8["Phase 8<br/>RELEASE<br/>(SM/Team)"]
+    subgraph "Phase 7: Release"
+        G6 --> P7["Phase 7<br/>RELEASE<br/>(SM/Team)"]
+        P7 --> G7{{"Gate:<br/>Deployed"}}
     end
 
-    style P7 fill:#ff6b6b,stroke:#c92a2a,color:#fff
-    style G7 fill:#ff6b6b,stroke:#c92a2a,color:#fff
+    subgraph "Phase 8: Canon Sync (Post-Deployment)"
+        G7 -.-> P8["Phase 8<br/>PRODUCT CANON SYNC<br/>(PO/FA)"]
+        P8 -.-> G8{{"Gate:<br/>Canon Updated"}}
+    end
+
+    style P8 fill:#ff6b6b,stroke:#c92a2a,color:#fff
+    style G8 fill:#ff6b6b,stroke:#c92a2a,color:#fff
 ```
+
+> **Note:** Canon Sync (Phase 8) occurs **after deployment** to production. The Product Canon should only be updated to reflect behavior that is actually deployed and running. This is triggered via `ts:po sync` when the increment is verified in production.
 
 ### Role Handoffs
 
@@ -390,12 +396,13 @@ flowchart LR
         DEV3[DEV] -->|"Implementation complete<br/>ready for testing"| QA1[QA]
     end
     
-    subgraph "QA to Functional"
-        QA2[QA] -->|"Testing complete<br/>canon sync needed"| FA4[FA]
+    subgraph "QA to Release"
+        QA2[QA] -->|"Testing complete<br/>ready for release"| SM2[SM]
     end
     
-    subgraph "Functional to Business"
-        FA5[FA] -->|"Canon updated<br/>business validation may be needed"| BA2[BA]
+    subgraph "Post-Deployment Sync"
+        SM3[SM] -->|"Deployed to production<br/>sync to canon"| PO1[PO]
+        PO1 -->|"Canon sync approved<br/>FA prepares changes"| FA4[FA]
     end
     
     subgraph "Sprint Operations"
@@ -419,10 +426,14 @@ stateDiagram-v2
     
     READY_FOR_TESTING --> DONE: QA passes (after testing)
     
-    DONE --> ARCHIVED: FA archives (Canon updated)
+    DONE --> DEPLOYED: SM releases (deployed to prod)
+    
+    DEPLOYED --> ARCHIVED: PO syncs Canon (after deployment)
     
     ARCHIVED --> [*]
 ```
+
+> **Note:** Canon sync to ARCHIVED state happens **after deployment** via `ts:po sync`.
 
 ---
 

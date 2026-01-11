@@ -376,12 +376,13 @@ flowchart LR
         DEV3[DEV] -->|"Implementation complete<br/>ready for testing"| QA1[QA]
     end
     
-    subgraph "QA to Functional"
-        QA2[QA] -->|"Testing complete<br/>canon sync needed"| FA4[FA]
+    subgraph "QA to Release"
+        QA2[QA] -->|"Testing complete<br/>ready for release"| SM2[SM]
     end
     
-    subgraph "Functional to Business"
-        FA5[FA] -->|"Canon updated<br/>business validation may be needed"| BA2[BA]
+    subgraph "Post-Deployment Sync"
+        SM3[SM] -->|"Deployed to production<br/>sync to canon"| PO1[PO]
+        PO1 -->|"Canon sync approved<br/>FA prepares changes"| FA4[FA]
     end
     
     subgraph "Sprint Operations"
