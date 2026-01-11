@@ -172,16 +172,257 @@ Users can also log in with Google OAuth.
 
 ### Role Boundaries
 
-| Role | Owns | Primary Commands |
-|------|------|------------------|
-| **PO** | Products, product lifecycle, deployment approval | `ts:po product`, `ts:deploy` |
-| **BA** | Projects, business analysis, decisions | `ts:ba project`, `ts:ba analysis` |
-| **FA** | Feature Canon, feature-increments, stories, epics | `ts:fa story`, `ts:fa slice` |
-| **SA** | Architecture, technical decisions | `ts:sa adr` |
-| **DEV** | Implementation, dev plans | `ts:dev plan`, `ts:dev implement` |
-| **QA** | Test cases, bugs, validation | `ts:qa test`, `ts:qa bug` |
-| **SM** | Sprints, ceremonies, process | `ts:sm sprint`, `ts:sm planning` |
-| **DES** | UX design, design artifacts | `ts:des wireframe` |
+| Role | Owns | Does NOT Own | Primary Commands |
+|------|------|--------------|------------------|
+| **PO** | Products, product lifecycle, deployment approval | Project execution details | `ts:po product`, `ts:deploy` |
+| **BA** | Projects, business analysis, decisions, features | Stories, UI, technical design | `ts:ba project`, `ts:ba analysis` |
+| **FA** | Feature Canon, feature-increments, stories, epics | Business intent, implementation | `ts:fa story`, `ts:fa slice` |
+| **SA** | Architecture, technical decisions, ADRs | Requirements, code implementation | `ts:sa adr` |
+| **DEV** | Implementation, dev plans, code quality | Requirements definition, scope | `ts:dev plan`, `ts:dev implement` |
+| **QA** | Test cases, bugs, validation | Requirements definition, canon updates | `ts:qa test`, `ts:qa bug` |
+| **SM** | Sprints, ceremonies, process, metrics | Prioritization, scope, acceptance | `ts:sm sprint`, `ts:sm planning` |
+| **DES** | UX design, design artifacts, usability | Scope, priority | `ts:des wireframe` |
+
+### Role Descriptions and Rules
+
+#### Product Owner (PO)
+**Ownership Domain:** Products, Projects, Product Lifecycle, Deployment Approval, Production Truth
+
+| Responsibility | Description |
+|----------------|-------------|
+| Product Definition | Create and own product structure with unique PRX prefix |
+| Deployment Approval | Approve sync from project to product |
+| Product Lifecycle | Manage active, deprecated, retired states |
+| Project Management | Create projects that target one or more products |
+
+**Hard Rules:**
+- PO never modifies Product Canon during active project execution
+- PO owns deployment gate — no sync without PO approval
+- Product Canon updates require deployment verification
+- Products must be registered before projects can target them
+- PRX must be unique, 3-4 uppercase letters, and immutable
+
+---
+
+#### Business Analyst (BA)
+**Ownership Domain:** Business Intent, Strategic Direction, Feature Definition
+
+| Responsibility | Description |
+|----------------|-------------|
+| Project Creation | Create and own `/projects/{project-id}/` structure |
+| Business Analysis | Perform analysis of business processes |
+| Feature Definition | Define and prioritize Features (implementation-agnostic) |
+| Decision Logs | Maintain `/decisions/` with business decisions |
+
+**Hard Rules:**
+- BA never writes stories (FA responsibility)
+- BA never defines system behavior details
+- BA never approves technical feasibility
+- BA owns "what and why", never "how"
+- All feature changes require decision log entry
+
+---
+
+#### Functional Analyst (FA)
+**Ownership Domain:** System Behavior, Story Definition, Feature Canon Synchronization
+
+| Responsibility | Description |
+|----------------|-------------|
+| Story Definition | Define Stories as deltas to Features |
+| Acceptance Criteria | Write ACs aligned to Feature Canon |
+| Feature Canon Sync | Update Feature Canon when behavior changes |
+| Behavior Validation | Validate behavior with users and SMEs |
+
+**Hard Rules:**
+- All behavior must trace to BA analysis or stakeholder validation
+- FA is the Feature Canon synchronizer
+- Reject stories that restate features instead of deltas
+- Stories must link to ≥1 feature
+- Feature Canon updated before story marked Done
+
+**Critical Gate:** FA is responsible for the most critical gate — ensuring Feature Canon reflects implemented behavior.
+
+---
+
+#### Solution Architect (SA)
+**Ownership Domain:** Technical Direction, Architecture Decisions, System Structure
+
+| Responsibility | Description |
+|----------------|-------------|
+| ADR Ownership | Create and maintain ADRs per Feature |
+| Technical Approach | Define high-level technical approach |
+| Cross-Feature Impact | Assess cross-feature and irreversible decisions |
+
+**Hard Rules:**
+- ADRs link to features and decisions
+- High-level decisions only, not code-level
+- Technical feasibility assessment, not requirement changes
+- ADR required before dev work on architecture-impacting changes
+
+---
+
+#### Developer (DEV)
+**Ownership Domain:** Implementation, Task Planning, Code Delivery
+
+| Responsibility | Description |
+|----------------|-------------|
+| Dev Plans | Create detailed dev plans per story |
+| Implementation | Implement stories per Feature Canon and ADR |
+| Reviewable Iterations | Deliver work in reviewable chunks |
+| DoD Completion | Mark stories ready for testing when DoD met |
+
+**Hard Rules:**
+- DEV cannot redefine scope
+- DEV cannot change feature behavior silently
+- DEV must stop and escalate if ADR or Feature Canon is unclear
+- Dev plan required before implementation starts
+- All tasks must be reviewable
+
+---
+
+#### QA Engineer (QA)
+**Ownership Domain:** Verification, Test Design, Quality Assurance
+
+| Responsibility | Description |
+|----------------|-------------|
+| Story Testing | Test stories against Acceptance Criteria |
+| Feature Test Cases | Create Feature-level test cases (canonical) |
+| Bug Classification | Classify bugs vs documentation gaps |
+| UAT Packs | Prepare UAT packs per persona |
+
+**Hard Rules:**
+- QA never updates Feature Canon directly
+- QA flags mismatches → FA decides
+- Tests are canonical (feature-level), not story-specific
+- Bugs must be classified (implementation vs. canon vs. undocumented)
+
+---
+
+#### Designer (DES)
+**Ownership Domain:** User Experience, Design Artifacts, Interaction Design
+
+| Responsibility | Description |
+|----------------|-------------|
+| UX Design | Create UX designs at Feature level |
+| Design Consistency | Ensure design consistency and usability |
+| User Validation | Validate designs with real users |
+
+**Hard Rules:**
+- Designs are feature canon, not story artifacts
+- Designers work with personas from BA analysis
+- Refuse to design if feature scope is unclear
+- Refuse to design if personas are missing
+
+---
+
+#### Scrum Master (SM)
+**Ownership Domain:** Sprint Operations, Facilitation, Metrics
+
+| Responsibility | Description |
+|----------------|-------------|
+| Sprint Management | Create and manage sprints |
+| Sprint Planning | Facilitate sprint planning |
+| Progress Tracking | Track progress and metrics |
+| Ceremony Facilitation | Run standups, reviews, retros |
+
+**Hard Rules:**
+- SM does not prioritize
+- SM does not change scope
+- SM does not accept work
+- SM is metrics-driven and neutral
+- Only SM can assign stories to sprints
+
+---
+
+### Main Workflow
+
+The TeamSpec workflow follows a structured order of operations with explicit role handoffs and quality gates:
+
+```mermaid
+flowchart TD
+    subgraph "Phase 0-3: Planning"
+        P0["Phase 0<br/>PROJECT INIT<br/>(BA)"] --> G0{{"Gate:<br/>Project Exists"}}
+        G0 --> P1["Phase 1<br/>BUSINESS ANALYSIS<br/>(BA)"]
+        P1 --> G1{{"Gate:<br/>Features Defined"}}
+        G1 --> P2["Phase 2<br/>FUNCTIONAL ELABORATION<br/>(FA)"]
+        P2 --> G2{{"Gate:<br/>Canon Ready"}}
+        G2 --> P3["Phase 3<br/>STORY DEFINITION<br/>(FA)"]
+        P3 --> G3{{"Gate:<br/>Stories Ready"}}
+    end
+    
+    subgraph "Phase 4-7: Execution"
+        G3 --> P4["Phase 4<br/>ARCHITECTURE<br/>(SA)"]
+        P4 --> G4{{"Gate:<br/>ADR Ready"}}
+        G4 --> P5["Phase 5<br/>SPRINT<br/>(SM/DEV)"]
+        P5 --> G5{{"Gate:<br/>Sprint Complete"}}
+        G5 --> P6["Phase 6<br/>QUALITY<br/>(QA)"]
+        P6 --> G6{{"Gate:<br/>Tested"}}
+        G6 --> P7["Phase 7<br/>CANON SYNC<br/>(FA)"]
+        P7 --> G7{{"Gate:<br/>Canon Updated"}}
+    end
+    
+    subgraph "Phase 8: Release"
+        G7 --> P8["Phase 8<br/>RELEASE<br/>(SM/Team)"]
+    end
+
+    style P7 fill:#ff6b6b,stroke:#c92a2a,color:#fff
+    style G7 fill:#ff6b6b,stroke:#c92a2a,color:#fff
+```
+
+### Role Handoffs
+
+```mermaid
+flowchart LR
+    subgraph "Business to Functional"
+        BA1[BA] -->|"Feature defined<br/>ready for story slicing"| FA1[FA]
+    end
+    
+    subgraph "Functional to Development"
+        FA2[FA] -->|"Story refined<br/>ready for development"| DEV1[DEV]
+        FA3[FA] -->|"Functional context<br/>provided for design"| DES1[DES]
+    end
+    
+    subgraph "Architecture to Development"
+        SA1[SA] -->|"ADR created<br/>technical constraints clear"| DEV2[DEV]
+    end
+    
+    subgraph "Development to QA"
+        DEV3[DEV] -->|"Implementation complete<br/>ready for testing"| QA1[QA]
+    end
+    
+    subgraph "QA to Functional"
+        QA2[QA] -->|"Testing complete<br/>canon sync needed"| FA4[FA]
+    end
+    
+    subgraph "Functional to Business"
+        FA5[FA] -->|"Canon updated<br/>business validation may be needed"| BA2[BA]
+    end
+    
+    subgraph "Sprint Operations"
+        SM1[SM] -->|"Sprint planned<br/>work committed"| TEAM[Team]
+    end
+```
+
+### Story State Machine
+
+```mermaid
+stateDiagram-v2
+    [*] --> BACKLOG: FA creates
+    
+    BACKLOG --> READY_TO_REFINE: FA moves (after review)
+    
+    READY_TO_REFINE --> READY_FOR_DEVELOPMENT: DEV moves (after refinement)
+    
+    READY_FOR_DEVELOPMENT --> IN_SPRINT: SM assigns (ONLY SM can assign)
+    
+    IN_SPRINT --> READY_FOR_TESTING: DEV marks ready (after dev complete)
+    
+    READY_FOR_TESTING --> DONE: QA passes (after testing)
+    
+    DONE --> ARCHIVED: FA archives (Canon updated)
+    
+    ARCHIVED --> [*]
+```
 
 ---
 
