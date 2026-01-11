@@ -1,69 +1,85 @@
 # TeamSpec Configuration
-# Version: 2.0.0
+# Version: 4.0.0
 
-version: "2.0"
-name: "TeamSpec Feature Canon Operating Model"
+version: "4.0"
+name: "TeamSpec Product-Canon Operating Model"
 
 # Core principles
 principles:
-  - Feature Canon is the source of truth for system behavior
+  - Product Canon is the source of truth for production behavior (AS-IS)
+  - Feature-Increments propose changes to products (TO-BE)
   - Stories describe deltas (changes), not full behavior
+  - Canon is updated ONLY after deployment via ts:po sync
   - Structural artifacts require explicit creation commands
   - Each role has clear ownership boundaries
 
 # Folder structure reference
 structure:
   teamspec_root: ".teamspec"
-  project_root: "projects/{project-id}"
+  products_root: "products/{product-id}"
+  projects_root: "projects/{project-id}"
   
-  folders:
-    features: "projects/{project-id}/features"
-    stories: "projects/{project-id}/stories"
-    adr: "projects/{project-id}/adr"
-    decisions: "projects/{project-id}/decisions"
-    dev_plans: "projects/{project-id}/dev-plans"
-    qa: "projects/{project-id}/qa"
-    sprints: "projects/{project-id}/sprints"
+  product_folders:
+    features: "products/{product-id}/features"
+    business_analysis: "products/{product-id}/business-analysis"
+    solution_designs: "products/{product-id}/solution-designs"
+    technical_architecture: "products/{product-id}/technical-architecture"
+    decisions: "products/{product-id}/decisions"
+    regression_tests: "products/{product-id}/qa/regression-tests"
+    
+  project_folders:
+    feature_increments: "projects/{project-id}/feature-increments"
     epics: "projects/{project-id}/epics"
+    stories: "projects/{project-id}/stories"
+    dev_plans: "projects/{project-id}/dev-plans"
+    test_cases: "projects/{project-id}/qa/test-cases"
+    bug_reports: "projects/{project-id}/qa/bug-reports"
+    sprints: "projects/{project-id}/sprints"
 
 # Role definitions
 roles:
+  PO:
+    name: "Product Owner"
+    owns:
+      - "Products (product.yml, structure)"
+      - "Projects (project.yml, scope)"
+      - "Product Canon (approval authority)"
+      - "Canon sync execution"
   BA:
     name: "Business Analyst"
     owns:
-      - "Problem/goal definition"
-      - "Business value and scope"
-      - "Feature Canon: Purpose & Scope section"
+      - "Business Analysis artifacts"
+      - "Domain knowledge documentation"
   FA:
     name: "Functional Analyst"
     owns:
-      - "Functional specifications"
-      - "Story slicing"
-      - "Feature Canon: Behavior section"
-      - "Feature Canon: Change Log"
+      - "Features (f-PRX-*.md)"
+      - "Feature-Increments (fi-PRX-*.md)"
+      - "Epics (epic-PRX-*.md)"
+      - "Stories (s-eXXX-YYY-*.md)"
   SA:
     name: "Solution Architect"
     owns:
-      - "Technical design"
-      - "Architecture decisions (ADRs)"
+      - "Solution Designs"
+      - "Technical Architecture"
+      - "ADRs"
   DEV:
     name: "Developer"
     owns:
       - "Implementation"
-      - "Development plans"
+      - "Dev plans (dp-eXXX-sYYY-*.md)"
   QA:
-    name: "Quality Assurance"
+    name: "QA Engineer"
     owns:
-      - "Test cases (feature-level)"
+      - "Project test cases (tc-fi-PRX-*.md)"
+      - "Product regression tests (rt-f-PRX-*.md)"
       - "Bug reports"
-      - "UAT packs"
   SM:
     name: "Scrum Master"
     owns:
-      - "Sprint management"
-      - "Process facilitation"
+      - "Sprint operations"
+      - "Deployment checklist"
   DES:
     name: "Designer"
     owns:
-      - "UI/UX design"
-      - "Design system"
+      - "UX/UI design artifacts"

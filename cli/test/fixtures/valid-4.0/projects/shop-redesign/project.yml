@@ -1,0 +1,7 @@
+# Project Configuration (4.0)
+project:
+  id: "shop-redesign"
+  name: "Shop Redesign"
+  status: "active"
+  target_products:
+    - product_id: "acme-shop"

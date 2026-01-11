@@ -1,0 +1,4 @@
+# Broken: missing required fields (prefix)
+product-id: broken-product
+name: Broken Product
+# prefix: MISSING -- should trigger TS-PROD rule

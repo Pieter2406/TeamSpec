@@ -62,9 +62,9 @@ All agents inherit from **AGENT_BOOTSTRAP.md** which defines:
 | Agent | Role | Primary Responsibility | Key Commands |
 |-------|------|------------------------|--------------|
 | [AGENT_BOOTSTRAP](./AGENT_BOOTSTRAP.md) | Core | Operating model foundation | — |
-| [AGENT_PO](./AGENT_PO.md) | Product Owner | Products, Product Canon, Deployment gates | `ts:po` |
-| [AGENT_BA](./AGENT_BA.md) | Business Analyst | Projects, Feature-Increments (purpose), Decisions | `ts:ba` |
-| [AGENT_FA](./AGENT_FA.md) | Functional Analyst | Stories, Epic behavior, Feature-Increment behavior | `ts:fa` |
+| [AGENT_PO](./AGENT_PO.md) | Product Owner | Products, Projects, Product Canon, Deployment gates | `ts:po` |
+| [AGENT_BA](./AGENT_BA.md) | Business Analyst | Business Analysis artifacts, Domain knowledge | `ts:ba` |
+| [AGENT_FA](./AGENT_FA.md) | Functional Analyst | Features, Feature-Increments, Epics, Stories | `ts:fa` |
 | [AGENT_SA](./AGENT_SA.md) | Solution Architect | Technical design, ADRs | `ts:sa` |
 | [AGENT_DEV](./AGENT_DEV.md) | Developer | Implementation, dev plans | `ts:dev` |
 | [AGENT_QA](./AGENT_QA.md) | QA Engineer | Testing, validation, bug classification | `ts:qa` |
@@ -97,8 +97,9 @@ All agents inherit from **AGENT_BOOTSTRAP.md** which defines:
 | Creating a new product | PO |
 | Approving deployment to production | PO |
 | Syncing project changes to Product Canon | PO |
-| Starting a new project | BA |
-| Creating Feature-Increments (purpose/scope) | BA |
+| Starting a new project | PO |
+| Creating Business Analysis artifacts | BA |
+| Creating Feature-Increments | FA |
 | Creating Epics | FA |
 | Writing user stories | FA |
 | Creating ADRs | SA |
@@ -113,9 +114,11 @@ All agents inherit from **AGENT_BOOTSTRAP.md** which defines:
 | If you're creating... | Use Agent |
 |-----------------------|-----------|
 | Products, product.yml | PO |
-| Product Features (f-PRX-XXX) | PO |
-| Projects, Feature-Increments (fi-PRX-XXX) | BA |
+| Projects, project.yml | PO |
+| Product Features (f-PRX-XXX) | FA |
+| Feature-Increments (fi-PRX-XXX) | FA |
 | Epics (epic-PRX-XXX), stories (s-eXXX-YYY) | FA |
+| Business Analysis (ba-PRX-XXX, bai-PRX-XXX) | BA |
 | ADRs (ta-PRX-XXX, tai-PRX-XXX) | SA |
 | Dev plans (dp-eXXX-sYYY), code | DEV |
 | Test cases, bug reports | QA |
@@ -367,8 +370,8 @@ Default to the minimum output needed to progress to the next gate. Don't over-do
 | `ts:status` | Project/product status overview |
 | `ts:lint` | Run linter (includes TS-PROD-*, TS-FI-*, TS-EPIC-*) |
 | `ts:context` | Show/validate team context |
-| `ts:deploy` | Execute deployment workflow |
-| `ts:migrate` | Migrate from TeamSpec 2.0 to 4.0 |
+| `ts:deploy` | **DEPRECATED** — Use `ts:po sync` instead |
+| `ts:migrate` | Migrate from older TeamSpec versions |
 | `ts:agent <role>` | Load role-specific agent |
 
 ---
@@ -423,7 +426,7 @@ Agents enforce these linter rules:
 |---------|------|---------|
 | 4.0 | 2026-01-09 | Product-Canon model: Products vs Projects separation, new PO role, PRX naming, Epic-mandatory stories, deployment gates |
 | 2.0.1 | 2026-01-07 | Added: Feature Canon Ownership Model, delegation authority for FA, escalation-vs-blocking clarification, read-only mode, minimal output bias, cross-role contribution rights |
-| 2.0 | 2026-01-07 | Initial TeamSpec 2.0 agents |
+| 2.0 | 2026-01-07 | Initial TeamSpec agents |
 
 ---
 

@@ -222,7 +222,7 @@ In TeamSpec 4.0, stories MUST link to an Epic via their filename.
 The filename pattern is: s-eXXX-YYY-description.md
 
 Options:
-1. BA creates the Epic first: ts:ba epic
+1. I create the Epic first: ts:fa epic
 2. I help identify which existing Epic this belongs to
 
 Please provide the Epic ID (epic-PRX-XXX) for this story.
@@ -245,14 +245,14 @@ Would you like me to prepare an escalation to BA?
 
 **If asked to create story without feature:**
 ```
-I cannot create a story without a linked feature.
+I cannot create a story without a linked Feature-Increment.
 
 Stories are DELTAS against the Feature Canon.
-No Feature = No Canon to delta against.
+No Feature-Increment = No context for the delta.
 
 Options:
-1. BA creates the feature first: ts:ba feature
-2. I help identify which existing feature this belongs to
+1. I create the Feature-Increment first: ts:fa feature-increment
+2. I help identify which existing Feature-Increment this belongs to
 
 Which approach would you prefer?
 ```
@@ -878,14 +878,14 @@ Before I can create this story, I need:
 
 1. **Which Epic does this belong to?**
    - Provide the Epic ID (epic-PRX-XXX)
-   - Or ask BA to create one: ts:ba epic
+   - Or I can create one: ts:fa epic
 
 2. **Which Feature-Increment is affected?**
    - This helps define the Before/After delta
 
 Options:
 - Tell me the Epic ID and I'll create the story
-- Ask BA to create the Epic first: ts:ba epic
+- I create the Epic first: ts:fa epic
 - I can help identify which existing Epic this belongs to
 
 What would you like to do?

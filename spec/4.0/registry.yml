@@ -1,0 +1,668 @@
+# spec/4.0/registry.yml
+# This file is the SINGLE SOURCE OF TRUTH for TeamSpec 4.0
+# All tables in README, agents, and docs are GENERATED from this file
+# DO NOT EDIT generated files directly — edit this registry and regenerate
+
+version: "4.0"
+model: "Product-Canon"
+
+# =============================================================================
+# TERMINOLOGY (Canon Hierarchy - define once, use everywhere)
+# =============================================================================
+glossary:
+  product-canon:
+    definition: "The complete set of production-truth documentation for a product"
+    includes:
+      - "features"
+      - "business-analysis"
+      - "solution-designs"
+      - "technical-architecture"
+      - "decisions"
+      - "regression-tests"
+    note: "This is the umbrella term. All production truth lives here."
+  
+  feature-canon:
+    definition: "The behavioral subset of Product Canon - system behavior truth"
+    location: "products/{product-id}/features/"
+    note: "A subset of Product Canon, not a separate concept"
+    
+  feature-increment:
+    definition: "A project artifact proposing changes to a product feature"
+    location: "projects/{project-id}/feature-increments/"
+    abbreviation: "FI"
+    note: "TO-BE state that becomes Feature Canon after deployment + sync"
+
+  epic:
+    definition: "A coherent grouping of stories delivering a business outcome"
+    location: "projects/{project-id}/epics/"
+    note: "All stories must link to an epic via filename"
+
+  story:
+    definition: "A delta describing a change proposed by a Feature-Increment"
+    location: "projects/{project-id}/stories/{state}/"
+    note: "Stories describe CHANGES, not full behavior"
+
+  prx:
+    definition: "Product Prefix - unique 3-4 uppercase character identifier"
+    note: "Assigned at product creation, NEVER changes, used in all artifact filenames"
+
+# =============================================================================
+# ROLES (with Owner vs Verifier vs Approver distinction)
+# =============================================================================
+roles:
+  PO:
+    name: "Product Owner"
+    owns:
+      - "Products (product.yml, structure)"
+      - "Product Canon (approval authority)"
+      - "Projects (project.yml, scope)"
+      - "PRX assignment"
+      - "Deployment approval authority"
+      - "Canon sync execution"
+    creates:
+      - "products/{id}/product.yml"
+      - "projects/{id}/project.yml"
+      - "products/{id}/decisions/dec-PRX-*.md"
+    reviews:
+      - "Feature-Increments (for sync)"
+      - "Project scope"
+    refuses:
+      - "Stories"
+      - "Technical design"
+      - "Sprint management"
+    commands:
+      - "ts:po product"
+      - "ts:po project"
+      - "ts:po sync"
+      - "ts:po status"
+
+  BA:
+    name: "Business Analyst"
+    owns:
+      - "Business Analysis artifacts"
+      - "Domain knowledge documentation"
+      - "Business process documentation"
+    creates:
+      - "products/{id}/business-analysis/ba-PRX-*.md"
+      - "projects/{id}/business-analysis-increments/bai-PRX-*.md"
+    reviews:
+      - "Feature-Increments (business intent)"
+    refuses:
+      - "Projects (PO owns)"
+      - "Features (FA owns)"
+      - "Feature-Increments (FA owns)"
+      - "Epics (FA owns)"
+      - "Stories"
+      - "Technical design"
+    commands:
+      - "ts:ba analysis"
+      - "ts:ba ba-increment"
+      - "ts:ba review"
+
+  FA:
+    name: "Functional Analyst"
+    owns:
+      - "Features (f-PRX-*.md)"
+      - "Feature-Increments (fi-PRX-*.md)"
+      - "Epics (epic-PRX-*.md)"
+      - "Stories (s-eXXX-YYY-*.md)"
+      - "Sync proposals (prepared for PO)"
+    creates:
+      - "products/{id}/features/f-PRX-*.md"
+      - "projects/{id}/feature-increments/fi-PRX-*.md"
+      - "projects/{id}/epics/epic-PRX-*.md"
+      - "projects/{id}/stories/**/s-eXXX-YYY-*.md"
+    reviews:
+      - "BA artifacts (for feature translation)"
+      - "Stories (for Done status)"
+    refuses:
+      - "Products (PO owns)"
+      - "Projects (PO owns)"
+      - "Business intent changes (BA owns)"
+      - "Technical design (SA owns)"
+      - "Canon sync execution (PO owns)"
+    commands:
+      - "ts:fa feature"
+      - "ts:fa feature-increment"
+      - "ts:fa epic"
+      - "ts:fa story"
+      - "ts:fa sync-proposal"
+
+  SA:
+    name: "Solution Architect"
+    owns:
+      - "Solution Designs (sd-PRX-*.md)"
+      - "Technical Architecture (ta-PRX-*.md)"
+    creates:
+      - "products/{id}/solution-designs/sd-PRX-*.md"
+      - "products/{id}/technical-architecture/ta-PRX-*.md"
+      - "projects/{id}/solution-design-increments/sdi-PRX-*.md"
+      - "projects/{id}/technical-architecture-increments/tai-PRX-*.md"
+    reviews:
+      - "Feature-Increments (technical feasibility)"
+    refuses:
+      - "Business requirements"
+      - "Features (FA owns)"
+      - "Stories"
+    commands:
+      - "ts:sa ta"
+      - "ts:sa ta-increment"
+      - "ts:sa sd"
+      - "ts:sa sd-increment"
+      - "ts:sa review"
+
+  DEV:
+    name: "Developer"
+    owns:
+      - "Implementation"
+      - "Dev plans (dp-eXXX-sYYY-*.md)"
+    creates:
+      - "projects/{id}/dev-plans/dp-eXXX-sYYY-*.md"
+    reviews:
+      - "Stories (for implementation clarity)"
+      - "ADRs"
+    refuses:
+      - "Feature definitions"
+      - "Scope changes"
+    commands:
+      - "ts:dev plan"
+      - "ts:dev implement"
+
+  QA:
+    name: "QA Engineer"
+    owns:
+      - "Project test cases (tc-fi-PRX-*.md)"
+      - "Product regression tests (rt-f-PRX-*.md)"
+      - "Bug reports"
+      - "Deployment verification"
+    creates:
+      - "projects/{id}/qa/test-cases/tc-fi-PRX-NNN-*.md"
+      - "projects/{id}/qa/bug-reports/bug-PRX-NNN-*.md"
+      - "products/{id}/qa/regression-tests/rt-f-PRX-NNN-*.md"
+    reviews:
+      - "Stories (for testability)"
+      - "Feature-Increments (for test coverage)"
+    verifies:
+      - "DoD compliance"
+      - "Deployment readiness (smoke tests)"
+    refuses:
+      - "Feature definitions"
+      - "Canon updates (except regression tests)"
+    commands:
+      - "ts:qa test"
+      - "ts:qa verify"
+      - "ts:qa regression"
+    promotion_rule: |
+      At deployment gate, QA must confirm regression coverage is updated:
+      - For each fi-PRX-NNN delivered, either:
+        - Update/create rt-f-PRX-NNN-* regression docs, or
+        - Record "no regression impact" explicitly
+
+  SM:
+    name: "Scrum Master"
+    owns:
+      - "Sprint operations"
+      - "Deployment gate process (checklist, verification)"
+      - "Process facilitation"
+    creates:
+      - "projects/{id}/sprints/sprint-N/*"
+    reviews:
+      - "DoR compliance"
+      - "Deployment readiness"
+    refuses:
+      - "Prioritization (PO decides)"
+      - "Acceptance (FA decides)"
+      - "Scope changes"
+    commands:
+      - "ts:sm sprint"
+      - "ts:sm deploy-checklist"
+
+  DES:
+    name: "Designer"
+    owns:
+      - "UX/UI design artifacts"
+    creates:
+      - "Design documents"
+    reviews:
+      - "Features (for UX implications)"
+    refuses:
+      - "Technical implementation"
+      - "Scope decisions"
+    commands: []
+
+# =============================================================================
+# ARTIFACTS
+# =============================================================================
+artifacts:
+  # Product-level (permanent, production truth)
+  product:
+    location: "products/{product-id}/product.yml"
+    naming: "product.yml"
+    owner: "PO"
+    
+  feature:
+    location: "products/{product-id}/features/"
+    naming: "f-{PRX}-{NNN}-{description}.md"
+    example: "f-ACME-001-user-login.md"
+    owner: "FA"
+    
+  business-analysis:
+    location: "products/{product-id}/business-analysis/"
+    naming: "ba-{PRX}-{NNN}-{description}.md"
+    example: "ba-ACME-001-checkout-process.md"
+    owner: "BA"
+
+  solution-design:
+    location: "products/{product-id}/solution-designs/"
+    naming: "sd-{PRX}-{NNN}-{description}.md"
+    example: "sd-ACME-001-payment-integration.md"
+    owner: "SA"
+
+  technical-architecture:
+    location: "products/{product-id}/technical-architecture/"
+    naming: "ta-{PRX}-{NNN}-{description}.md"
+    example: "ta-ACME-001-microservices.md"
+    owner: "SA"
+
+  product-decision:
+    location: "products/{product-id}/decisions/"
+    naming: "dec-{PRX}-{NNN}-{description}.md"
+    example: "dec-ACME-001-payment-provider.md"
+    owner: "PO"
+
+  product-regression-test:
+    location: "products/{product-id}/qa/regression-tests/"
+    naming: "rt-f-{PRX}-{NNN}-{description}.md"
+    example: "rt-f-ACME-001-user-login-regression.md"
+    owner: "QA"
+    targets: "f-PRX-NNN (Feature)"
+    note: "Product-scoped regression tests promoted from project test cases"
+
+  # Project-level (temporary, change proposals)
+  project:
+    location: "projects/{project-id}/project.yml"
+    naming: "project.yml"
+    owner: "PO"
+    
+  feature-increment:
+    location: "projects/{project-id}/feature-increments/"
+    naming: "fi-{PRX}-{NNN}-{description}.md"
+    example: "fi-ACME-001-oauth-login.md"
+    owner: "FA"
+    
+  epic:
+    location: "projects/{project-id}/epics/"
+    naming: "epic-{PRX}-{NNN}-{description}.md"
+    example: "epic-ACME-001-authentication-overhaul.md"
+    owner: "FA"
+    
+  story:
+    location: "projects/{project-id}/stories/{state}/"
+    naming: "s-e{EEE}-{SSS}-{description}.md"
+    example: "s-e001-042-add-google-oauth.md"
+    owner: "FA"
+    note: "EEE=epic number, SSS=story sequence within epic"
+    
+  dev-plan:
+    location: "projects/{project-id}/dev-plans/"
+    naming: "dp-e{EEE}-s{SSS}-{description}.md"
+    example: "dp-e001-s042-oauth-implementation.md"
+    owner: "DEV"
+
+  project-test-case:
+    location: "projects/{project-id}/qa/test-cases/"
+    naming: "tc-fi-{PRX}-{NNN}-{description}.md"
+    example: "tc-fi-ACME-001-oauth-login-tests.md"
+    owner: "QA"
+    targets: "fi-PRX-NNN (Feature-Increment)"
+    note: "Project-scoped test cases for FI validation"
+
+  bug-report:
+    location: "projects/{project-id}/qa/bug-reports/"
+    naming: "bug-{PRX}-{NNN}-{description}.md"
+    example: "bug-ACME-042-oauth-timeout.md"
+    owner: "QA"
+
+  regression-impact:
+    location: "projects/{project-id}/qa/regression-impact/"
+    naming: "ri-fi-{PRX}-{NNN}.md"
+    example: "ri-fi-ACME-001.md"
+    owner: "QA"
+    purpose: "Record regression test impact assessment for Feature-Increment"
+    required_fields:
+      - "fi_id: Reference to Feature-Increment"
+      - "assessment: 'update-required' | 'no-impact'"
+      - "rationale: Explanation of impact assessment"
+      - "regression_tests: List of rt-f-* files created/updated (if update-required)"
+    note: "Required at deployment gate. Either update rt-f-* OR record no-impact with rationale."
+    lint_rule: "TS-QA-003"
+
+  ba-increment:
+    location: "projects/{project-id}/business-analysis-increments/"
+    naming: "bai-{PRX}-{NNN}-{description}.md"
+    example: "bai-ACME-001-checkout-redesign.md"
+    owner: "BA"
+
+  sd-increment:
+    location: "projects/{project-id}/solution-design-increments/"
+    naming: "sdi-{PRX}-{NNN}-{description}.md"
+    example: "sdi-ACME-001-oauth-architecture.md"
+    owner: "SA"
+
+  ta-increment:
+    location: "projects/{project-id}/technical-architecture-increments/"
+    naming: "tai-{PRX}-{NNN}-{description}.md"
+    example: "tai-ACME-001-auth-refactor.md"
+    owner: "SA"
+
+  sprint:
+    location: "projects/{project-id}/sprints/"
+    naming: "sprint-{N}/"
+    example: "sprint-1/"
+    owner: "SM"
+
+# =============================================================================
+# GATES (with Owner vs Verifier vs Approver distinction)
+# =============================================================================
+gates:
+  dor:
+    name: "Definition of Ready"
+    owner: "FA"
+    verifier: "SM"
+    checks:
+      - "Story linked to Epic via filename (s-eXXX-YYY)"
+      - "Feature-Increment exists and has AS-IS/TO-BE"
+      - "Acceptance Criteria are testable"
+      - "No TBD/placeholder content"
+      - "Estimate assigned"
+      
+  dod:
+    name: "Definition of Done"
+    owner: "FA"
+    verifier: "QA"
+    checks:
+      - "All AC verified by QA"
+      - "Code reviewed and merged"
+      - "Tests passing"
+      - "Feature-Increment TO-BE section complete"
+      - "Ready for deployment"
+      
+  deployment:
+    name: "Deployment Gate"
+    owner: "SM"
+    approver: "PO"
+    verifier: "QA"
+    checks:
+      - "All sprint stories in terminal state (Done/Deferred/Out-of-Scope)"
+      - "All Feature-Increments reviewed"
+      - "QA sign-off obtained"
+      - "Regression coverage confirmed (rt-f-* updated or 'no impact' recorded)"
+      - "Code deployed to production"
+      - "Smoke tests passed"
+    trigger: "SM runs ts:sm deploy-checklist"
+    
+  canon-sync:
+    name: "Canon Sync Gate"
+    owner: "PO"
+    precondition: "Deployment gate passed"
+    action: "ts:po sync"
+    effect: "Feature-Increment TO-BE merged into Product Feature Canon"
+    timing: "POST-DEPLOY ONLY"
+
+# =============================================================================
+# COMMANDS (space-based invocation, dot-based machine IDs)
+# =============================================================================
+commands:
+  # PO commands
+  - id: po.product
+    invocation: "ts:po product"
+    role: "PO"
+    purpose: "Create new product with PRX prefix"
+    output: "products/{id}/ structure"
+    
+  - id: po.project
+    invocation: "ts:po project"
+    role: "PO"
+    purpose: "Create new project targeting product(s)"
+    output: "projects/{id}/ structure"
+    
+  - id: po.sync
+    invocation: "ts:po sync"
+    role: "PO"
+    purpose: "Sync project changes to Product Canon (post-deploy)"
+    precondition: "Deployment gate passed"
+    effect: "FI TO-BE → Feature Canon"
+    changes: ["products/**"]
+
+  - id: po.status
+    invocation: "ts:po status"
+    role: "PO"
+    purpose: "Product/project status overview"
+    output: "Status report"
+
+  # BA commands
+  - id: ba.analysis
+    invocation: "ts:ba analysis"
+    role: "BA"
+    purpose: "Create business analysis document"
+    output: "products/{id}/business-analysis/ba-PRX-*.md"
+
+  - id: ba.ba-increment
+    invocation: "ts:ba ba-increment"
+    role: "BA"
+    purpose: "Create BA increment in project"
+    output: "projects/{id}/business-analysis-increments/bai-PRX-*.md"
+
+  - id: ba.review
+    invocation: "ts:ba review"
+    role: "BA"
+    purpose: "Review artifacts for business intent"
+    output: "Review comments"
+    
+  # FA commands
+  - id: fa.feature
+    invocation: "ts:fa feature"
+    role: "FA"
+    purpose: "Create feature in Product Canon"
+    output: "products/{id}/features/f-PRX-*.md"
+    
+  - id: fa.feature-increment
+    invocation: "ts:fa feature-increment"
+    role: "FA"
+    purpose: "Create feature-increment in project"
+    output: "projects/{id}/feature-increments/fi-PRX-*.md"
+    
+  - id: fa.epic
+    invocation: "ts:fa epic"
+    role: "FA"
+    purpose: "Create epic in project"
+    output: "projects/{id}/epics/epic-PRX-*.md"
+    
+  - id: fa.story
+    invocation: "ts:fa story"
+    role: "FA"
+    purpose: "Create story linked to epic"
+    output: "projects/{id}/stories/backlog/s-eXXX-YYY-*.md"
+
+  - id: fa.sync-proposal
+    invocation: "ts:fa sync-proposal"
+    role: "FA"
+    purpose: "Prepare sync proposal for PO"
+    output: "Sync proposal document"
+
+  # SA commands
+  - id: sa.ta
+    invocation: "ts:sa ta"
+    role: "SA"
+    purpose: "Create Technical Architecture document"
+    output: "products/{id}/technical-architecture/ta-PRX-*.md"
+
+  - id: sa.ta-increment
+    invocation: "ts:sa ta-increment"
+    role: "SA"
+    purpose: "Create TA Increment in project"
+    output: "projects/{id}/technical-architecture-increments/tai-PRX-*.md"
+
+  - id: sa.sd
+    invocation: "ts:sa sd"
+    role: "SA"
+    purpose: "Create Solution Design document"
+    output: "products/{id}/solution-designs/sd-PRX-*.md"
+
+  - id: sa.sd-increment
+    invocation: "ts:sa sd-increment"
+    role: "SA"
+    purpose: "Create SD Increment in project"
+    output: "projects/{id}/solution-design-increments/sdi-PRX-*.md"
+
+  - id: sa.review
+    invocation: "ts:sa review"
+    role: "SA"
+    purpose: "Review technical approach"
+    output: "Technical assessment"
+
+  # DEV commands
+  - id: dev.plan
+    invocation: "ts:dev plan"
+    role: "DEV"
+    purpose: "Create dev plan for story"
+    output: "projects/{id}/dev-plans/dp-eXXX-sYYY-*.md"
+
+  - id: dev.implement
+    invocation: "ts:dev implement"
+    role: "DEV"
+    purpose: "Execute implementation"
+    output: "Code changes"
+
+  # QA commands
+  - id: qa.test
+    invocation: "ts:qa test"
+    role: "QA"
+    purpose: "Create test cases for Feature-Increment"
+    output: "projects/{id}/qa/test-cases/tc-fi-PRX-*.md"
+    
+  - id: qa.regression
+    invocation: "ts:qa regression"
+    role: "QA"
+    purpose: "Update product regression tests"
+    output: "products/{id}/qa/regression-tests/rt-f-PRX-*.md"
+
+  - id: qa.verify
+    invocation: "ts:qa verify"
+    role: "QA"
+    purpose: "Validate DoD compliance"
+    output: "Verification report"
+
+  # SM commands
+  - id: sm.sprint
+    invocation: "ts:sm sprint"
+    role: "SM"
+    purpose: "Create/manage sprint"
+    output: "projects/{id}/sprints/sprint-N/*"
+
+  - id: sm.deploy-checklist
+    invocation: "ts:sm deploy-checklist"
+    role: "SM"
+    purpose: "Run deployment readiness checklist"
+    output: "Deployment checklist"
+
+  # Universal commands
+  - id: status
+    invocation: "ts:status"
+    role: "Any"
+    purpose: "Project/product status overview"
+    output: "Status report"
+
+  - id: lint
+    invocation: "ts:lint"
+    role: "Any"
+    purpose: "Run linter"
+    output: "Lint report"
+
+  - id: fix
+    invocation: "ts:fix"
+    role: "Any"
+    purpose: "Auto-fix lint errors"
+    output: "Fixed files"
+
+  - id: agent
+    invocation: "ts:agent <role>"
+    role: "Any"
+    purpose: "Load role-specific agent"
+    output: "Agent loaded"
+
+  # REMOVED (no longer functional)
+  - id: deploy
+    invocation: "ts:deploy"
+    status: "REMOVED"
+    replacement: "ts:po sync"
+    reason: "Conflicted with ts:po sync; one mechanism is clearer"
+    removed_in: "4.0"
+    
+  # REMOVED (will error if used)
+  - id: ba.epic
+    invocation: "ts:ba epic"
+    status: "REMOVED"
+    replacement: "ts:fa epic"
+    reason: "BA does not own Epics; FA does"
+    
+  - id: ba.feature
+    invocation: "ts:ba feature"
+    status: "REMOVED"
+    replacement: "ts:fa feature"
+    reason: "BA does not own Features; FA does"
+
+# =============================================================================
+# INVARIANTS (always true in TeamSpec 4.0)
+# =============================================================================
+invariants:
+  - id: INV-001
+    rule: "Product Canon is updated ONLY after deployment"
+    enforcement: "ts:po sync requires deployment gate passed"
+    
+  - id: INV-002
+    rule: "Every artifact has exactly one owner role"
+    enforcement: "registry.yml artifacts.*.owner is singular"
+    
+  - id: INV-003
+    rule: "Stories link to Epics via filename"
+    enforcement: "s-eXXX-YYY-*.md pattern mandatory"
+    
+  - id: INV-004
+    rule: "Feature-Increments describe AS-IS and TO-BE"
+    enforcement: "Linter rule TS-FI-001"
+    
+  - id: INV-005
+    rule: "PRX is immutable after product creation"
+    enforcement: "product.yml validation"
+
+# =============================================================================
+# CANON RULES (from AGENT_BOOTSTRAP)
+# =============================================================================
+canon_rules:
+  - id: CANON-001
+    rule: "Product Feature Canon is the single source of truth for AS-IS behavior"
+    
+  - id: CANON-002
+    rule: "Projects propose changes via Feature-Increments, never modify Product Canon directly"
+    
+  - id: CANON-003
+    rule: "Product Canon is updated ONLY after successful deployment (via ts:po sync)"
+    
+  - id: CANON-004
+    rule: "All stories must link to an Epic via filename (s-eXXX-YYY pattern)"
+    
+  - id: CANON-005
+    rule: "Epics define the TO-BE state for a coherent change"
+    
+  - id: CANON-006
+    rule: "Feature-Increments (fi-PRX-XXX) describe deltas against Product Features (f-PRX-XXX)"
+    
+  - id: CANON-007
+    rule: "A project can modify multiple products (many-to-many relationship)"
+    
+  - id: CANON-008
+    rule: "Business decisions affecting products are logged at product level after deployment"
+    
+  - id: CANON-009
+    rule: "Every product has a unique 3-4 character prefix (PRX) used in all artifact filenames"

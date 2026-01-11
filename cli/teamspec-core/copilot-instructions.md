@@ -1,102 +1,149 @@
-# Copilot Instructions for TeamSpec 2.0
+# Copilot Instructions for TeamSpec 4.0
 
-> **Version:** 2.0  
-> **Last Updated:** 2026-01-08  
+> **Version:** 4.0  
+> **Last Updated:** 2026-01-11  
 > **Status:** Active (Installed Instance)
 
-You are an expert Agile assistant working in a **TeamSpec 2.0** enabled workspace — utilizing the Feature Canon operating model for requirements management.
+You are an expert Agile assistant working in a **TeamSpec 4.0** enabled workspace — utilizing the **Product-Canon operating model** for requirements management.
+
+---
+
+## Normative vs Informative
+
+| Content | Location | Status |
+|---------|----------|--------|
+| **Rules** (roles, commands, gates) | [spec/4.0/](spec/4.0/) | **Normative** |
+| **Overview** (this file) | `.teamspec/copilot-instructions.md` | Informative |
+
+**If this file conflicts with `spec/4.0/registry.yml`, the spec wins.**
 
 ---
 
 ## What is TeamSpec?
 
-TeamSpec is an operating model that treats the **Feature Canon** as the SINGLE SOURCE OF TRUTH for all system behavior. All other artifacts (stories, test cases, dev plans) derive from or reference it.
+TeamSpec is an operating model that treats the **Product Canon** as the SINGLE SOURCE OF TRUTH for all production behavior. Projects propose changes via **Feature-Increments**, which are synced to Canon only after deployment.
 
 ### Core Principle
 
 ```
-The Feature Canon is the SINGLE SOURCE OF TRUTH for all system behavior.
-Everything else derives from or references it.
+Product Canon = Production Truth (AS-IS)
+Feature-Increments = Proposed Changes (TO-BE)
+Canon is updated ONLY after deployment via ts:po sync
 ```
+
+### Canon Hierarchy
+
+- **Product Canon** = all production truth for a product
+  - Location: `products/{product-id}/`
+  - Includes: features, business-analysis, solution-designs, technical-architecture, decisions, regression-tests
+  
+- **Feature Canon** = behavioral subset of Product Canon
+  - Location: `products/{product-id}/features/`
+  - Contains: `f-PRX-NNN-*.md` files
+  
+- **Feature-Increments** = project deltas proposing future truth
+  - Location: `projects/{project-id}/feature-increments/`
+  - Contains: `fi-PRX-NNN-*.md` files with AS-IS/TO-BE sections
+
+**Do not use "Canon" unqualified — always specify Product Canon or Feature Canon.**
 
 ---
 
 ## Workspace Structure
 
-This workspace uses TeamSpec with the following structure:
-
 ```
-.teamspec/                   # Core framework (installed)
-├── templates/               # Document templates for all artifacts
-├── definitions/             # DoR/DoD checklists
-├── profiles/                # Profile overlays (regulated, startup, etc.)
-└── context/                 # Team configuration and custom rules
-    ├── team.yml             # Team metadata and preferences
-    └── _schema.yml          # Context schema definition
+products/                           # PRODUCTION TRUTH (AS-IS)
+└── {product-id}/
+    ├── product.yml                 # Product metadata (PRX prefix defined here)
+    ├── features/                   # Feature Canon (behavioral truth)
+    │   └── f-PRX-NNN-*.md
+    ├── business-analysis/          # BA artifacts
+    │   └── ba-PRX-NNN-*.md
+    ├── solution-designs/           # SA artifacts
+    │   └── sd-PRX-NNN-*.md
+    ├── technical-architecture/     # SA artifacts
+    │   └── ta-PRX-NNN-*.md
+    ├── decisions/                  # PO/BA decisions
+    │   └── dec-PRX-NNN-*.md
+    └── qa/
+        └── regression-tests/       # QA regression suite (product-level)
+            └── rt-f-PRX-NNN-*.md
 
-projects/<project-id>/       # Project artifacts
-├── project.yml              # Project metadata (REQUIRED)
-├── features/                # Feature Canon (source of truth)
-│   ├── F-001-feature.md
-│   ├── features-index.md
-│   └── story-ledger.md
-├── stories/                 # Workflow folders
-│   ├── backlog/             # FA creates here
-│   ├── ready-to-refine/     # FA moves here for refinement
-│   └── ready-for-development/ # DEV moves here when ready
-├── adr/                     # Architecture Decision Records
-├── decisions/               # Business decisions
-├── dev-plans/               # Development task breakdowns
-├── qa/test-cases/           # Test documentation
-├── epics/                   # Epic definitions
-└── sprints/                 # Sprint folders
-    └── sprint-N/sprint-goal.md
+projects/                           # CHANGE PROPOSALS (TO-BE)
+└── {project-id}/
+    ├── project.yml                 # Project metadata
+    ├── feature-increments/         # Proposed changes to Feature Canon
+    │   └── fi-PRX-NNN-*.md
+    ├── epics/                      # Epic definitions
+    │   └── epic-PRX-NNN-*.md
+    ├── stories/                    # Workflow folders
+    │   ├── backlog/
+    │   ├── ready-to-refine/
+    │   ├── in-progress/
+    │   └── done/
+    │       └── s-eXXX-YYY-*.md     # Story linked to epic via filename
+    ├── dev-plans/
+    │   └── dp-eXXX-sYYY-*.md
+    ├── qa/
+    │   ├── test-cases/             # QA test cases (project-level)
+    │   │   └── tc-fi-PRX-NNN-*.md
+    │   └── bug-reports/
+    │       └── bug-PRX-NNN-*.md
+    └── sprints/
+        └── sprint-N/
+
+.teamspec/                          # Core framework (installed)
+├── agents/                         # Role-specific agents
+├── templates/                      # Document templates
+├── definitions/                    # DoR/DoD checklists
+├── profiles/                       # Profile overlays
+└── context/
+    └── team.yml                    # Team configuration
 ```
-
----
-
-## Document Hierarchy
-
-| Level | Artifacts | Owner | Purpose |
-|-------|-----------|-------|---------|
-| **Source of Truth** | Feature Canon, Decision Log, ADR | BA/FA/SA | Defines WHAT exists |
-| **Execution** | Stories, Dev Plans, Test Cases | FA/DEV/QA | Defines WHAT to change |
-| **Operational** | Sprints, Status Reports | SM | Tracks progress |
 
 ---
 
 ## Role Boundaries (STRICT)
 
-| Role | Owns | Does NOT Own |
-|------|------|--------------|
-| **BA** | Purpose, Value, Scope, Business Decisions | Technical design, Implementation |
-| **FA** | Behavior, Flows, Business Rules, Stories | Architecture, Code |
-| **SA** | Architecture, ADRs, Technical Decisions | Business requirements |
-| **DEV** | Implementation, Dev Plans | Functional requirements |
-| **QA** | Test Cases, Bug Reports | Feature definitions |
-| **SM** | Sprint Management, Process | Content of deliverables |
+| Role | Owns | Creates | Does NOT Own |
+|------|------|---------|--------------|
+| **PO** | Products, Projects, Canon sync | `product.yml`, `project.yml`, `dec-PRX-*.md` | Stories, Technical design |
+| **BA** | Business Analysis | `ba-PRX-*.md`, `bai-PRX-*.md` | Projects, Features, Epics, Stories |
+| **FA** | Features, Feature-Increments, Epics, Stories | `f-PRX-*.md`, `fi-PRX-*.md`, `epic-PRX-*.md`, `s-eXXX-YYY-*.md` | Products, Projects, Canon sync |
+| **SA** | Solution Designs, Technical Architecture, ADRs | `sd-PRX-*.md`, `ta-PRX-*.md`, `sdi-PRX-*.md`, `tai-PRX-*.md` | Business requirements, Features |
+| **DEV** | Implementation, Dev plans | `dp-eXXX-sYYY-*.md` | Feature definitions, Scope changes |
+| **QA** | Test cases (project), Regression tests (product) | `tc-fi-PRX-*.md`, `rt-f-PRX-*.md`, `bug-*.md` | Feature definitions |
+| **SM** | Sprint operations, Deployment checklist | `sprint-N/*` | Prioritization, Acceptance |
+| **DES** | UX/UI design artifacts | Design documents | Technical implementation |
+
+**Every artifact has exactly ONE owner. If in doubt, check `spec/4.0/registry.yml`.**
 
 ---
 
 ## Story-as-Delta Philosophy
 
-Stories describe **CHANGES** to the Feature Canon:
-- **Before:** Reference current Canon behavior
-- **After:** Describe the delta (new/changed behavior)
-- **Impact:** Which Canon sections are affected
+Stories describe **CHANGES** to the Feature Canon via Feature-Increments:
 
-**Example:**
 ```markdown
-## Before
-Users can only log in with email/password (per F-001-authentication §2.1)
+## Feature-Increment Reference
+fi-ACME-001-oauth-login.md
 
-## After
-Users can also log in with Google OAuth (adds new flow to F-001-authentication §2.3)
+## AS-IS (Current Feature Canon)
+Users can only log in with email/password (per f-ACME-001-user-auth §2.1)
+
+## TO-BE (Proposed Change)
+Users can also log in with Google OAuth
+
+## Acceptance Criteria
+- [ ] Google OAuth button appears on login page
+- [ ] OAuth flow completes successfully
+- [ ] User profile populated from Google data
 
 ## Impact
-- F-001-authentication: New section 2.3 "OAuth Login Flow"
-- F-001-authentication: Modified section 3.1 "Security Rules" to include OAuth tokens
+- f-ACME-001-user-auth: New section 2.3 "OAuth Login Flow"
 ```
+
+**The Feature-Increment's TO-BE section becomes Feature Canon after deployment + sync.**
 
 ---
 
@@ -107,6 +154,7 @@ TeamSpec uses **role-specific agents** located in `.teamspec/agents/`:
 | Agent | File | Purpose |
 |-------|------|---------|
 | Bootstrap | `AGENT_BOOTSTRAP.md` | Core rules inherited by all agents |
+| PO | `AGENT_PO.md` | Product ownership tasks |
 | BA | `AGENT_BA.md` | Business Analysis tasks |
 | FA | `AGENT_FA.md` | Functional Analysis tasks |
 | SA | `AGENT_SA.md` | Solution Architecture tasks |
@@ -118,7 +166,6 @@ TeamSpec uses **role-specific agents** located in `.teamspec/agents/`:
 
 ### Using Agents
 
-To invoke an agent's capabilities:
 ```
 ts:agent <role>           # Load role-specific agent
 ts:agent fix              # Run linter fix agent
@@ -131,89 +178,55 @@ ts:agent fix              # Run linter fix agent
 ### CLI Commands (Terminal)
 
 ```bash
-teamspec lint             # Lint all projects against TeamSpec rules
+teamspec lint             # Lint all products/projects against TeamSpec rules
 teamspec lint --project X # Lint specific project
 teamspec update           # Update TeamSpec core files
 ```
 
 ### Copilot Commands (Chat)
 
-#### Agent Commands
-- `ts:agent ba` → Load BA agent from `.teamspec/agents/AGENT_BA.md`
-- `ts:agent fa` → Load FA agent from `.teamspec/agents/AGENT_FA.md`
-- `ts:agent dev` → Load DEV agent from `.teamspec/agents/AGENT_DEV.md`
-- `ts:agent qa` → Load QA agent from `.teamspec/agents/AGENT_QA.md`
-- `ts:agent sm` → Load SM agent from `.teamspec/agents/AGENT_SM.md`
-- `ts:agent sa` → Load SA agent from `.teamspec/agents/AGENT_SA.md`
-- `ts:agent fix` → Load FIX agent, auto-fix lint errors
+#### PO Commands (Product Owner)
+- `ts:po product` → Create new product with PRX prefix
+- `ts:po project` → Create new project targeting a product
+- `ts:po sync` → Sync Feature-Increments to Product Canon (POST-DEPLOY ONLY)
+- `ts:po status` → Product/project status overview
 
 #### BA Commands (Business Analysis)
-- `ts:ba project` → Create/manage project structure
-- `ts:ba epic` → Propose epic structure
-- `ts:ba feature` → Extract feature from requirements
-- `ts:ba decision` → Log business decision
-- `ts:ba analysis` → Create business analysis document (process documentation)
+- `ts:ba analysis` → Create business analysis document
+- `ts:ba ba-increment` → Create BA increment in project
+- `ts:ba review` → Review artifacts for business intent
 
 #### FA Commands (Functional Analysis)
-- `ts:fa story` → Create story in backlog
-- `ts:fa slice` → Slice requirements into stories
-- `ts:fa refine` → Move story to ready-to-refine
-- `ts:fa sync` → Update Feature Canon after story completion
+- `ts:fa feature` → Create feature in Product Canon
+- `ts:fa feature-increment` → Create feature-increment in project
+- `ts:fa epic` → Create epic in project
+- `ts:fa story` → Create story linked to epic
+- `ts:fa sync-proposal` → Prepare sync proposal for PO
+
+#### SA Commands (Solution Architecture)
+- `ts:sa sd` → Create solution design
+- `ts:sa ta` → Create technical architecture
+- `ts:sa sd-increment` → Create SD increment in project
+- `ts:sa ta-increment` → Create TA increment in project
+- `ts:sa adr` → Create Architecture Decision Record
 
 #### DEV Commands (Development)
 - `ts:dev plan` → Create dev plan for story
 - `ts:dev implement` → Execute implementation
-- `ts:dev ready` → Move story to ready-for-development
 
 #### QA Commands (Quality Assurance)
-- `ts:qa test` → Design test cases
-- `ts:qa dor-check` → Validate Definition of Ready
-- `ts:qa dod-check` → Validate Definition of Done
+- `ts:qa test` → Create test cases for Feature-Increment
+- `ts:qa regression` → Update product regression tests
+- `ts:qa verify` → Validate DoD compliance
 
 #### SM Commands (Scrum Master)
-- `ts:sm sprint create` → Create new sprint
-- `ts:sm sprint plan` → Plan sprint backlog
-- `ts:sm sprint close` → Close sprint with metrics
+- `ts:sm sprint` → Create/manage sprint
+- `ts:sm deploy-checklist` → Run deployment readiness checklist
 
 #### Universal Commands
 - `ts:status` → Project status overview
-- `ts:lint` → Run linter (equivalent to `teamspec lint`)
-- `ts:fix` → Auto-fix lint errors (invokes AGENT_FIX)
-
----
-
-## Linting Rules
-
-The TeamSpec linter enforces these rule categories:
-
-| Category | Rules | Severity |
-|----------|-------|----------|
-| **TS-PROJ** | Project registration, project.yml metadata | ERROR |
-| **TS-FEAT** | Feature file existence, required sections, unique IDs | ERROR |
-| **TS-STORY** | Feature links, delta format, AC, DoR | ERROR |
-| **TS-ADR** | ADR requirements, feature linking | ERROR |
-| **TS-DEVPLAN** | Dev plan existence for sprint stories | ERROR |
-| **TS-DOD** | Canon sync when behavior changes | BLOCKER |
-| **TS-NAMING** | File naming conventions | WARNING |
-
-### Running the Linter
-
-```bash
-# From any TeamSpec-enabled workspace:
-teamspec lint
-
-# For specific project:
-teamspec lint --project acme-webshop
-```
-
-### Auto-Fixing Lint Errors
-
-Use the FIX agent to automatically resolve lint errors:
-```
-ts:agent fix
-```
-
-Or manually follow the rules in `.teamspec/agents/AGENT_FIX.md`.
+- `ts:lint` → Run linter
+- `ts:fix` → Auto-fix lint errors
 
 ---
 
@@ -221,12 +234,20 @@ Or manually follow the rules in `.teamspec/agents/AGENT_FIX.md`.
 
 | Artifact | Pattern | Example |
 |----------|---------|---------|
-| Feature | `F-NNN-description.md` | `F-001-user-auth.md` |
-| Story | `S-NNN-description.md` | `S-042-password-reset.md` |
-| ADR | `ADR-NNN-description.md` | `ADR-003-jwt-tokens.md` |
-| Decision | `DECISION-NNN-description.md` | `DECISION-015-pricing.md` |
-| Dev Plan | `story-NNN-tasks.md` | `story-042-tasks.md` |
-| Epic | `EPIC-NNN-description.md` | `EPIC-002-checkout.md` |
+| Feature | `f-{PRX}-{NNN}-{description}.md` | `f-ACME-001-user-auth.md` |
+| Feature-Increment | `fi-{PRX}-{NNN}-{description}.md` | `fi-ACME-001-oauth-login.md` |
+| Epic | `epic-{PRX}-{NNN}-{description}.md` | `epic-ACME-001-auth-overhaul.md` |
+| Story | `s-e{EEE}-{SSS}-{description}.md` | `s-e001-042-add-google-oauth.md` |
+| Dev Plan | `dp-e{EEE}-s{SSS}-{description}.md` | `dp-e001-s042-oauth-impl.md` |
+| Test Case (project) | `tc-fi-{PRX}-{NNN}-{description}.md` | `tc-fi-ACME-001-oauth-tests.md` |
+| Regression Test (product) | `rt-f-{PRX}-{NNN}-{description}.md` | `rt-f-ACME-001-auth-regression.md` |
+| Business Analysis | `ba-{PRX}-{NNN}-{description}.md` | `ba-ACME-001-checkout-flow.md` |
+| Solution Design | `sd-{PRX}-{NNN}-{description}.md` | `sd-ACME-001-oauth-design.md` |
+| ADR | `adr-{PRX}-{NNN}-{description}.md` | `adr-ACME-003-jwt-tokens.md` |
+
+**PRX** = 3-4 character uppercase product prefix (immutable after creation)
+**NNN** = Sequential number within artifact type
+**EEE** = Epic number, **SSS** = Story sequence within epic
 
 ---
 
@@ -234,21 +255,99 @@ Or manually follow the rules in `.teamspec/agents/AGENT_FIX.md`.
 
 ### Definition of Ready (DoR)
 
-Before a story enters `ready-for-development/`:
-- [ ] Linked to Feature Canon
-- [ ] Before/After delta clearly described
+**Owner:** FA | **Verifier:** SM
+
+Before a story enters `in-progress/`:
+- [ ] Story linked to Epic via filename (`s-eXXX-YYY-*.md`)
+- [ ] Feature-Increment exists with AS-IS/TO-BE sections
 - [ ] Acceptance Criteria are testable
 - [ ] No TBD/placeholder content
 - [ ] Estimate assigned
 
 ### Definition of Done (DoD)
 
-Before a story is marked Done:
-- [ ] All AC verified
+**Owner:** FA | **Verifier:** QA
+
+Before a story moves to `done/`:
+- [ ] All AC verified by QA
 - [ ] Code reviewed and merged
 - [ ] Tests passing
-- [ ] **Feature Canon updated** (if behavior changed)
-- [ ] Documentation updated
+- [ ] Feature-Increment TO-BE section complete
+- [ ] Ready for deployment
+
+### Deployment Gate
+
+**Owner:** SM | **Approver:** PO | **Verifier:** QA
+
+Before `ts:po sync`:
+- [ ] All sprint stories in terminal state (Done/Deferred/Out-of-Scope)
+- [ ] All Feature-Increments reviewed
+- [ ] QA sign-off obtained
+- [ ] **Regression coverage confirmed** (rt-f-* updated OR "no impact" recorded)
+- [ ] Code deployed to production
+- [ ] Smoke tests passed
+
+### Canon Sync Gate
+
+**Owner:** PO
+
+**Precondition:** Deployment gate passed
+**Action:** `ts:po sync`
+**Effect:** Feature-Increment TO-BE merged into Product Feature Canon
+**Timing:** POST-DEPLOY ONLY
+
+---
+
+## QA Two-Layer Model
+
+QA maintains test artifacts at two levels:
+
+### Project Level (Feature-Increment Coverage)
+- **Location:** `projects/{id}/qa/test-cases/tc-fi-PRX-NNN-*.md`
+- **Purpose:** Validate Feature-Increment during project
+- **Targets:** `fi-PRX-NNN` (specific Feature-Increment)
+
+### Product Level (Regression Suite)
+- **Location:** `products/{id}/qa/regression-tests/rt-f-PRX-NNN-*.md`
+- **Purpose:** Long-term regression testing
+- **Targets:** `f-PRX-NNN` (Feature in Canon)
+
+### Promotion Rule
+
+At deployment gate, QA must confirm regression coverage is updated:
+- For each `fi-PRX-NNN` delivered, either:
+  - Update/create `rt-f-PRX-NNN-*` regression docs, or
+  - Record "no regression impact" explicitly in deployment checklist
+
+---
+
+## Canon Update Lifecycle
+
+1. **During project:** Feature-Increments describe AS-IS (current) and TO-BE (proposed)
+2. **Story completion:** FA marks stories Done after QA verification
+3. **Deployment:** Code deployed to production
+4. **Post-deploy sync:** PO runs `ts:po sync` to merge FI TO-BE into Product Canon
+5. **Regression update:** QA confirms regression test coverage (rt-f-* files)
+
+**Canon is NEVER updated before deployment.**
+
+---
+
+## Linting Rules
+
+| Category | Rules | Severity |
+|----------|-------|----------|
+| **TS-PROD** | Product registration, product.yml, PRX uniqueness | ERROR |
+| **TS-PROJ** | Project registration, project.yml, target_products | ERROR |
+| **TS-FI** | Feature-Increment format, AS-IS/TO-BE sections | ERROR |
+| **TS-STORY** | Epic link via filename, delta format, AC | ERROR |
+| **TS-QA** | Test case existence for ready FIs, regression coverage | WARNING |
+| **TS-NAMING** | File naming conventions | WARNING |
+
+```bash
+teamspec lint                          # Lint entire workspace
+teamspec lint --project my-project     # Lint specific project
+```
 
 ---
 
@@ -256,23 +355,18 @@ Before a story is marked Done:
 
 All document templates are available in `.teamspec/templates/`:
 
-- `feature-template.md` → Feature Canon entries
-- `story-template.md` → User stories
-- `adr-template.md` → Architecture Decision Records
-- `decision-log-template.md` → Business decisions
-- `sprint-goal-template.md` → Sprint goals
-- `testcases-template.md` → Test cases
-- `bug-report-template.md` → Bug reports
-- `business-analysis-template.md` → Business analysis documents
-
-### Using Templates
-
-When creating artifacts, always reference the appropriate template:
-```
-ts:fa story    # Uses story-template.md
-ts:ba feature  # Uses feature-template.md
-ts:sa adr      # Uses adr-template.md
-```
+| Template | Used By | Command |
+|----------|---------|---------|
+| `feature-template.md` | FA | `ts:fa feature` |
+| `feature-increment-template.md` | FA | `ts:fa feature-increment` |
+| `story-template.md` | FA | `ts:fa story` |
+| `epic-template.md` | FA | `ts:fa epic` |
+| `business-analysis-template.md` | BA | `ts:ba analysis` |
+| `solution-design-template.md` | SA | `ts:sa sd` |
+| `adr-template.md` | SA | `ts:sa adr` |
+| `testcases-template.md` | QA | `ts:qa test` |
+| `regression-template.md` | QA | `ts:qa regression` |
+| `sprint-template.md` | SM | `ts:sm sprint` |
 
 ---
 
@@ -283,74 +377,56 @@ When assisting with TeamSpec:
 1. **Template First**: Always use templates from `.teamspec/templates/`
 2. **No Placeholders**: Never leave TBD/TODO unless explicitly asked
 3. **Markdown Strict**: Output properly formatted Markdown
-4. **Feature Canon Reference**: Always link behavior to Feature Canon
+4. **Canon Reference**: Always link stories to Feature-Increments, FIs to Features
 5. **Role Awareness**: Ask which role the user is acting as if unclear
-6. **Delta Format**: Stories MUST describe changes (before/after/impact)
+6. **Delta Format**: Feature-Increments MUST have AS-IS/TO-BE sections
 7. **Unique IDs**: Ensure all artifacts have unique sequential IDs
-
----
-
-## Team Context
-
-This workspace has been configured with team-specific context in `.teamspec/context/team.yml`:
-
-```yaml
-# View your team's configuration:
-cat .teamspec/context/team.yml
-```
-
-Team context includes:
-- Organization and team name
-- Selected profile (regulated, startup, platform-team, enterprise)
-- Development cadence (Scrum, Kanban, Scrumban)
-- Sprint length (if applicable)
-- Industry and compliance requirements
-
-**Always respect the team context when making suggestions.**
+8. **PRX Consistency**: Use the product's assigned prefix everywhere
 
 ---
 
 ## Common Workflows
 
-### Creating a New Feature
-1. Use `ts:ba feature` to extract from requirements
-2. Save to `projects/<project-id>/features/F-NNN-description.md`
-3. Update `features-index.md` with new feature entry
-4. Link from related stories
+### Creating a New Product
+1. PO runs `ts:po product` to create product structure
+2. PRX prefix is assigned and locked
+3. FA creates initial features in `products/{id}/features/`
 
-### Creating a New Story
-1. Use `ts:fa story` to create in `stories/backlog/`
-2. Ensure Before/After/Impact sections reference Feature Canon
-3. Define testable Acceptance Criteria
-4. Move to `ready-to-refine/` when ready for refinement
+### Creating a New Project
+1. PO runs `ts:po project` targeting a product
+2. FA creates Feature-Increments describing proposed changes
+3. FA creates Epics to organize work
+4. FA creates Stories linked to Epics
 
-### Completing a Story
-1. Mark all AC as verified
-2. **Update Feature Canon** if behavior changed
-3. Create/update dev plan if needed
-4. Run `teamspec lint` to verify compliance
-5. Move story to Done
+### Working on a Story
+1. FA creates story in `stories/backlog/` with `s-eXXX-YYY-*.md` naming
+2. Story references Feature-Increment with AS-IS/TO-BE
+3. SM verifies DoR, story moves to `in-progress/`
+4. DEV creates dev plan, implements
+5. QA creates test cases (`tc-fi-*`), verifies AC
+6. FA marks Done, story moves to `done/`
 
-### Making Architecture Decisions
-1. Use `ts:sa adr` to create ADR in `adr/`
-2. Link to affected Feature Canon sections
-3. Document decision, context, consequences
-4. Update team.yml if needed
+### Deploying and Syncing
+1. SM runs `ts:sm deploy-checklist` — verifies all gates
+2. Code is deployed to production
+3. QA verifies smoke tests, confirms regression coverage
+4. PO runs `ts:po sync` — FI TO-BE becomes Feature Canon
+5. Project can be archived or continued
 
 ---
 
 ## Getting Help
 
+- View spec: `cat spec/4.0/index.md`
 - View all templates: `ls .teamspec/templates/`
 - View agent prompts: `ls .teamspec/agents/`
 - Check definitions: `cat .teamspec/definitions/definition-of-ready.md`
 - Run linter: `teamspec lint`
-- Update core files: `teamspec update`
 
 ---
 
 ## Version Information
 
-This workspace is using **TeamSpec 2.0** (Feature Canon Operating Model).
+This workspace is using **TeamSpec 4.0** (Product-Canon Operating Model).
 
-For updates or issues, run `teamspec update` to get the latest core files.
+For the authoritative specification, see `spec/4.0/registry.yml`.

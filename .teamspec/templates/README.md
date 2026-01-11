@@ -1,14 +1,14 @@
-# TeamSpec 2.0 Templates
+# TeamSpec 4.0 Templates
 
-> **Version:** 2.0  
-> **Last Updated:** 2026-01-07  
-> **Purpose:** Aligned templates for Feature Canon operating model
+> **Version:** 4.0  
+> **Last Updated:** 2026-01-11  
+> **Purpose:** Aligned templates for Product-Canon operating model
 
 ---
 
 ## Overview
 
-These templates are designed for the TeamSpec 2.0 Feature Canon operating model. Each template:
+These templates are designed for the TeamSpec 4.0 Product-Canon operating model. Each template:
 
 1. **Identifies its owner** — Which role creates/maintains it
 2. **States its artifact type** — Source of Truth, Execution, Planning, or Operational

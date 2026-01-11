@@ -8,7 +8,15 @@
 
 ---
 
-> ⚠️ **Work in Progress**: TeamSpec is currently transitioning to version 4.0, which introduces the **Product-Canon** operating model. Not all documentation, agents, and templates are fully updated yet. See the [teamspec_4.0/](teamspec_4.0/) folder for the latest 4.0 planning documents.
+## Normative vs Informative
+
+| Content | Location | Status |
+|---------|----------|--------|
+| **Rules** (roles, commands, gates, artifacts) | [spec/4.0/](spec/4.0/) | **Normative** |
+| **Overview** (this README) | README.md | Informative |
+| **Agents** | [agents/](agents/) | Semi-normative |
+
+**If this README conflicts with `spec/4.0/registry.yml`, the spec wins.**
 
 ---
 
@@ -37,7 +45,7 @@ TeamSpec is a **Product-Canon Operating Model** that brings structure and clarit
 │      └── technical-architecture/  # Architecture decisions          │
 └─────────────────────────────────────────────────────────────────────┘
                                    ▲
-                                   │ ts:deploy (sync after release)
+                                   │ ts:po sync (after deployment)
                                    │
 ┌─────────────────────────────────────────────────────────────────────┐
 │                        PROJECTS (TO-BE)                             │
@@ -45,7 +53,7 @@ TeamSpec is a **Product-Canon Operating Model** that brings structure and clarit
 │                                                                     │
 │  projects/                                                          │
 │  └── {project-id}/                                                  │
-│      ├── project.yml          # Project definition (BA)             │
+│      ├── project.yml          # Project definition (PO)             │
 │      ├── feature-increments/  # PROPOSED changes to Canon           │
 │      ├── epics/               # Story containers                    │
 │      └── stories/             # Execution deltas                    │
@@ -82,7 +90,8 @@ TeamSpec works natively with GitHub Copilot through instruction files:
 3. **Use TeamSpec commands** in Copilot Chat:
 
 ```
-ts:ba project          # Create project structure
+ts:po product         # Create new product
+ts:po project         # Create project structure  
 ts:fa story           # Create delta-based story
 ts:dev plan           # Create implementation plan
 ts:qa test            # Design test cases
@@ -106,7 +115,7 @@ TeamSpec 4.0 introduces a clear separation between **Products** and **Projects**
 | Concept | Purpose | Lifecycle | Owner |
 |---------|---------|-----------|-------|
 | **Product** | Production truth (AS-IS state) | Permanent | PO |
-| **Project** | Change proposal (TO-BE state) | Time-bound | BA |
+| **Project** | Change proposal (TO-BE state) | Time-bound | PO |
 
 This solves the "time-pollution problem" where project artifacts contaminate the canonical documentation of production systems.
 
@@ -152,7 +161,33 @@ Users can also log in with Google OAuth.
 - Requires new OAuth token handling
 ```
 
-After deployment, the Feature-Increment is synced into the Feature Canon via `ts:deploy`.
+After deployment, the Feature-Increment is synced into the Feature Canon via `ts:po sync`.
+
+### Canon Update Lifecycle
+
+1. **During project:** Feature-Increments describe AS-IS (current) and TO-BE (proposed)
+2. **Story completion:** FA marks stories Done after QA verification
+3. **Deployment:** Code deployed to production
+4. **Post-deploy sync:** PO runs `ts:po sync` to merge FI TO-BE into Product Canon
+5. **Regression update:** QA confirms regression test coverage (rt-f-* files)
+
+**Canon is NEVER updated before deployment.**
+
+### Canon Hierarchy
+
+- **Product Canon** = all production truth for a product
+  - Location: `products/{product-id}/`
+  - Includes: features, business-analysis, solution-designs, technical-architecture, decisions, regression-tests
+  
+- **Feature Canon** = behavioral subset of Product Canon
+  - Location: `products/{product-id}/features/`
+  - Contains: `f-PRX-NNN-*.md` files
+  
+- **Feature-Increments** = project deltas proposing future truth
+  - Location: `projects/{project-id}/feature-increments/`
+  - Contains: `fi-PRX-NNN-*.md` files with AS-IS/TO-BE sections
+
+**Do not use "Canon" unqualified — always specify Product Canon or Feature Canon.**
 
 ### Stories as Deltas
 
@@ -172,16 +207,18 @@ Users can also log in with Google OAuth.
 
 ### Role Boundaries
 
+See [spec/4.0/roles.md](spec/4.0/roles.md) for the authoritative ownership matrix.
+
 | Role | Owns | Does NOT Own | Primary Agent Commands |
 |------|------|--------------|------------------------|
-| **PO** | Products, product lifecycle, deployment approval | Project execution details | `ts:po product`, `ts:po project`, `ts:po sync` |
-| **BA** | Business analysis, decisions, features | Stories, UI, technical design | `ts:ba analysis`, `ts:ba ba-increment` |
-| **FA** | Feature Canon, feature-increments, stories, epics | Business intent, implementation | `ts:fa story`, `ts:fa feature`, `ts:fa slice` |
-| **SA** | Architecture, technical decisions, solution designs | Requirements, code implementation | `ts:sa ta`, `ts:sa sd` |
-| **DEV** | Implementation, dev plans, code quality | Requirements definition, scope | `ts:dev plan`, `ts:dev implement` |
-| **QA** | Test cases, bugs, validation | Requirements definition, canon updates | `ts:qa test`, `ts:qa bug` |
-| **SM** | Sprints, ceremonies, process, metrics | Prioritization, scope, acceptance | `ts:sm sprint create`, `ts:sm planning` |
-| **DES** | UX design, design artifacts, usability | Scope, priority | _(no agent commands defined)_ |
+| **PO** | Products, Projects, Canon sync | Stories, Technical design | `ts:po product`, `ts:po project`, `ts:po sync` |
+| **BA** | Business Analysis artifacts | Projects, Features, Stories | `ts:ba analysis`, `ts:ba ba-increment` |
+| **FA** | Features, Feature-Increments, Epics, Stories | Products, Business intent | `ts:fa feature`, `ts:fa story`, `ts:fa epic` |
+| **SA** | Solution Design, Technical Architecture, ADRs | Requirements, code | `ts:sa design`, `ts:sa adr` |
+| **DEV** | Implementation, Dev plans | Requirements, scope | `ts:dev plan`, `ts:dev implement` |
+| **QA** | Test cases (project), Regression tests (product) | Feature definitions | `ts:qa test`, `ts:qa regression` |
+| **SM** | Sprint operations, Deployment checklist | Prioritization, scope | `ts:sm sprint`, `ts:sm deploy-checklist` |
+| **DES** | UX/UI design artifacts | Scope, priority | — |
 
 ### Role Descriptions and Rules
 

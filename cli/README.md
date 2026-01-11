@@ -1,17 +1,18 @@
 # TeamSpec CLI
 
-> Bootstrap TeamSpec 2.0 Feature Canon Operating Model in any repository
+> Bootstrap TeamSpec 4.0 Product-Canon Operating Model in any repository
 
 [![npm version](https://img.shields.io/npm/v/teamspec.svg)](https://www.npmjs.com/package/teamspec)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## What is TeamSpec?
 
-TeamSpec is a **Feature Canon Operating Model** for software teams. It provides:
+TeamSpec is a **Product-Canon Operating Model** for software teams. It provides:
 
-- **Feature Canon** — Single source of truth for system behavior
+- **Product Canon** — Single source of truth for production behavior (AS-IS)
+- **Feature-Increments** — Proposed changes to products (TO-BE)
 - **Delta-based Stories** — Stories describe changes, not full behavior
-- **Role-based Workflows** — Clear ownership boundaries (BA, FA, SA, DEV, QA, SM)
+- **Role-based Workflows** — Clear ownership boundaries (PO, BA, FA, SA, DEV, QA, SM)
 - **AI Agent Integration** — Works with GitHub Copilot, Cursor, Claude, and more
 
 ## Installation
@@ -129,20 +130,30 @@ Updates templates, definitions, and profiles while preserving your team configur
 
 Once configured, use these commands with your AI assistant:
 
+### Product Owner
+
+```
+ts:po product    # Create new product with PRX prefix
+ts:po project    # Create new project targeting product(s)
+ts:po sync       # Sync Feature-Increments to Product Canon (post-deploy)
+ts:po status     # Product/project status overview
+```
+
 ### Business Analysis
 
 ```
-ts:ba create     # Create business analysis
-ts:ba feature    # Propose and create features
-ts:ba epic       # Propose epics with justification
+ts:ba analysis   # Create business analysis document
+ts:ba ba-increment # Create BA increment in project
+ts:ba review     # Review artifacts for business intent
 ```
 
 ### Functional Analysis
 
 ```
-ts:fa story      # Create user story
-ts:fa slice      # Slice requirements into stories
-ts:fa sync       # Update Feature Canon after story completion
+ts:fa feature    # Create feature in Product Canon
+ts:fa feature-increment # Create feature-increment in project
+ts:fa epic       # Create epic in project
+ts:fa story      # Create story linked to epic
 ```
 
 ### Development
@@ -155,8 +166,9 @@ ts:dev implement # Execute from existing plan
 ### Quality Assurance
 
 ```
-ts:qa test       # Design test cases
-ts:qa bug        # File bug report
+ts:qa test       # Design test cases for Feature-Increment
+ts:qa regression # Update product regression tests
+ts:qa verify     # Validate DoD compliance
 ts:qa uat        # Create UAT pack
 ```
 

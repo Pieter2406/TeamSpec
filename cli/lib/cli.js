@@ -182,7 +182,7 @@ function parseArgs(args) {
 
 function printHelp() {
   console.log(`
-${colored('TeamSpec Init', colors.bold)} - Bootstrap TeamSpec 2.0 Feature Canon Operating Model
+${colored('TeamSpec Init', colors.bold)} - Bootstrap TeamSpec 4.0 Product-Canon Operating Model
 
 ${colored('USAGE:', colors.bold)}
   teamspec [command] [options]
@@ -1108,7 +1108,7 @@ Epics are required containers for stories. Each Epic links to Feature-Increments
 
 ## Next Available ID: _Derived from product prefix (epic-PRX-XXX)_
 
-> **To add epics:** Run \`ts:ba epic\`
+> **To add epics:** Run \`ts:fa epic\`
 `, 'utf-8');
   console.log(`  ✓ Created projects/${projectId}/epics/`);
 
@@ -1333,7 +1333,7 @@ async function setupIDEIntegration(targetDir, options) {
 
 function printNextSteps(targetDir, profile, projectId, ide, ideResult, copilot) {
   console.log(`\n${colored('='.repeat(70), colors.green)}`);
-  console.log(colored('  ✅ TeamSpec 2.0 initialized successfully!', colors.green + colors.bold));
+  console.log(colored('  ✅ TeamSpec 4.0 initialized successfully!', colors.green + colors.bold));
   console.log(colored('='.repeat(70), colors.green));
 
   const copilotSection = copilot !== false ? `
@@ -1376,9 +1376,9 @@ ${colored('📁 Created Structure:', colors.bold)}
   ${colored('1. Configure Your Team', colors.cyan)}
     Edit ${colored('.teamspec/context/team.yml', colors.bold)} to set your tech stack.
 
-  ${colored('2. Create Your First Feature', colors.cyan)}
-    Features are NEVER created implicitly. Use:
-    ${colored('ts:ba feature', colors.bold)}              - Create feature
+  ${colored('2. Create Your First Feature-Increment', colors.cyan)}
+    Feature-Increments are NEVER created implicitly. Use:
+    ${colored('ts:fa feature-increment', colors.bold)}    - Create feature-increment (FI)
 
   ${colored('3. Start Using TeamSpec Commands', colors.cyan)}
     ${colored('ts:ba create', colors.bold)}       - Create business analysis

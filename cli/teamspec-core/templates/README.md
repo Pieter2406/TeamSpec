@@ -1,16 +1,14 @@
-# TeamSpec Templates
+# TeamSpec 4.0 Templates
 
 > **Version:** 4.0  
 > **Last Updated:** 2026-01-11  
-> **Purpose:** Aligned templates for Product Canon operating model
+> **Purpose:** Aligned templates for Product-Canon operating model
 
 ---
 
 ## Overview
 
-These templates are designed for the TeamSpec 4.0 Product Canon operating model, where features live in products and increments are delivered through projects.
-
-Each template:
+These templates are designed for the TeamSpec 4.0 Product-Canon operating model. Each template:
 
 1. **Identifies its owner** — Which role creates/maintains it
 2. **States its artifact type** — Source of Truth, Execution, Planning, or Operational
@@ -20,19 +18,6 @@ Each template:
 ---
 
 ## Template Index
-
-### Core Templates
-
-Templates for the Product Canon operating model.
-
-| Template | Owner | Linter Rules | Purpose |
-|----------|-------|--------------|---------|
-| [epic-template.md](epic-template.md) | BA/PO | TS-EPIC-* | Epic definition (groups Feature-Increments) |
-| [story-template-v4.md](story-template-v4.md) | FA | TS-STORY-006/007 | Stories linked to Epics (s-eXXX-YYY) |
-| [feature-increment-template.md](feature-increment-template.md) | BA | TS-FI-* | Feature-Increment (delta to product feature) |
-| [product-template.yml](product-template.yml) | PO | TS-PROD-* | Product configuration |
-| [products-index-template.md](products-index-template.md) | PO | TS-PROD-001 | Product registry |
-| [increments-index-template.md](increments-index-template.md) | BA | TS-FI-004 | Increment registry |
 
 ### Source of Truth Templates
 
@@ -178,27 +163,11 @@ Before sprint close, verify Canon is updated:
 
 | Rule | Applies To | Description |
 |------|------------|-------------|
-| TS-PROD-001 | Products | Product registration required |
-| TS-PROD-002 | Products | product.yml metadata required |
-| TS-PROD-003 | Products | Bidirectional product-project links |
-| TS-PROD-004 | Products | features-index.md required |
-| TS-PROD-005 | Products | story-ledger.md required |
-| TS-FI-001 | Feature-Increments | Product/feature reference required |
-| TS-FI-002 | Feature-Increments | AS-IS/TO-BE sections required |
-| TS-FI-003 | Feature-Increments | Target feature must exist |
-| TS-FI-004 | Feature-Increments | ID must be unique |
-| TS-EPIC-001 | Epics | Feature-Increment link required |
-| TS-EPIC-002 | Epics | TO-BE section required |
-| TS-EPIC-003 | Epics | ID must be unique |
-| TS-PROJ-003 | Projects | Must target at least one product |
-| TS-PROJ-004 | Projects | Target products must exist |
-| TS-STORY-001 | Stories | Feature link recommended |
+| TS-STORY-001 | Stories | Feature link required |
 | TS-STORY-002 | Stories | Delta-only format |
 | TS-STORY-003 | Stories | ACs testable |
 | TS-STORY-004 | Stories | Sprint assignment by SM only |
 | TS-STORY-005 | Stories | DoR complete |
-| TS-STORY-006 | Stories | Epic link required (via filename) |
-| TS-STORY-007 | Stories | Linked Epic must exist |
 | TS-FEAT-001 | Features | Feature must exist before stories |
 | TS-FEAT-002 | Features | All sections required |
 | TS-FEAT-003 | Features | Feature ID unique |
@@ -209,11 +178,7 @@ Before sprint close, verify Canon is updated:
 | TS-QA-002 | Bugs | Classification required |
 | TS-DOD-001 | All | Canon sync before Done |
 | TS-DOD-002 | Tests | Tests are feature-level |
-| TS-DOD-003 | Projects | Product sync after deployment |
 | TS-DEVPLAN-001 | Sprints | Dev plan before implementation |
-| TS-NAMING-FI | Feature-Increments | Naming convention (fi-PRX-XXX) |
-| TS-NAMING-EPIC | Epics | Naming convention (epic-PRX-XXX) |
-| TS-NAMING-PRODUCT | Products | Naming convention (lowercase-dashes) |
 
 ---
 

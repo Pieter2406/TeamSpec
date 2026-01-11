@@ -1,0 +1,70 @@
+# Project Configuration Template
+# TeamSpec 4.0 - Product/Project Operating Model
+#
+# Usage: Copy this template to projects/<project-id>/project.yml
+# Replace placeholders marked with <...>
+
+project:
+  # Unique slug identifier (lowercase, hyphens)
+  id: "<project-id>"
+  
+  # Human-readable name
+  name: "<Project Name>"
+  
+  # Project description (TO-BE goals)
+  description: |
+    # TODO: Describe what this project will CHANGE
+    # - What business outcomes are targeted?
+    # - What products will be modified?
+    # - What is the expected timeline?
+  
+  # Project lifecycle status
+  status: active  # Options: planning, active, paused, completed, archived
+  
+  # Target products this project will modify
+  # Each entry creates a feature-increment link
+  target_products:
+    - product_id: "<product-id>"
+      prefix: "<PRX>"          # Product prefix for artifact naming
+      # epic_id: "epic-PRX-001"  # Optional: link to specific epic
+
+# Team configuration
+team:
+  # Stakeholders and their roles
+  stakeholders:
+    - name: "<Product Owner>"
+      role: "PO"
+    - name: "<Team Lead>"
+      role: "DEV"
+  
+  # Active roles in this project
+  roles:
+    - BA
+    - FA
+    - SA
+    - DEV
+    - QA
+    - SM
+    - DES  # Optional: Designer role
+
+# Sprint configuration (if using Scrum)
+sprints:
+  # Sprint duration in weeks
+  length: 2
+  
+  # Current sprint number (auto-updated by SM)
+  current: 1
+
+# Optional: Project metadata
+metadata:
+  # Project start date
+  start_date: "<YYYY-MM-DD>"
+  
+  # Target completion date
+  target_date: "<YYYY-MM-DD>"
+  
+  # Project priority
+  priority: medium  # Options: low, medium, high, critical
+  
+  # Related projects (for cross-references)
+  related_projects: []

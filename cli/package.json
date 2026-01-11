@@ -1,7 +1,7 @@
 {
   "name": "teamspec",
-  "version": "3.2.0",
-  "description": "CLI tool to bootstrap TeamSpec 2.0 Feature Canon operating model in any repository",
+  "version": "4.0.0",
+  "description": "CLI tool to bootstrap TeamSpec 4.0 Product-Canon operating model in any repository",
   "main": "lib/cli.js",
   "bin": {
     "teamspec": "./bin/teamspec-init.js"
@@ -9,12 +9,17 @@
   "scripts": {
     "test": "node --test test/**/*.test.js",
     "lint": "eslint lib/**/*.js",
+    "check:banlist": "node ../scripts/check-banlist.js",
+    "check:parity": "node ../scripts/check-parity.js",
+    "generate": "node ../scripts/generate-spec.js",
+    "pretest": "npm run check:banlist && npm run check:parity",
     "prepublishOnly": "npm test"
   },
   "keywords": [
     "teamspec",
     "agile",
     "specifications",
+    "product-canon",
     "feature-canon",
     "copilot",
     "cursor",

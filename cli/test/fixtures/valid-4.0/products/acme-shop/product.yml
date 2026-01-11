@@ -1,0 +1,9 @@
+# Product Configuration (4.0)
+product:
+  id: "acme-shop"
+  prefix: "ACME"
+  name: "ACME Shop"
+  status: "active"
+  description: "E-commerce platform"
+  active_projects:
+    - project_id: "shop-redesign"

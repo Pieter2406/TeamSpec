@@ -1,0 +1,44 @@
+# Product Configuration Template
+# TeamSpec 4.0 - Product/Project Operating Model
+#
+# Usage: Copy this template to products/<product-id>/product.yml
+# Replace placeholders marked with <...>
+
+product:
+  # Unique slug identifier (lowercase, hyphens)
+  id: "<product-id>"
+  
+  # Human-readable name
+  name: "<Product Name>"
+  
+  # 3-4 uppercase character unique prefix
+  # Used in all artifact naming: f-PRX-001, ba-PRX-001, etc.
+  prefix: "<PRX>"
+  
+  # Product description (AS-IS state)
+  description: |
+    # TODO: Describe what this product IS (current state)
+    # - What problem does it solve?
+    # - Who are the users?
+    # - What are the key capabilities?
+  
+  # Product lifecycle status
+  status: active  # Options: active, deprecated, archived
+  
+  # List of projects currently modifying this product
+  # Automatically managed by TeamSpec when creating feature-increments
+  active_projects: []
+
+# Optional: Product metadata
+metadata:
+  # Product owner
+  owner: "<name or team>"
+  
+  # Creation date
+  created: "<YYYY-MM-DD>"
+  
+  # Domain/category
+  domain: "<domain>"
+  
+  # Related products (for cross-references)
+  related_products: []

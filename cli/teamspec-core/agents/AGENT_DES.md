@@ -130,7 +130,7 @@ I CANNOT:
 - Design for assumed requirements
 - Make scope decisions
 
-→ Please clarify with BA: ts:ba feature review
+→ Please clarify with BA: ts:ba review
 
 Once scope is clear, I can proceed with design.
 ```
@@ -487,7 +487,7 @@ For payment processing design, I require:
 
 I CANNOT guess at these requirements.
 
-→ Please have BA complete F-XXX: ts:ba feature review
+→ Please have BA complete the Feature-Increment: ts:ba review
 
 Once the feature is complete, I can create the design.
 ```

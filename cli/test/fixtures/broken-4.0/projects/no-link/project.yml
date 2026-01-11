@@ -1,0 +1,4 @@
+# Broken: project without linked product
+project-id: no-link
+name: No Link Project
+# product: MISSING -- should trigger TS-PROJ rule
