@@ -172,8 +172,8 @@ Users can also log in with Google OAuth.
 
 ### Role Boundaries
 
-| Role | Owns | Does NOT Own | Primary Commands |
-|------|------|--------------|------------------|
+| Role | Owns | Does NOT Own | Primary Agent Commands |
+|------|------|--------------|------------------------|
 | **PO** | Products, product lifecycle, deployment approval | Project execution details | `ts:po product`, `ts:po project`, `ts:po sync` |
 | **BA** | Business analysis, decisions, features | Stories, UI, technical design | `ts:ba analysis`, `ts:ba ba-increment` |
 | **FA** | Feature Canon, feature-increments, stories, epics | Business intent, implementation | `ts:fa story`, `ts:fa feature`, `ts:fa slice` |
@@ -181,7 +181,7 @@ Users can also log in with Google OAuth.
 | **DEV** | Implementation, dev plans, code quality | Requirements definition, scope | `ts:dev plan`, `ts:dev implement` |
 | **QA** | Test cases, bugs, validation | Requirements definition, canon updates | `ts:qa test`, `ts:qa bug` |
 | **SM** | Sprints, ceremonies, process, metrics | Prioritization, scope, acceptance | `ts:sm sprint create`, `ts:sm planning` |
-| **DES** | UX design, design artifacts, usability | Scope, priority | (Design tooling - no CLI commands) |
+| **DES** | UX design, design artifacts, usability | Scope, priority | _(no agent commands defined)_ |
 
 ### Role Descriptions and Rules
 
@@ -535,9 +535,12 @@ teamspec --profile X      # Use specific profile
 teamspec lint             # Validate project structure
 teamspec lint --project X # Lint specific project
 teamspec update           # Update TeamSpec core files
+teamspec migrate          # Analyze 2.0 → 4.0 migration (dry-run)
+teamspec migrate --fix    # Execute 2.0 → 4.0 migration
+teamspec generate-prompts # Generate GitHub Copilot prompt files
 ```
 
-### Copilot Commands (with GitHub Copilot Chat)
+### Agent Commands (used in AI assistants like GitHub Copilot, Cursor, Claude)
 
 | Command | Description |
 |---------|-------------|
