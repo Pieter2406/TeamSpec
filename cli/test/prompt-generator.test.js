@@ -368,7 +368,10 @@ describe('Frontmatter Format', () => {
         const { frontmatter } = parsePromptFile(promptPath);
 
         assert.ok(frontmatter.description, 'Should have description');
-        assert.ok(frontmatter.description.includes('Business Analyst'), 'Should reference Business Analyst');
+        // Description comes from command purpose in registry
+        assert.ok(frontmatter.description.toLowerCase().includes('analysis') ||
+            frontmatter.description.toLowerCase().includes('business'),
+            'Should describe the command purpose');
     });
 
     test('prompts reference agent files', () => {

@@ -329,12 +329,69 @@ function getStoryWorkflowFolders(structure) {
     ];
 }
 
+/**
+ * Convert naming pattern from registry.yml to regex
+ * 
+ * Converts patterns like:
+ * - "f-{PRX}-{NNN}-{description}.md" -> /^f-[A-Z]{3,4}-\d{3}-[\w-]+\.md$/
+ * - "s-e{EEE}-{SSS}-{description}.md" -> /^s-e\d{3}-\d{3}-[\w-]+\.md$/
+ * 
+ * @param {string} pattern - Naming pattern from registry
+ * @returns {RegExp} - Compiled regex pattern
+ */
+function namingPatternToRegex(pattern) {
+    if (!pattern) return null;
+
+    // Escape special regex characters first (except { and })
+    let regexStr = pattern
+        .replace(/\./g, '\\.')
+        .replace(/\*/g, '.*');
+
+    // Replace placeholders with regex patterns
+    regexStr = regexStr
+        .replace(/\{PRX\}/g, '[A-Z]{3,4}')         // Product prefix
+        .replace(/\{NNN\}/g, '\\d{3}')             // 3-digit number
+        .replace(/\{EEE\}/g, '\\d{3}')             // Epic number
+        .replace(/\{SSS\}/g, '\\d{3}')             // Story sequence
+        .replace(/\{N\}/g, '\\d+')                 // Sprint number
+        .replace(/\{description\}/g, '[\\w-]+')   // Description slug
+        .replace(/\{product-id\}/g, '[\\w-]+')    // Product ID
+        .replace(/\{project-id\}/g, '[\\w-]+')    // Project ID
+        .replace(/\{state\}/g, '[\\w-]+');        // Story state
+
+    return new RegExp(`^${regexStr}$`);
+}
+
+/**
+ * Get naming patterns as regex from registry artifacts
+ * @param {Object} registry - Parsed registry
+ * @returns {Object} - Map of artifact type to regex pattern
+ */
+function getArtifactNamingRegex(registry) {
+    const patterns = {};
+
+    if (registry?.artifacts) {
+        for (const [artifactKey, artifactData] of Object.entries(registry.artifacts)) {
+            if (artifactData.naming) {
+                const regex = namingPatternToRegex(artifactData.naming);
+                if (regex) {
+                    patterns[artifactKey] = regex;
+                }
+            }
+        }
+    }
+
+    return patterns;
+}
+
 module.exports = {
     parseYaml,
     loadRegistry,
     loadFolderStructure,
     getCommandsFromRegistry,
     getArtifactPatterns,
+    getArtifactNamingRegex,
+    namingPatternToRegex,
     getProductFolders,
     getProjectFolders,
     getStoryWorkflowFolders,

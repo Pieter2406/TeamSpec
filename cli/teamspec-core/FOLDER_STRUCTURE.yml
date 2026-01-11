@@ -1,0 +1,131 @@
+# TeamSpec 4.0 Folder Structure Encoding
+# Encodes the physical folder hierarchy for AI prompts and tooling
+# Version: 4.0
+# Last Updated: 2026-01-11
+#
+# NOTE: Role ownership, artifact naming, and gates are defined in registry.yml
+# This file focuses ONLY on folder paths and hierarchy
+
+# =============================================================================
+# CORE CONCEPT: Products vs Projects
+# =============================================================================
+# Products = Production truth (AS-IS state) - canonical, permanent
+# Projects = Change proposals (TO-BE state) - time-bound, sync to product on deploy
+
+structure:
+  # ---------------------------------------------------------------------------
+  # PRODUCTS - Production Truth
+  # ---------------------------------------------------------------------------
+  products:
+    path: "products/"
+    
+    product_folder:
+      path: "products/{product-id}/"
+      files:
+        - "product.yml"
+        - "README.md"
+      
+      subfolders:
+        - path: "business-analysis/"
+        - path: "features/"
+          key_files:
+            - "features-index.md"
+            - "story-ledger.md"
+        - path: "solution-designs/"
+        - path: "technical-architecture/"
+        - path: "qa/regression-tests/"
+        - path: "decisions/"
+
+  # ---------------------------------------------------------------------------
+  # PROJECTS - Change Proposals
+  # ---------------------------------------------------------------------------
+  projects:
+    path: "projects/"
+    
+    project_folder:
+      path: "projects/{project-id}/"
+      files:
+        - "project.yml"
+        - "README.md"
+      
+      subfolders:
+        - path: "business-analysis-increments/"
+        - path: "feature-increments/"
+          key_files:
+            - "increments-index.md"
+        - path: "solution-design-increments/"
+        - path: "technical-architecture-increments/"
+        - path: "epics/"
+          key_files:
+            - "epics-index.md"
+        - path: "stories/"
+          workflow_subfolders:
+            - "backlog/"
+            - "ready-to-refine/"
+            - "ready-to-develop/"
+            - "deferred/"
+            - "out-of-scope/"
+        - path: "decisions/"
+        - path: "dev-plans/"
+        - path: "qa/"
+          subfolders:
+            - "test-cases/"
+            - "bug-reports/"
+            - "uat/"
+            - "regression-impact/"
+        - path: "sprints/"
+          key_files:
+            - "active-sprint.md"
+          sprint_folder:
+            pattern: "sprint-N/"
+            files:
+              - "sprint-goal.md"
+              - "committed-stories.md"
+              - "retrospective.md"
+
+# =============================================================================
+# STORY WORKFLOW FOLDERS
+# =============================================================================
+# Stories move between folders based on workflow state
+story_workflow_folders:
+  - folder: "stories/backlog/"
+    state: "backlog"
+    next: "stories/ready-to-refine/"
+    
+  - folder: "stories/ready-to-refine/"
+    state: "ready-to-refine"
+    next: "stories/ready-to-develop/"
+    
+  - folder: "stories/ready-to-develop/"
+    state: "ready-to-develop"
+    next: "sprints/sprint-N/"
+    
+  - folder: "sprints/sprint-N/"
+    state: "in-sprint"
+    next: "completed (archived)"
+    
+  # Terminal states
+  - folder: "stories/deferred/"
+    state: "deferred"
+    terminal: true
+    
+  - folder: "stories/out-of-scope/"
+    state: "out-of-scope"
+    terminal: true
+
+# =============================================================================
+# CANON SYNC FOLDER MAPPINGS
+# =============================================================================
+# Post-deployment, project artifacts sync to product folders
+canon_sync_paths:
+  - from: "projects/{project-id}/feature-increments/"
+    to: "products/{product-id}/features/"
+    
+  - from: "projects/{project-id}/business-analysis-increments/"
+    to: "products/{product-id}/business-analysis/"
+    
+  - from: "projects/{project-id}/solution-design-increments/"
+    to: "products/{product-id}/solution-designs/"
+    
+  - from: "projects/{project-id}/technical-architecture-increments/"
+    to: "products/{product-id}/technical-architecture/"

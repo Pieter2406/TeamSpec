@@ -34,6 +34,21 @@ const SYNC_CONFIG = [
     }
 ];
 
+// Individual YML files to sync from spec/4.0
+const YML_FILES_TO_SYNC = [
+    {
+        source: 'spec/4.0/registry.yml',
+        dest: 'registry.yml',
+        description: 'Registry (roles, artifacts, commands, gates)'
+    },
+    {
+        source: 'cli/teamspec-core/FOLDER_STRUCTURE.yml',
+        dest: 'FOLDER_STRUCTURE.yml',
+        description: 'Folder structure definition',
+        skipIfMissing: true // Keep existing if source missing
+    }
+];
+
 function ensureDir(dir) {
     if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
@@ -91,6 +106,38 @@ function syncFolder(config) {
     return { copied, skipped };
 }
 
+function syncYmlFiles() {
+    console.log(`\n📄 Syncing YML configuration files...`);
+    
+    let copied = 0;
+    let skipped = 0;
+
+    for (const config of YML_FILES_TO_SYNC) {
+        const srcPath = path.join(ROOT, config.source);
+        const destPath = path.join(CLI_CORE, config.dest);
+
+        console.log(`\n   ${config.description}`);
+        console.log(`   Source: ${config.source}`);
+        console.log(`   Dest:   cli/teamspec-core/${config.dest}`);
+
+        if (!fs.existsSync(srcPath)) {
+            if (config.skipIfMissing) {
+                console.log(`   ⚠️  Source not found, keeping existing`);
+                skipped++;
+            } else {
+                console.log(`   ❌ Source not found!`);
+                skipped++;
+            }
+            continue;
+        }
+
+        copyFile(srcPath, destPath);
+        copied++;
+    }
+
+    return { copied, skipped };
+}
+
 function main() {
     console.log('═══════════════════════════════════════════════════');
     console.log('  TeamSpec CLI Core Sync');
@@ -104,11 +151,17 @@ function main() {
     let totalCopied = 0;
     let totalSkipped = 0;
 
+    // Sync folders
     for (const config of SYNC_CONFIG) {
         const result = syncFolder(config);
         totalCopied += result.copied;
         totalSkipped += result.skipped;
     }
+
+    // Sync YML configuration files
+    const ymlResult = syncYmlFiles();
+    totalCopied += ymlResult.copied;
+    totalSkipped += ymlResult.skipped;
 
     console.log('\n═══════════════════════════════════════════════════');
     console.log(`  ✅ Sync complete: ${totalCopied} files copied, ${totalSkipped} skipped`);

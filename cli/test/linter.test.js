@@ -32,7 +32,8 @@ const {
     formatResults,
     LintResult,
     SEVERITY,
-    NAMING_PATTERNS,
+    getNamingPatterns,
+    resetNamingPatterns,
     checkProductRegistered,
     checkProductYml,
     checkProjectRegistered,
@@ -193,6 +194,9 @@ describe('LintResult Class', () => {
 // =============================================================================
 
 describe('Naming Patterns', () => {
+    // Get naming patterns (will use fallback since no workspace)
+    const NAMING_PATTERNS = getNamingPatterns(null);
+
     test('feature pattern should match valid filenames', () => {
         assert.ok(NAMING_PATTERNS.feature.test('f-ACME-001-user-login.md'));
         assert.ok(NAMING_PATTERNS.feature.test('f-TST-123-some-feature.md'));

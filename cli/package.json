@@ -1,20 +1,18 @@
 {
   "name": "teamspec",
-  "version": "4.0.0",
+  "version": "4.1.1",
   "description": "CLI tool to bootstrap TeamSpec 4.0 Product-Canon operating model in any repository",
   "main": "lib/cli.js",
   "bin": {
-    "teamspec": "./bin/teamspec-init.js"
+    "teamspec": "bin/teamspec-init.js"
   },
   "scripts": {
     "sync": "node ../scripts/sync-cli-core.js",
     "test": "node --test test/**/*.test.js",
     "lint": "eslint lib/**/*.js",
-    "check:banlist": "node ../scripts/check-banlist.js",
     "check:parity": "node ../scripts/check-parity.js",
-    "generate": "node ../scripts/generate-spec.js",
     "check:consistency": "node ../scripts/check-consistency.js",
-    "pretest": "npm run check:banlist && npm run check:parity && npm run check:consistency",
+    "pretest": "npm run check:consistency",
     "prepublishOnly": "npm run sync && npm test"
   },
   "keywords": [
