@@ -174,14 +174,14 @@ Users can also log in with Google OAuth.
 
 | Role | Owns | Does NOT Own | Primary Commands |
 |------|------|--------------|------------------|
-| **PO** | Products, product lifecycle, deployment approval | Project execution details | `ts:po product`, `ts:deploy` |
-| **BA** | Projects, business analysis, decisions, features | Stories, UI, technical design | `ts:ba project`, `ts:ba analysis` |
-| **FA** | Feature Canon, feature-increments, stories, epics | Business intent, implementation | `ts:fa story`, `ts:fa slice` |
-| **SA** | Architecture, technical decisions, ADRs | Requirements, code implementation | `ts:sa adr` |
+| **PO** | Products, product lifecycle, deployment approval | Project execution details | `ts:po product`, `ts:po project`, `ts:po sync` |
+| **BA** | Business analysis, decisions, features | Stories, UI, technical design | `ts:ba analysis`, `ts:ba ba-increment` |
+| **FA** | Feature Canon, feature-increments, stories, epics | Business intent, implementation | `ts:fa story`, `ts:fa feature`, `ts:fa slice` |
+| **SA** | Architecture, technical decisions, solution designs | Requirements, code implementation | `ts:sa ta`, `ts:sa sd` |
 | **DEV** | Implementation, dev plans, code quality | Requirements definition, scope | `ts:dev plan`, `ts:dev implement` |
 | **QA** | Test cases, bugs, validation | Requirements definition, canon updates | `ts:qa test`, `ts:qa bug` |
-| **SM** | Sprints, ceremonies, process, metrics | Prioritization, scope, acceptance | `ts:sm sprint`, `ts:sm planning` |
-| **DES** | UX design, design artifacts, usability | Scope, priority | `ts:des wireframe` |
+| **SM** | Sprints, ceremonies, process, metrics | Prioritization, scope, acceptance | `ts:sm sprint create`, `ts:sm planning` |
+| **DES** | UX design, design artifacts, usability | Scope, priority | (Design tooling - no CLI commands) |
 
 ### Role Descriptions and Rules
 
@@ -483,11 +483,11 @@ TeamSpec provides native GitHub Copilot integration through instruction files:
 **In Copilot Chat:**
 ```
 ts:po product                 # Create/manage products (4.0)
-ts:ba project                 # Create project structure
-ts:fa story F-042 ...         # Create delta-based story
-ts:dev plan S-001             # Create implementation plan
-ts:qa test F-042              # Design test cases
-ts:deploy                     # Sync increments to Canon (4.0)
+ts:po project                 # Create/manage projects
+ts:fa story                   # Create delta-based story
+ts:dev plan                   # Create implementation plan
+ts:qa test                    # Design test cases
+ts:po sync                    # Sync increments to Canon (4.0)
 ts:status                     # Project health overview
 ts:agent fix                  # Auto-fix lint errors
 ```
@@ -542,15 +542,22 @@ teamspec update           # Update TeamSpec core files
 | Command | Description |
 |---------|-------------|
 | `ts:po product` | Create/manage products (4.0) |
-| `ts:ba project` | Create/manage projects |
-| `ts:ba analysis` | Business analysis documents |
+| `ts:po project` | Create/manage projects |
+| `ts:po sync` | Sync project increments to Product Canon |
+| `ts:ba analysis` | Create business analysis documents |
+| `ts:ba ba-increment` | Create BA increment in project |
+| `ts:fa feature` | Create a feature in Product Canon |
+| `ts:fa feature-increment` | Create a Feature-Increment |
 | `ts:fa story` | Create delta-based stories |
-| `ts:fa slice` | Slice requirements into stories |
-| `ts:sa adr` | Create architecture decisions |
+| `ts:fa slice` | Slice epic into stories |
+| `ts:sa ta` | Create Technical Architecture document |
+| `ts:sa sd` | Create Solution Design document |
 | `ts:dev plan` | Create implementation plans |
+| `ts:dev implement` | Start implementation workflow |
 | `ts:qa test` | Design test cases |
-| `ts:sm sprint` | Sprint management |
-| `ts:deploy` | Sync increments to Canon (4.0) |
+| `ts:qa bug` | File bug reports |
+| `ts:sm sprint create` | Create new sprint |
+| `ts:sm planning` | Sprint planning facilitation |
 | `ts:status` | Project health overview |
 | `ts:agent fix` | Auto-fix lint errors |
 
