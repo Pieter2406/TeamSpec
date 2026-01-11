@@ -108,7 +108,7 @@ function syncFolder(config) {
 
 function syncYmlFiles() {
     console.log(`\n📄 Syncing YML configuration files...`);
-    
+
     let copied = 0;
     let skipped = 0;
 

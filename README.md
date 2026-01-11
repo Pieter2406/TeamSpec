@@ -189,13 +189,29 @@ After deployment, the Feature-Increment is synced into the Feature Canon via `ts
 
 **Do not use "Canon" unqualified — always specify Product Canon or Feature Canon.**
 
+### Epics
+
+Epics are containers for related stories within a project. Stories MUST link to an Epic via their filename pattern.
+
+**Pattern:** `epic-{PRX}-{NNN}-{description}.md`
+
+**Key Rules:**
+- Epics belong to FA (not BA)
+- Every story must reference an Epic in its filename
+- Epics define the TO-BE state for a coherent change
+
 ### Stories as Deltas
 
-Stories don't duplicate documentation — they describe **changes** within a project:
+Stories don't duplicate documentation — they describe **changes** within a project. Stories MUST link to an Epic via filename.
+
+**Pattern:** `s-e{EEE}-{SSS}-{description}.md` (where EEE = epic number, SSS = story sequence)
 
 ```markdown
+## Linked Epic
+epic-ACME-001 (Authentication Overhaul)
+
 ## Before (Current Behavior)
-Reference: fi-DIT-001, Section: OAuth Login Flow
+Reference: fi-ACME-001, Section: OAuth Login Flow
 
 ## After (New Behavior)  
 Users can also log in with Google OAuth.
@@ -211,26 +227,27 @@ See [spec/4.0/roles.md](spec/4.0/roles.md) for the authoritative ownership matri
 
 | Role | Owns | Does NOT Own | Primary Agent Commands |
 |------|------|--------------|------------------------|
-| **PO** | Products, Projects, Canon sync | Stories, Technical design | `ts:po product`, `ts:po project`, `ts:po sync` |
-| **BA** | Business Analysis artifacts | Projects, Features, Stories | `ts:ba analysis`, `ts:ba ba-increment` |
-| **FA** | Features, Feature-Increments, Epics, Stories | Products, Business intent | `ts:fa feature`, `ts:fa story`, `ts:fa epic` |
-| **SA** | Solution Design, Technical Architecture | Requirements, code | `ts:sa sd`, `ts:sa ta` |
-| **DEV** | Implementation, Dev plans | Requirements, scope | `ts:dev plan`, `ts:dev implement` |
-| **QA** | Test cases (project), Regression tests (product) | Feature definitions | `ts:qa test`, `ts:qa regression` |
-| **SM** | Sprint operations, Deployment checklist | Prioritization, scope | `ts:sm sprint`, `ts:sm deploy-checklist` |
-| **DES** | UX/UI design artifacts | Scope, priority | — |
+| **PO** | Products, Projects, PRX assignment, Canon sync, Deployment approval | Stories, Technical design, Sprint management | `ts:po product`, `ts:po project`, `ts:po sync`, `ts:po status` |
+| **BA** | Business Analysis artifacts, Domain knowledge | Projects, Features, Feature-Increments, Epics, Stories | `ts:ba analysis`, `ts:ba ba-increment`, `ts:ba review` |
+| **FA** | Features, Feature-Increments, Epics, Stories, Sync proposals | Products, Projects, Business intent, Technical design | `ts:fa feature`, `ts:fa feature-increment`, `ts:fa epic`, `ts:fa story` |
+| **SA** | Solution Designs, Technical Architecture | Business requirements, Features, Stories | `ts:sa sd`, `ts:sa sd-increment`, `ts:sa ta`, `ts:sa ta-increment` |
+| **DEV** | Implementation, Dev plans | Feature definitions, Scope changes | `ts:dev plan`, `ts:dev implement` |
+| **QA** | Project test cases, Product regression tests, Bug reports, Deployment verification | Feature definitions, Canon updates | `ts:qa test`, `ts:qa regression`, `ts:qa verify` |
+| **SM** | Sprint operations, Deployment gate process | Prioritization, Acceptance, Scope changes | `ts:sm sprint`, `ts:sm deploy-checklist` |
+| **DES** | UX/UI design artifacts | Technical implementation, Scope decisions | — |
 
 ### Role Descriptions and Rules
 
 #### Product Owner (PO)
-**Ownership Domain:** Products, Projects, Product Lifecycle, Deployment Approval, Production Truth
+**Ownership Domain:** Products, Product Canon, Projects, PRX assignment, Deployment approval, Canon sync
 
 | Responsibility | Description |
 |----------------|-------------|
 | Product Definition | Create and own product structure with unique PRX prefix |
-| Deployment Approval | Approve sync from project to product |
+| Project Definition | Create projects that target one or more products |
+| Deployment Approval | Approve deployment verification gate — no sync without PO approval |
+| Canon Sync | Execute `ts:po sync` after deployment verification gate passed |
 | Product Lifecycle | Manage active, deprecated, retired states |
-| Project Management | Create projects that target one or more products |
 
 **Hard Rules:**
 - PO never modifies Product Canon during active project execution
@@ -242,59 +259,65 @@ See [spec/4.0/roles.md](spec/4.0/roles.md) for the authoritative ownership matri
 ---
 
 #### Business Analyst (BA)
-**Ownership Domain:** Business Intent, Strategic Direction, Feature Definition
+**Ownership Domain:** Business Analysis artifacts, Domain knowledge documentation
 
 | Responsibility | Description |
 |----------------|-------------|
-| Project Creation | Create and own `/projects/{project-id}/` structure |
-| Business Analysis | Perform analysis of business processes |
-| Feature Definition | Define and prioritize Features (implementation-agnostic) |
-| Decision Logs | Maintain `/decisions/` with business decisions |
+| Business Analysis | Create and own business analysis documents (`ba-PRX-*.md`) |
+| BA Increments | Create BA increments in projects (`bai-PRX-*.md`) |
+| Domain Knowledge | Document business processes and domain context |
+| Review | Review Feature-Increments for business intent alignment |
 
 **Hard Rules:**
+- BA never creates Projects (PO responsibility)
+- BA never creates Features (FA responsibility)
+- BA never creates Feature-Increments (FA responsibility)
+- BA never creates Epics (FA responsibility)
 - BA never writes stories (FA responsibility)
 - BA never defines system behavior details
-- BA never approves technical feasibility
 - BA owns "what and why", never "how"
-- All feature changes require decision log entry
 
 ---
 
 #### Functional Analyst (FA)
-**Ownership Domain:** System Behavior, Story Definition, Feature Canon Synchronization
+**Ownership Domain:** Features, Feature-Increments, Epics, Stories, Sync proposals
 
 | Responsibility | Description |
 |----------------|-------------|
-| Story Definition | Define Stories as deltas to Features |
-| Acceptance Criteria | Write ACs aligned to Feature Canon |
-| Feature Canon Sync | Update Feature Canon when behavior changes |
-| Behavior Validation | Validate behavior with users and SMEs |
+| Feature Definition | Create and own Features in Product Canon (`f-PRX-*.md`) |
+| Feature-Increments | Create Feature-Increments in projects (`fi-PRX-*.md`) |
+| Epic Definition | Create and own Epics (`epic-PRX-*.md`) |
+| Story Definition | Define Stories as deltas linked to Epics (`s-eXXX-YYY-*.md`) |
+| Acceptance Criteria | Write testable ACs aligned to Feature Canon |
+| Sync Proposals | Prepare sync proposals for PO review |
 
 **Hard Rules:**
 - All behavior must trace to BA analysis or stakeholder validation
-- FA is the Feature Canon synchronizer
+- FA is the Feature Canon owner (creates features)
 - Reject stories that restate features instead of deltas
-- Stories must link to ≥1 feature
-- Feature Canon updated before story marked Done
+- Stories must link to an Epic via filename (`s-eXXX-YYY-*.md` pattern)
+- Feature-Increment must have AS-IS/TO-BE sections
 
-**Critical Gate:** FA is responsible for the most critical gate — ensuring Feature Canon reflects implemented behavior.
+**Critical Gate:** FA owns DoD — ensuring Feature-Increment TO-BE is complete before story is Done.
 
 ---
 
 #### Solution Architect (SA)
-**Ownership Domain:** Technical Direction, Architecture Decisions, System Structure
+**Ownership Domain:** Solution Designs, Technical Architecture (canonical and increments)
 
 | Responsibility | Description |
 |----------------|-------------|
-| Technical Architecture | Create and maintain technical architecture per Feature |
-| Technical Approach | Define high-level technical approach |
-| Cross-Feature Impact | Assess cross-feature and irreversible decisions |
+| Technical Architecture | Create and maintain TA documents (`ta-PRX-*.md`) |
+| TA Increments | Create TA increments in projects (`tai-PRX-*.md`) |
+| Solution Design | Create solution designs (`sd-PRX-*.md`) |
+| SD Increments | Create SD increments in projects (`sdi-PRX-*.md`) |
+| Technical Review | Assess Feature-Increments for technical feasibility |
 
 **Hard Rules:**
 - Technical Architecture links to features and decisions
 - High-level decisions only, not code-level
 - Technical feasibility assessment, not requirement changes
-- Technical Architecture required before dev work on architecture-impacting changes
+- TA required before dev work on architecture-impacting changes
 
 ---
 
@@ -318,20 +341,26 @@ See [spec/4.0/roles.md](spec/4.0/roles.md) for the authoritative ownership matri
 ---
 
 #### QA Engineer (QA)
-**Ownership Domain:** Verification, Test Design, Quality Assurance
+**Ownership Domain:** Project test cases, Product regression tests, Bug reports, Deployment verification
 
 | Responsibility | Description |
 |----------------|-------------|
-| Story Testing | Test stories against Acceptance Criteria |
-| Feature Test Cases | Create Feature-level test cases (canonical) |
-| Bug Classification | Classify bugs vs documentation gaps |
-| UAT Packs | Prepare UAT packs per persona |
+| Test Cases | Create test cases for Feature-Increments (`tc-fi-PRX-*.md`) |
+| Regression Tests | Create/update regression tests in Product Canon (`rt-f-PRX-*.md`) |
+| Bug Reports | Report and classify bugs (`bug-{project}-NNN-*.md`) |
+| Regression Impact | Record regression impact at deployment (`ri-fi-PRX-*.md`) |
+| Deployment Verification | Verify DoD compliance and deployment readiness |
 
 **Hard Rules:**
-- QA never updates Feature Canon directly
-- QA flags mismatches → FA decides
-- Tests are canonical (feature-level), not story-specific
+- QA never updates Feature Canon directly (only regression tests)
+- QA flags mismatches → FA decides on feature updates
+- Tests are Feature-Increment level (`tc-fi-*`), not story-specific
 - Bugs must be classified (implementation vs. canon vs. undocumented)
+- Regression impact record required at deployment gate
+
+**QA Two-Layer Model:**
+- **Project Test Cases:** `projects/{id}/qa/test-cases/tc-fi-PRX-*.md` (validates FI)
+- **Product Regression Tests:** `products/{id}/qa/regression-tests/rt-f-PRX-*.md` (long-term coverage)
 
 ---
 
@@ -353,21 +382,24 @@ See [spec/4.0/roles.md](spec/4.0/roles.md) for the authoritative ownership matri
 ---
 
 #### Scrum Master (SM)
-**Ownership Domain:** Sprint Operations, Facilitation, Metrics
+**Ownership Domain:** Sprint operations, Deployment gate process, Process facilitation
 
 | Responsibility | Description |
 |----------------|-------------|
-| Sprint Management | Create and manage sprints |
-| Sprint Planning | Facilitate sprint planning |
+| Sprint Management | Create and manage sprints (`sprint-N/`) |
+| Sprint Planning | Facilitate sprint planning with PO and team |
+| DoR Verification | Verify Definition of Ready before sprint commitment |
+| Deployment Checklist | Run deployment verification checklist |
 | Progress Tracking | Track progress and metrics |
 | Ceremony Facilitation | Run standups, reviews, retros |
 
 **Hard Rules:**
-- SM does not prioritize
+- SM does not prioritize (PO decides)
 - SM does not change scope
-- SM does not accept work
+- SM does not accept work (FA decides on Done)
 - SM is metrics-driven and neutral
-- Only SM can assign stories to sprints
+- SM owns deployment gate process (verification, checklist), PO has approval authority
+- SM does NOT deploy — that is Operations
 
 ---
 
@@ -377,100 +409,97 @@ The TeamSpec workflow follows a structured order of operations with explicit rol
 
 ```mermaid
 flowchart TD
-    subgraph "Phase 0-3: Planning"
-        P0["Phase 0<br/>PROJECT INIT<br/>(BA)"] --> G0{{"Gate:<br/>Project Exists"}}
-        G0 --> P1["Phase 1<br/>BUSINESS ANALYSIS<br/>(BA)"]
-        P1 --> G1{{"Gate:<br/>Features Defined"}}
-        G1 --> P2["Phase 2<br/>FUNCTIONAL ELABORATION<br/>(FA)"]
-        P2 --> G2{{"Gate:<br/>Canon Ready"}}
-        G2 --> P3["Phase 3<br/>STORY DEFINITION<br/>(FA)"]
-        P3 --> G3{{"Gate:<br/>Stories Ready"}}
+    subgraph "Phase 1: Product & Project Setup"
+        P1["PRODUCT CREATION<br/>(PO)"] --> P2["PROJECT CREATION<br/>(PO)"]
+        P2 --> G1{{"Gate:<br/>Project Exists"}}
     end
     
-    subgraph "Phase 4-6: Execution"
-        G3 --> P4["Phase 4<br/>ARCHITECTURE<br/>(SA)"]
-        P4 --> G4{{"Gate:<br/>TA Ready"}}
-        G4 --> P5["Phase 5<br/>SPRINT<br/>(SM/DEV)"]
-        P5 --> G5{{"Gate:<br/>Sprint Complete"}}
-        G5 --> P6["Phase 6<br/>QUALITY<br/>(QA)"]
-        P6 --> G6{{"Gate:<br/>Tested"}}
+    subgraph "Phase 2: Analysis & Planning"
+        G1 --> BA["BUSINESS ANALYSIS<br/>(BA)"]
+        BA --> FI["FEATURE-INCREMENT<br/>(FA)"]
+        FI --> EPIC["EPIC DEFINITION<br/>(FA)"]
+        EPIC --> G2{{"Gate:<br/>Epics Defined"}}
     end
     
-    subgraph "Phase 7: Release"
-        G6 --> P7["Phase 7<br/>RELEASE<br/>(SM/Team)"]
-        P7 --> G7{{"Gate:<br/>Deployed"}}
+    subgraph "Phase 3: Story & Architecture"
+        G2 --> STORY["STORY DEFINITION<br/>(FA)"]
+        STORY --> G3{{"Gate:<br/>DoR Passed"}}
+        G3 --> TA["TECHNICAL ARCHITECTURE<br/>(SA - if needed)"]
+        TA --> SD["SOLUTION DESIGN<br/>(SA - if needed)"]
+    end
+    
+    subgraph "Phase 4: Execution"
+        SD --> SPRINT["SPRINT PLANNING<br/>(SM)"]
+        SPRINT --> DEV["DEVELOPMENT<br/>(DEV)"]
+        DEV --> QA["TESTING<br/>(QA)"]
+        QA --> G4{{"Gate:<br/>DoD Passed"}}
+    end
+    
+    subgraph "Phase 5: Deployment & Verification"
+        G4 --> DEPLOY["PRODUCTION DEPLOY<br/>(Ops)"]
+        DEPLOY --> VERIFY["DEPLOYMENT VERIFICATION<br/>(SM/QA)"]
+        VERIFY --> G5{{"Gate:<br/>Verification Passed"}}
     end
 
-    subgraph "Phase 8: Canon Sync (Post-Deployment)"
-        G7 -.-> P8["Phase 8<br/>PRODUCT CANON SYNC<br/>(PO/FA)"]
-        P8 -.-> G8{{"Gate:<br/>Canon Updated"}}
+    subgraph "Phase 6: Canon Sync (Post-Deployment)"
+        G5 -.-> SYNC["CANON SYNC<br/>(PO)"]
+        SYNC -.-> G6{{"Gate:<br/>Canon Updated"}}
     end
 
-    style P8 fill:#ff6b6b,stroke:#c92a2a,color:#fff
-    style G8 fill:#ff6b6b,stroke:#c92a2a,color:#fff
+    style SYNC fill:#ff6b6b,stroke:#c92a2a,color:#fff
+    style G6 fill:#ff6b6b,stroke:#c92a2a,color:#fff
 ```
 
-> **Note:** Canon Sync (Phase 8) occurs **after deployment** to production. The Product Canon should only be updated to reflect behavior that is actually deployed and running. This is triggered via `ts:po sync` when the increment is verified in production.
+> **Note:** Canon Sync (Phase 6) occurs **after deployment** to production. The Product Canon should only be updated to reflect behavior that is actually deployed and running. This is triggered via `ts:po sync` when the increment is verified in production.
 
 ### Role Handoffs
 
-```mermaid
-flowchart LR
-    subgraph "Business to Functional"
-        BA1[BA] -->|"Feature defined<br/>ready for story slicing"| FA1[FA]
-    end
-    
-    subgraph "Functional to Development"
-        FA2[FA] -->|"Story refined<br/>ready for development"| DEV1[DEV]
-        FA3[FA] -->|"Functional context<br/>provided for design"| DES1[DES]
-    end
-    
-    subgraph "Architecture to Development"
-        SA1[SA] -->|"TA created<br/>technical constraints clear"| DEV2[DEV]
-    end
-    
-    subgraph "Development to QA"
-        DEV3[DEV] -->|"Implementation complete<br/>ready for testing"| QA1[QA]
-    end
-    
-    subgraph "QA to Release"
-        QA2[QA] -->|"Testing complete<br/>ready for release"| SM2[SM]
-    end
-    
-    subgraph "Post-Deployment Sync"
-        SM3[SM] -->|"Deployed to production<br/>sync to canon"| PO1[PO]
-        PO1 -->|"Canon sync approved<br/>FA prepares changes"| FA4[FA]
-    end
-    
-    subgraph "Sprint Operations"
-        SM1[SM] -->|"Sprint planned<br/>work committed"| TEAM[Team]
-    end
-```
+| From | To | Artifact | Trigger |
+|------|----|----------|--------|
+| BA | FA | Business analysis complete | BA review done |
+| FA | SA | Feature-Increment created | Technical review needed |
+| FA | DEV | Story ready | DoR passed |
+| SA | DEV | TA/SD created | Technical constraints documented |
+| DEV | QA | Code complete | PR created |
+| QA | FA | Verified | DoD checks passed |
+| QA | SM | Deployment verified | Regression impact recorded |
+| SM | PO | Deployment ready | Checklist complete |
+| PO | — | Canon synced | `ts:po sync` executed |
 
 ### Story State Machine
 
 ```mermaid
 stateDiagram-v2
-    [*] --> BACKLOG: FA creates
+    [*] --> backlog: FA creates story
     
-    BACKLOG --> READY_TO_REFINE: FA moves (after review)
+    backlog --> ready_to_refine: Needs refinement
+    ready_to_refine --> backlog: Refinement complete
     
-    READY_TO_REFINE --> READY_FOR_DEVELOPMENT: DEV moves (after refinement)
+    backlog --> in_progress: Sprint planning + DoR passed
     
-    READY_FOR_DEVELOPMENT --> IN_SPRINT: SM assigns (ONLY SM can assign)
+    in_progress --> done: DoD passed + QA verified
     
-    IN_SPRINT --> READY_FOR_TESTING: DEV marks ready (after dev complete)
+    in_progress --> deferred: Postponed
+    in_progress --> out_of_scope: Removed from project
     
-    READY_FOR_TESTING --> DONE: QA passes (after testing)
+    deferred --> backlog: Reactivated
     
-    DONE --> DEPLOYED: SM releases (deployed to prod)
-    
-    DEPLOYED --> ARCHIVED: PO syncs Canon (after deployment)
-    
-    ARCHIVED --> [*]
+    done --> [*]
+    out_of_scope --> [*]
 ```
 
-> **Note:** Canon sync to ARCHIVED state happens **after deployment** via `ts:po sync`.
+### Story State Folders
+
+| Folder | Meaning |
+|--------|--------|
+| `stories/backlog/` | Ready for sprint planning |
+| `stories/ready-to-refine/` | Needs refinement |
+| `stories/in-progress/` | Under development |
+| `stories/done/` | Completed |
+| `stories/deferred/` | Postponed |
+| `stories/out-of-scope/` | Removed from project |
+
+> **Note:** Stories move between folders based on workflow state. Canon sync happens after deployment via `ts:po sync`.
 
 ---
 
@@ -481,43 +510,58 @@ After initialization, your repository will have:
 ```
 your-repo/
 ├── .teamspec/                      # Framework core
-│   ├── agents/                     # Role-specific agents (+ AGENT_PO.md)
+│   ├── agents/                     # Role-specific agents
 │   ├── templates/                  # Document templates
 │   ├── definitions/                # DoR/DoD checklists
 │   ├── profiles/                   # Profile overlays
 │   └── context/
 │       └── team.yml                # Team configuration
 │
-├── products/                       # 📦 PRODUCTION TRUTH (4.0)
+├── products/                       # 📦 PRODUCTION TRUTH (AS-IS)
 │   ├── products-index.md           # Product registry
-│   └── {product-id}/               # e.g., checkout-system/
+│   └── {product-id}/               # e.g., acme-webshop/
 │       ├── product.yml             # Product metadata (PO owns)
-│       ├── features/               # 📚 CANONICAL Feature Canon
-│       │   ├── f-PRX-NNN-*.md      # Feature files
+│       ├── README.md               # Product overview
+│       ├── features/               # 📚 Feature Canon
+│       │   ├── f-PRX-NNN-*.md      # Feature files (FA owns)
 │       │   ├── features-index.md   # Feature registry
 │       │   └── story-ledger.md     # Story history
-│       ├── business-analysis/      # Business context
-│       ├── solution-designs/       # Technical design
-│       ├── technical-architecture/ # Architecture decisions
-│       └── decisions/              # Product decisions
+│       ├── business-analysis/      # BA artifacts (ba-PRX-*.md)
+│       ├── solution-designs/       # SA artifacts (sd-PRX-*.md)
+│       ├── technical-architecture/ # SA artifacts (ta-PRX-*.md)
+│       ├── decisions/              # Product decisions (dec-PRX-*.md)
+│       └── qa/
+│           └── regression-tests/   # QA regression tests (rt-f-PRX-*.md)
 │
-├── projects/                       # 📋 CHANGE PROPOSALS
+├── projects/                       # 📋 CHANGE PROPOSALS (TO-BE)
 │   ├── projects-index.md           # Project registry
-│   └── {project-id}/               # e.g., q1-2026-oauth/
-│       ├── project.yml             # Project metadata (BA owns)
-│       ├── feature-increments/     # 📝 Proposed changes to Canon
-│       │   ├── fi-PRX-NNN-*.md     # Feature-increment files
+│   └── {project-id}/               # e.g., q1-auth-overhaul/
+│       ├── project.yml             # Project metadata (PO owns)
+│       ├── README.md               # Project overview
+│       ├── feature-increments/     # 📝 Proposed changes (fi-PRX-*.md)
 │       │   └── increments-index.md # Increment registry
-│       ├── epics/                  # Epic definitions
-│       ├── stories/                # 📝 Stories (deltas)
-│       │   ├── backlog/            # New stories
-│       │   ├── ready-to-refine/    # For refinement
-│       │   └── ready-to-develop/   # Sprint-ready
-│       ├── technical-architecture-increments/  # Project TA increments
+│       ├── epics/                  # 📋 Epic definitions (epic-PRX-*.md)
+│       │   └── epics-index.md      # Epic registry
+│       ├── stories/                # 📝 Stories (s-eXXX-YYY-*.md)
+│       │   ├── backlog/            # Ready for sprint
+│       │   ├── ready-to-refine/    # Needs refinement
+│       │   ├── in-progress/        # Under development
+│       │   ├── done/               # Completed
+│       │   ├── deferred/           # Postponed
+│       │   └── out-of-scope/       # Removed
+│       ├── business-analysis-increments/      # BA increments (bai-PRX-*.md)
+│       ├── solution-design-increments/        # SA increments (sdi-PRX-*.md)
+│       ├── technical-architecture-increments/ # SA increments (tai-PRX-*.md)
 │       ├── decisions/              # Project decisions
-│       ├── dev-plans/              # Implementation plans
-│       ├── qa/test-cases/          # Test documentation
+│       ├── dev-plans/              # Implementation plans (dp-eXXX-sYYY-*.md)
+│       ├── qa/
+│       │   ├── test-cases/         # Test cases (tc-fi-PRX-*.md)
+│       │   ├── bug-reports/        # Bug reports (bug-{project}-NNN-*.md)
+│       │   ├── uat/                # UAT packs
+│       │   └── regression-impact/  # Impact records (ri-fi-PRX-*.md)
 │       └── sprints/                # Sprint management
+│           ├── active-sprint.md    # Current sprint pointer
+│           └── sprint-N/           # Sprint folders
 ```
 
 ---
@@ -588,24 +632,35 @@ teamspec generate-prompts # Generate GitHub Copilot prompt files
 
 ### Agent Commands (used in AI assistants like GitHub Copilot, Cursor, Claude)
 
-| Command | Description |
-|---------|-------------|
-| `ts:po product` | Create/manage products (4.0) |
-| `ts:po project` | Create/manage projects |
-| `ts:po sync` | Sync project increments to Product Canon |
-| `ts:ba analysis` | Create business analysis documents |
-| `ts:ba ba-increment` | Create BA increment in project |
-| `ts:fa feature` | Create a feature in Product Canon |
-| `ts:fa feature-increment` | Create a Feature-Increment |
-| `ts:fa story` | Create delta-based stories |
-| `ts:sa ta` | Create Technical Architecture document |
-| `ts:sa sd` | Create Solution Design document |
-| `ts:dev plan` | Create implementation plans |
-| `ts:dev implement` | Start implementation workflow |
-| `ts:qa test` | Design test cases |
-| `ts:sm sprint` | Create and manage sprints |
-| `ts:po status` | Project health overview |
-| `ts:fix` | Auto-fix lint errors |
+| Command | Role | Description | Output |
+|---------|------|-------------|--------|
+| `ts:po product` | PO | Create new product with PRX prefix | `products/{id}/` structure |
+| `ts:po project` | PO | Create new project targeting product(s) | `projects/{id}/` structure |
+| `ts:po sync` | PO | Sync project changes to Product Canon (post-deploy) | Updated `products/**` |
+| `ts:po status` | PO | Business/management health report (read-only) | Status report |
+| `ts:ba analysis` | BA | Create business analysis document | `ba-PRX-*.md` |
+| `ts:ba ba-increment` | BA | Create BA increment in project | `bai-PRX-*.md` |
+| `ts:ba review` | BA | Review artifacts for business intent | Review comments |
+| `ts:fa feature` | FA | Create feature in Product Canon | `f-PRX-*.md` |
+| `ts:fa feature-increment` | FA | Create feature-increment in project | `fi-PRX-*.md` |
+| `ts:fa epic` | FA | Create epic in project | `epic-PRX-*.md` |
+| `ts:fa story` | FA | Create story linked to epic | `s-eXXX-YYY-*.md` |
+| `ts:fa sync-proposal` | FA | Prepare sync proposal for PO | Sync proposal |
+| `ts:sa ta` | SA | Create Technical Architecture document | `ta-PRX-*.md` |
+| `ts:sa ta-increment` | SA | Create TA Increment in project | `tai-PRX-*.md` |
+| `ts:sa sd` | SA | Create Solution Design document | `sd-PRX-*.md` |
+| `ts:sa sd-increment` | SA | Create SD Increment in project | `sdi-PRX-*.md` |
+| `ts:sa review` | SA | Review technical approach | Technical assessment |
+| `ts:dev plan` | DEV | Create dev plan for story | `dp-eXXX-sYYY-*.md` |
+| `ts:dev implement` | DEV | Execute implementation | Code changes |
+| `ts:qa test` | QA | Create test cases for Feature-Increment | `tc-fi-PRX-*.md` |
+| `ts:qa regression` | QA | Update product regression tests | `rt-f-PRX-*.md` |
+| `ts:qa verify` | QA | Validate DoD compliance | Verification report |
+| `ts:sm sprint` | SM | Create/manage sprint | `sprint-N/*` |
+| `ts:sm deploy-checklist` | SM | Run deployment readiness checklist | Deployment checklist |
+| `ts:lint` | Any | Run linter | Lint report |
+| `ts:fix` | Any | Auto-fix lint errors | Fixed files |
+| `ts:agent <role>` | Any | Load role-specific agent | Agent loaded |
 
 ---
 
@@ -627,29 +682,59 @@ Select during `teamspec init` or with `--profile`.
 
 ## Quality Gates
 
+### Gate Overview
+
+| Gate | Owner | Verifier | Approver | When |
+|------|-------|----------|----------|------|
+| DoR | FA | SM | — | Before story enters development |
+| DoD | FA | QA | — | Before story marked complete |
+| Deployment Verification | SM | QA | PO | After production deploy, before sync |
+| Canon Sync | PO | — | — | After Deployment Verification passed |
+
 ### Definition of Ready (DoR)
 
-Before a story enters development:
-- [ ] Linked to Epic (4.0 requirement)
-- [ ] References Feature-Increment (TO-BE state)
-- [ ] Before/After delta clearly described
+**Owner:** FA | **Verifier:** SM
+
+Before a story enters `in-progress/`:
+- [ ] Story linked to Epic via filename (`s-eXXX-YYY-*.md`)
+- [ ] Feature-Increment exists with AS-IS/TO-BE sections
 - [ ] Acceptance Criteria are testable
+- [ ] No TBD/placeholder content
 - [ ] Estimate assigned
 
 ### Definition of Done (DoD)
 
-Before a story is marked complete:
-- [ ] All AC verified
+**Owner:** FA | **Verifier:** QA
+
+Before a story moves to `done/`:
+- [ ] All Acceptance Criteria verified by QA
 - [ ] Code reviewed and merged
 - [ ] Tests passing
-- [ ] **Feature-Increment updated** (if behavior changed)
+- [ ] Feature-Increment TO-BE section complete
+- [ ] Ready for deployment
 
-### Deployment Verification Gate (4.0)
+### Deployment Verification Gate
 
-After deployment:
-- [ ] All Feature-Increments reviewed and verified
-- [ ] PO runs `ts:po sync` to sync to Canon
-- [ ] Feature Canon updated with verified changes
+**Owner:** SM | **Verifier:** QA | **Approver:** PO
+
+After production deploy + feature toggles enabled (if applicable), before `ts:po sync`:
+- [ ] All sprint stories in terminal state (Done/Deferred/Out-of-Scope)
+- [ ] All Feature-Increments reviewed
+- [ ] **Code deployed to production**
+- [ ] **Feature toggles enabled** (or N/A if not using toggles)
+- [ ] Smoke tests passed in production
+- [ ] QA sign-off obtained
+- [ ] **Regression impact recorded** (`ri-fi-PRX-*.md` for each FI)
+- [ ] PO approval obtained
+
+### Canon Sync Gate
+
+**Owner:** PO | **Precondition:** Deployment Verification gate passed
+
+After deployment verification:
+- Run `ts:po sync`
+- Feature-Increment TO-BE sections merged into Product Feature Canon
+- Canon is NEVER updated before deployment
 
 ---
 

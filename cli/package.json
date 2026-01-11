@@ -1,6 +1,6 @@
 {
   "name": "teamspec",
-  "version": "4.1.1",
+  "version": "4.2.0",
   "description": "CLI tool to bootstrap TeamSpec 4.0 Product-Canon operating model in any repository",
   "main": "lib/cli.js",
   "bin": {
