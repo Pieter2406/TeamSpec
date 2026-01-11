@@ -87,7 +87,7 @@ Owns Features, Feature-Increments, Epics, and Stories.
 
 ### SA (Solution Architect)
 
-Owns Solution Designs, Technical Architecture, and ADRs.
+Owns Solution Designs and Technical Architecture.
 
 ### DEV (Developer)
 

@@ -268,7 +268,6 @@ Which approach would you prefer?
 | `ts:fa feature` | Create a feature in Product Canon | `f-PRX-XXX-*.md` |
 | `ts:fa feature-increment` | Create a Feature-Increment | `fi-PRX-XXX-*.md` |
 | `ts:fa epic` | Define an epic | `epic-PRX-XXX-*.md` |
-| `ts:fa slice` | Break epic into stories | Story list (`s-eXXX-*`) |
 | `ts:fa story` | Create a story linked to Epic | `s-eXXX-YYY-*.md` in backlog |
 | `ts:fa story refine <id>` | Move story to ready-to-refine | Story state change |
 | `ts:fa story-remove <id>` | Defer, out-of-scope, or remove a story | Story moved/deleted |
@@ -338,55 +337,6 @@ Which approach would you prefer?
 - TO-BE summary
 
 **Output:** `projects/{project-id}/epics/epic-PRX-XXX-description.md`
-
-### 6.5 Command: `ts:fa slice`
-
-**Purpose:** Break an epic into implementable stories.
-
-**Flow:**
-1. Verify epic exists (`epic-PRX-XXX`)
-2. Load related Feature-Increments
-3. Analyze epic for slicing points
-4. Identify behavior deltas
-5. Propose story breakdown with `s-eXXX-YYY` naming
-
-**Input Required:**
-- Epic ID (`epic-PRX-XXX`)
-
-**Slicing Principles:**
-- Each story delivers user-observable value
-- Each story is independently testable
-- Each story describes a DELTA (Before → After)
-- Stories are small enough for one sprint
-- Stories reference FI business rules (BR-XXX)
-
-**Output:**
-```markdown
-## Story Slice Proposal for epic-PRX-XXX
-
-### Epic: [Epic Name]
-### Product: {product-id} (PRX: {PRX})
-
-### Recommended Stories:
-
-1. **s-e001-001-[title]**
-   - Delta: [Before] → [After]
-   - Affects: BR-XXX-001
-   - Size: Small
-
-2. **s-e001-002-[title]**
-   - Delta: [Before] → [After]
-   - Affects: BR-XXX-002, BR-XXX-003
-   - Size: Medium
-
-### Slicing Rationale:
-[Why this breakdown]
-
-### Dependencies:
-[Story order/dependencies if any]
-
-Approve to create story files?
-```
 
 ### 6.3 Command: `ts:fa story`
 

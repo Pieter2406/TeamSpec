@@ -95,7 +95,7 @@ ts:po project         # Create project structure
 ts:fa story           # Create delta-based story
 ts:dev plan           # Create implementation plan
 ts:qa test            # Design test cases
-ts:status             # Project health overview
+ts:po status          # Project health overview
 ```
 
 GitHub Copilot reads `.github/copilot-instructions.md` and `/agents/` to provide role-based assistance.
@@ -214,7 +214,7 @@ See [spec/4.0/roles.md](spec/4.0/roles.md) for the authoritative ownership matri
 | **PO** | Products, Projects, Canon sync | Stories, Technical design | `ts:po product`, `ts:po project`, `ts:po sync` |
 | **BA** | Business Analysis artifacts | Projects, Features, Stories | `ts:ba analysis`, `ts:ba ba-increment` |
 | **FA** | Features, Feature-Increments, Epics, Stories | Products, Business intent | `ts:fa feature`, `ts:fa story`, `ts:fa epic` |
-| **SA** | Solution Design, Technical Architecture, ADRs | Requirements, code | `ts:sa design`, `ts:sa adr` |
+| **SA** | Solution Design, Technical Architecture | Requirements, code | `ts:sa sd`, `ts:sa ta` |
 | **DEV** | Implementation, Dev plans | Requirements, scope | `ts:dev plan`, `ts:dev implement` |
 | **QA** | Test cases (project), Regression tests (product) | Feature definitions | `ts:qa test`, `ts:qa regression` |
 | **SM** | Sprint operations, Deployment checklist | Prioritization, scope | `ts:sm sprint`, `ts:sm deploy-checklist` |
@@ -286,15 +286,15 @@ See [spec/4.0/roles.md](spec/4.0/roles.md) for the authoritative ownership matri
 
 | Responsibility | Description |
 |----------------|-------------|
-| ADR Ownership | Create and maintain ADRs per Feature |
+| Technical Architecture | Create and maintain technical architecture per Feature |
 | Technical Approach | Define high-level technical approach |
 | Cross-Feature Impact | Assess cross-feature and irreversible decisions |
 
 **Hard Rules:**
-- ADRs link to features and decisions
+- Technical Architecture links to features and decisions
 - High-level decisions only, not code-level
 - Technical feasibility assessment, not requirement changes
-- ADR required before dev work on architecture-impacting changes
+- Technical Architecture required before dev work on architecture-impacting changes
 
 ---
 
@@ -304,14 +304,14 @@ See [spec/4.0/roles.md](spec/4.0/roles.md) for the authoritative ownership matri
 | Responsibility | Description |
 |----------------|-------------|
 | Dev Plans | Create detailed dev plans per story |
-| Implementation | Implement stories per Feature Canon and ADR |
+| Implementation | Implement stories per Feature Canon and Technical Architecture |
 | Reviewable Iterations | Deliver work in reviewable chunks |
 | DoD Completion | Mark stories ready for testing when DoD met |
 
 **Hard Rules:**
 - DEV cannot redefine scope
 - DEV cannot change feature behavior silently
-- DEV must stop and escalate if ADR or Feature Canon is unclear
+- DEV must stop and escalate if Technical Architecture or Feature Canon is unclear
 - Dev plan required before implementation starts
 - All tasks must be reviewable
 
@@ -389,7 +389,7 @@ flowchart TD
     
     subgraph "Phase 4-6: Execution"
         G3 --> P4["Phase 4<br/>ARCHITECTURE<br/>(SA)"]
-        P4 --> G4{{"Gate:<br/>ADR Ready"}}
+        P4 --> G4{{"Gate:<br/>TA Ready"}}
         G4 --> P5["Phase 5<br/>SPRINT<br/>(SM/DEV)"]
         P5 --> G5{{"Gate:<br/>Sprint Complete"}}
         G5 --> P6["Phase 6<br/>QUALITY<br/>(QA)"]
@@ -426,7 +426,7 @@ flowchart LR
     end
     
     subgraph "Architecture to Development"
-        SA1[SA] -->|"ADR created<br/>technical constraints clear"| DEV2[DEV]
+        SA1[SA] -->|"TA created<br/>technical constraints clear"| DEV2[DEV]
     end
     
     subgraph "Development to QA"
@@ -513,7 +513,7 @@ your-repo/
 │       │   ├── backlog/            # New stories
 │       │   ├── ready-to-refine/    # For refinement
 │       │   └── ready-to-develop/   # Sprint-ready
-│       ├── technical-architecture-increments/  # Project ADRs
+│       ├── technical-architecture-increments/  # Project TA increments
 │       ├── decisions/              # Project decisions
 │       ├── dev-plans/              # Implementation plans
 │       ├── qa/test-cases/          # Test documentation
@@ -536,8 +536,8 @@ ts:fa story                   # Create delta-based story
 ts:dev plan                   # Create implementation plan
 ts:qa test                    # Design test cases
 ts:po sync                    # Sync increments to Canon (4.0)
-ts:status                     # Project health overview
-ts:agent fix                  # Auto-fix lint errors
+ts:po status                  # Project health overview
+ts:fix                        # Auto-fix lint errors
 ```
 
 **How it works:**
@@ -583,8 +583,6 @@ teamspec --profile X      # Use specific profile
 teamspec lint             # Validate project structure
 teamspec lint --project X # Lint specific project
 teamspec update           # Update TeamSpec core files
-teamspec migrate          # Analyze 2.0 → 4.0 migration (dry-run)
-teamspec migrate --fix    # Execute 2.0 → 4.0 migration
 teamspec generate-prompts # Generate GitHub Copilot prompt files
 ```
 
@@ -600,17 +598,14 @@ teamspec generate-prompts # Generate GitHub Copilot prompt files
 | `ts:fa feature` | Create a feature in Product Canon |
 | `ts:fa feature-increment` | Create a Feature-Increment |
 | `ts:fa story` | Create delta-based stories |
-| `ts:fa slice` | Slice epic into stories |
 | `ts:sa ta` | Create Technical Architecture document |
 | `ts:sa sd` | Create Solution Design document |
 | `ts:dev plan` | Create implementation plans |
 | `ts:dev implement` | Start implementation workflow |
 | `ts:qa test` | Design test cases |
-| `ts:qa bug` | File bug reports |
-| `ts:sm sprint create` | Create new sprint |
-| `ts:sm planning` | Sprint planning facilitation |
-| `ts:status` | Project health overview |
-| `ts:agent fix` | Auto-fix lint errors |
+| `ts:sm sprint` | Create and manage sprints |
+| `ts:po status` | Project health overview |
+| `ts:fix` | Auto-fix lint errors |
 
 ---
 
@@ -649,12 +644,12 @@ Before a story is marked complete:
 - [ ] Tests passing
 - [ ] **Feature-Increment updated** (if behavior changed)
 
-### Deployment Gate (4.0)
+### Deployment Verification Gate (4.0)
 
-Before project completion:
-- [ ] All Feature-Increments reviewed
-- [ ] `ts:deploy` executed to sync to Canon
-- [ ] Feature Canon updated with approved changes
+After deployment:
+- [ ] All Feature-Increments reviewed and verified
+- [ ] PO runs `ts:po sync` to sync to Canon
+- [ ] Feature Canon updated with verified changes
 
 ---
 

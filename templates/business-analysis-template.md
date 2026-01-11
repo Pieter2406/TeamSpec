@@ -1,26 +1,29 @@
-# Business Analysis Document: [Feature Name]
+# Business Analysis: `ba-{PRX}-{NNN}-{description}`
 
-<!-- 
+<!--
   ⚠️ THIS IS A PLANNING ARTIFACT, NOT SOURCE OF TRUTH
-  
+
   This Business Analysis document captures analysis and decisions
   during the planning phase.
-  
+
   SOURCE OF TRUTH:
-  - For current system behavior → Feature Canon (/features/F-XXX.md)
-  - For business decisions → Decision Log (/decisions/DEC-XXX.md)
-  
+  - For current system behavior → Feature Canon (f-{PRX}-{NNN}.md)
+  - For business decisions → Decision Log (dec-{PRX}-{NNN}.md)
+
   This document becomes HISTORICAL after Feature Canon is created.
+
+  NAMING PATTERN: ba-{PRX}-{NNN}-{description}.md
+  EXAMPLE: ba-ACME-001-checkout-process.md
 -->
 
-> **Template Version**: 2.0  
-> **Last Updated**: 2026-01-07
+> **Template Version**: 4.0
+> **Last Updated**: 2026-01-11
 
 ---
 
-**Document Owner:** BA (Business Analyst)  
-**Artifact Type:** Planning (Not Source of Truth)  
-**Lifecycle:** Historical after Feature Canon creation
+**Document Owner:** BA (Business Analyst)
+**Artifact Type:** Business Analysis (Product Canon)
+**Lifecycle:** Permanent, updated via bai-* increments
 
 | Metadata | Details |
 | :--- | :--- |
@@ -61,7 +64,7 @@
 
 | Feature ID | Feature Name | Status | Link |
 |------------|--------------|--------|------|
-| [F-XXX](../features/F-XXX-name.md) | [Feature Name] | Draft / Active | |
+| [f-{PRX}-{NNN}](../features/f-{PRX}-{NNN}-*.md) | [Feature Name] | Draft / Active | |
 
 ---
 

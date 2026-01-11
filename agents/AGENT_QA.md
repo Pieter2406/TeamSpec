@@ -238,8 +238,6 @@ FA updates Canon, then DEV may need to update code
 | `ts:qa regression` | Manage product regression suite | Regression test set |
 | `ts:qa dor-check <id>` | Run DoR checklist on story | DoR report |
 | `ts:qa execute` | Execute tests for story | Test results |
-| `ts:qa bug` | File a bug report | Bug file |
-| `ts:qa uat` | Create UAT instructions | UAT pack |
 
 ### 6.2 Command: `ts:qa test`
 
@@ -477,79 +475,6 @@ FA updates Canon, then DEV may need to update code
 - [ ] Ready for Done (all ACs pass, Canon sync needed)
 - [ ] Needs fixes (bugs filed)
 - [ ] Needs clarification (escalated to FA)
-```
-
-### 6.6 Command: `ts:qa bug`
-
-**Purpose:** File a properly classified bug report.
-
-**Flow:**
-1. Gather bug details
-2. Determine classification (with decision tree)
-3. Create bug file
-4. Link to story/feature
-
-**Classification Questions:**
-1. Is this behavior specified in Feature Canon?
-2. If yes, does the code match the Canon?
-3. If no, should this behavior exist?
-
-### 6.7 Command: `ts:qa uat`
-
-**Purpose:** Create UAT pack for stakeholder validation.
-
-**Flow:**
-1. Load Feature Canon
-2. Identify personas/actors
-3. Create persona-based test scenarios
-4. Write user-friendly instructions
-5. Generate UAT pack
-
-**UAT Pack Structure:**
-```markdown
-# UAT Pack: f-PRX-NNN - [Feature Name]
-
-## Metadata
-- **Feature:** f-PRX-NNN
-- **UAT File:** uat-f-PRX-NNN.md
-
-## Overview
-**Feature Purpose:** [From Canon]
-**Target Release:** [Version]
-
-## Personas Covered
-| Persona | Description |
-|---------|-------------|
-| [Persona 1] | [From Canon] |
-
-## UAT Scenarios
-
-### uat-f-PRX-NNN-001: [Scenario Name]
-**Persona:** [Who performs this]
-**Goal:** [What they're trying to achieve]
-
-**Steps:**
-1. [User-friendly step]
-2. [User-friendly step]
-
-**Expected Result:**
-[What should happen]
-
-**Validation:**
-- [ ] Result matches expectation
-- [ ] User experience acceptable
-
-### uat-f-PRX-NNN-002: [Scenario Name]
-...
-
-## Sign-off
-
-| Persona | Tester | Date | Result |
-|---------|--------|------|--------|
-| | | | Pass/Fail |
-
-## Feedback
-[Space for stakeholder feedback]
 ```
 
 ---

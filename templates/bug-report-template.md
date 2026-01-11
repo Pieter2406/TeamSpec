@@ -1,26 +1,29 @@
-# Bug: [Title]
+# Bug Report: `bug-{project-id}-{NNN}-{description}`
 
-<!-- 
+<!--
   ⚠️ BUG CLASSIFICATION IS MANDATORY
-  
+
   When reporting bugs, you MUST classify whether the issue is:
   - Implementation defect (code doesn't match Canon)
   - Feature Canon wrong (Canon doesn't match business intent)
   - Undocumented behavior (neither covers this case)
-  
+
   Classification determines who fixes what.
-  
+
+  NAMING PATTERN: bug-{project-id}-{NNN}-{description}.md
+  EXAMPLE: bug-q1-auth-042-oauth-timeout.md
+
   TEAMSPEC RULES ENFORCED:
   - TS-QA-002: Bug classification required (exactly one)
 -->
 
-> **Template Version**: 2.0  
-> **Last Updated**: 2026-01-07
+> **Template Version**: 4.0
+> **Last Updated**: 2026-01-11
 
 ---
 
-**Document Owner:** QA (QA Engineer)  
-**Artifact Type:** Defect Report  
+**Document Owner:** QA (QA Engineer)
+**Artifact Type:** Bug Report (Project-scoped)
 **Lifecycle:** Open → Resolved → Closed
 
 ---
@@ -29,7 +32,9 @@
 
 | Field | Value |
 | :--- | :--- |
-| **Bug ID** | BUG-XXX |
+| **Bug ID** | bug-{project-id}-{NNN} |
+| **Project** | {project-id} |
+| **Product** | {product-id} ({PRX}) |
 | **Severity** | Critical / High / Medium / Low |
 | **Priority** | P1 / P2 / P3 / P4 |
 | **Environment** | Staging / Dev / Production |
@@ -61,7 +66,7 @@
 
 > What should happen (reference Feature Canon if applicable).
 
-**Feature Canon Reference:** [F-XXX](../../features/F-XXX-name.md), Section: [Section Name]
+**Feature Canon Reference:** [f-{PRX}-{NNN}](../../products/{product-id}/features/f-{PRX}-{NNN}-*.md), Section: [Section Name]
 
 [What the system should do according to Feature Canon]
 
@@ -143,16 +148,17 @@ Is the behavior documented in Feature Canon?
 
 | Feature | Section | Expected Behavior |
 |---------|---------|-------------------|
-| [F-XXX](../../features/F-XXX-name.md) | [Section] | [Brief description from Canon] |
+| [f-{PRX}-{NNN}](../../products/{product-id}/features/f-{PRX}-{NNN}-*.md) | [Section] | [Brief description from Canon] |
 
 ---
 
-## Related Stories / Bugs
+## Related Artifacts
 
 | ID | Type | Relationship |
 |----|------|--------------|
-| [S-XXX] | Story | Introduced behavior |
-| [BUG-YYY] | Bug | Related issue |
+| [s-e{EEE}-{SSS}](../stories/**/s-e{EEE}-{SSS}-*.md) | Story | Introduced behavior |
+| [fi-{PRX}-{NNN}](../feature-increments/fi-{PRX}-{NNN}-*.md) | Feature-Increment | Related FI |
+| [bug-{project-id}-{NNN}](./bug-{project-id}-{NNN}-*.md) | Bug | Related issue |
 
 ---
 

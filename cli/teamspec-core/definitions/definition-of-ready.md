@@ -1,7 +1,10 @@
 # Definition of Ready (DoR)
 
-> **Version:** 2.0  
-> **Owner:** FA (gates story readiness), SM (enforces in sprint planning)
+> **Version:** 4.0  
+> **Status:** Normative  
+> **Owner:** FA (gates story readiness)  
+> **Verifier:** SM (enforces in sprint planning)  
+> **Source:** [registry.yml](../registry.yml)
 
 A story is **Ready** for development when ALL of the following are satisfied.
 
@@ -9,26 +12,27 @@ A story is **Ready** for development when ALL of the following are satisfied.
 
 ## Mandatory Checklist
 
-### 1. Feature Canon Link ✓
+Before a story enters `in-progress/`:
+
+### 1. Epic Link ✓
 
 | Check | Required |
 |-------|----------|
-| Story links to existing Feature(s) in Feature Canon | ✓ |
-| Feature file exists in `features/` folder | ✓ |
-| Feature link uses correct format: `[F-XXX](../../features/F-XXX-name.md)` | ✓ |
+| Story linked to Epic via filename (`s-eXXX-YYY-*.md`) | ✓ |
+| Epic file exists in `projects/{project-id}/epics/` | ✓ |
 
-**Linter Rule:** `TS-STORY-001` — Feature link required
+**Linter Rule:** `TS-STORY-001` — Epic link required
 
-### 2. Delta Format ✓
+### 2. Feature-Increment Reference ✓
 
 | Check | Required |
 |-------|----------|
-| Story uses Before/After delta format | ✓ |
-| "Before" section references Feature Canon | ✓ |
-| "After" section describes ONLY the change | ✓ |
-| Story does NOT restate full feature behavior | ✓ |
+| Story references a Feature-Increment (`fi-PRX-NNN-*.md`) | ✓ |
+| Feature-Increment file exists in `projects/{project-id}/feature-increments/` | ✓ |
+| Feature-Increment has AS-IS section (current Canon state) | ✓ |
+| Feature-Increment has TO-BE section (proposed change) | ✓ |
 
-**Linter Rule:** `TS-STORY-002` — Delta-only format required
+**Linter Rule:** `TS-FI-001` — AS-IS/TO-BE required
 
 ### 3. Acceptance Criteria ✓
 
@@ -36,69 +40,40 @@ A story is **Ready** for development when ALL of the following are satisfied.
 |-------|----------|
 | All ACs are testable (Given/When/Then or clear assertions) | ✓ |
 | No ambiguous terms ("should work well", "user-friendly") | ✓ |
-| ACs cover the delta, not the entire feature | ✓ |
+| ACs describe the delta (change), not full feature behavior | ✓ |
 
 **Linter Rule:** `TS-STORY-003` — ACs must be testable
 
-### 4. FA Acceptance Gate ✓
+### 4. No Placeholders ✓
 
 | Check | Required |
 |-------|----------|
-| FA has reviewed and initialed the story | ✓ |
-| FA confirms delta is correctly scoped | ✓ |
-| FA confirms feature link is correct | ✓ |
+| No TBD/TODO/placeholder content in story | ✓ |
+| No TBD/TODO content in linked Feature-Increment | ✓ |
 
-**Gate:** FA Acceptance section complete in story
+**Linter Rule:** `TS-CONTENT-001` — No placeholder content
 
-### 5. Dev Plan Exists ✓
+### 5. Estimate Assigned ✓
 
 | Check | Required |
 |-------|----------|
-| Dev plan file exists in `dev-plans/` | ✓ |
-| Story links to dev plan | ✓ |
-| Dev plan has no TBD/TODO items | ✓ |
-
-**Linter Rule:** `TS-DEVPLAN-001` — Dev plan required before implementation
+| Story has estimate (points or time) | ✓ |
+| Estimate is realistic based on dev plan | ✓ |
 
 ---
 
-## Optional (Profile-Dependent)
+## Enforcement
 
-These checks apply based on team profile:
-
-### Regulated Profile
-
-| Check | Applies To |
-|-------|------------|
-| Risk assessment completed | regulated |
-| Compliance impact documented | regulated |
-| Sign-off from compliance officer | regulated |
-
-### Enterprise Profile
-
-| Check | Applies To |
-|-------|------------|
-| Architecture review completed | enterprise |
-| Cross-team dependencies identified | enterprise |
+| Actor | Responsibility |
+|-------|----------------|
+| FA | Creates story, ensures all content is complete |
+| SM | Verifies checklist before sprint planning |
+| Linter | Automated validation via `teamspec lint` |
 
 ---
 
-## Workflow Gate
+## Related
 
-Stories MUST be in `stories/ready-for-development/` folder to enter sprint.
-
-| From Folder | To Folder | Owner |
-|-------------|-----------|-------|
-| `backlog/` | `ready-to-refine/` | FA |
-| `ready-to-refine/` | `ready-for-development/` | DEV (after refinement) |
-| `ready-for-development/` | Sprint | SM (sprint planning) |
-
----
-
-## Quick Reference
-
-```
-DoR = Feature Link + Delta Format + Testable ACs + FA Gate + Dev Plan
-```
-
-If any check fails, the story is **NOT READY** for development.
+- [Definition of Done](definition-of-done.md)
+- [Gates Overview](../gates.md)
+- [Registry (Source of Truth)](../registry.yml)

@@ -7,7 +7,7 @@
 
 ## Overview
 
-TeamSpec 4.0 defines clear workflows for product/project management with explicit handoffs between roles. All commands referenced here exist in [commands.md](commands.md).
+TeamSpec 4.0 defines clear workflows for product/project management with explicit handoffs between roles.
 
 ---
 
@@ -18,7 +18,7 @@ sequenceDiagram
     participant PO as Product Owner
     participant System as TeamSpec
     
-    PO->>System: ts:po product
+    PO->>System: Create product
     System->>PO: Enter product name, PRX
     PO->>System: ACME, PRX=ACME
     System->>System: Create products/acme-webshop/
@@ -46,7 +46,7 @@ sequenceDiagram
     participant PO as Product Owner
     participant System as TeamSpec
     
-    PO->>System: ts:po project
+    PO->>System: Create project
     System->>PO: Enter project name, target product(s)
     PO->>System: Q1-Auth-Overhaul, targets ACME
     System->>System: Create projects/q1-auth-overhaul/
@@ -79,16 +79,16 @@ sequenceDiagram
     participant DEV as Developer
     participant QA as QA Engineer
     
-    BA->>BA: ts:ba analysis (business context)
-    FA->>FA: ts:fa feature-increment (fi-PRX-NNN)
-    FA->>FA: ts:fa epic (epic-PRX-NNN)
-    SA->>SA: ts:sa sd (if needed)
-    SA->>SA: ts:sa ta (if architecture-impacting)
-    FA->>FA: ts:fa story (s-eXXX-YYY)
-    DEV->>DEV: ts:dev plan (dp-eXXX-sYYY)
-    QA->>QA: ts:qa test (tc-fi-PRX-NNN)
-    DEV->>DEV: ts:dev implement
-    QA->>QA: ts:qa verify
+    BA->>BA: Create business analysis
+    FA->>FA: Create feature-increment
+    FA->>FA: Create epic
+    SA->>SA: Create solution design (if needed)
+    SA->>SA: Create technical architecture (if architecture-impacting)
+    FA->>FA: Create story
+    DEV->>DEV: Create dev plan
+    QA->>QA: Create test cases
+    DEV->>DEV: Implement
+    QA->>QA: Verify
 ```
 
 ---
@@ -97,7 +97,7 @@ sequenceDiagram
 
 ```mermaid
 stateDiagram-v2
-    [*] --> backlog: ts:fa story
+    [*] --> backlog: Create story
     backlog --> ready_to_refine: Needs refinement
     ready_to_refine --> backlog: Refinement complete
     backlog --> in_progress: Sprint planning + DoR passed
@@ -139,10 +139,10 @@ sequenceDiagram
     Ops->>Ops: Enable feature toggles (if applicable)
     Ops->>SM: Deployed + toggles ON ✓
     Note over SM,PO: POST-DEPLOY Verification Gate
-    SM->>SM: ts:sm deploy-checklist
+    SM->>SM: Run deployment checklist
     SM->>QA: Request verification
-    QA->>QA: ts:qa verify (all items)
-    QA->>QA: Create ri-fi-PRX-NNN for each FI
+    QA->>QA: Verify all items
+    QA->>QA: Create regression impact records
     QA->>SM: Sign-off ✓
     SM->>PO: Present checklist for approval
     PO->>PO: Review checklist
@@ -177,7 +177,7 @@ sequenceDiagram
     participant QA as QA Engineer
     
     Note over PO,System: Deployment Verification gate MUST be passed
-    PO->>System: ts:po sync
+    PO->>System: Sync to Canon
     System->>System: Validate deployment verification gate
     System->>System: Merge FI TO-BE → Feature Canon
     System->>System: Merge increments → Canon
@@ -215,7 +215,7 @@ sequenceDiagram
 
 ### Sprint Planning
 
-1. SM creates sprint: `ts:sm sprint`
+1. SM creates sprint
 2. PO prioritizes backlog
 3. FA refines stories
 4. Team commits to sprint
@@ -234,7 +234,7 @@ Team retrospective facilitated by SM.
 
 1. Operations deploys to production
 2. Operations enables feature toggles (if applicable)
-3. SM runs verification checklist: `ts:sm deploy-checklist`
-4. QA verifies and records regression impact (`ri-fi-*`)
+3. SM runs verification checklist
+4. QA verifies and records regression impact
 5. PO approves deployment verification gate
-6. PO syncs canon: `ts:po sync`
+6. PO syncs canon

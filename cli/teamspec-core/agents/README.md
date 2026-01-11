@@ -315,7 +315,6 @@ Default to the minimum output needed to progress to the next gate. Don't over-do
 | `ts:fa feature-increment` | Create Feature-Increment (fi-PRX-XXX) |
 | `ts:fa epic` | Create Epic (epic-PRX-XXX) |
 | `ts:fa story` | Create story linked to Epic (s-eXXX-YYY) |
-| `ts:fa slice` | Slice Epic into stories |
 | `ts:fa sync-prepare` | Prepare Canon sync proposal for PO |
 | `ts:fa behavior` | Update Feature-Increment behavior |
 | `ts:fa storymap` | Story mapping workshop |
@@ -324,9 +323,9 @@ Default to the minimum output needed to progress to the next gate. Don't over-do
 
 | Command | Description |
 |---------|-------------|
-| `ts:sa adr` | Create ADR (ta-PRX-XXX or tai-PRX-XXX) |
+| `ts:sa sd` | Create Solution Design (sd-PRX-XXX) |
+| `ts:sa ta` | Create Technical Architecture (ta-PRX-XXX) |
 | `ts:sa review` | Review technical design |
-| `ts:sa sync` | Sync design to stories |
 
 ### DEV Commands (`ts:dev`)
 
@@ -343,8 +342,6 @@ Default to the minimum output needed to progress to the next gate. Don't over-do
 | Command | Description |
 |---------|-------------|
 | `ts:qa test` | Design test cases |
-| `ts:qa bug` | File bug report |
-| `ts:qa uat` | Create UAT instructions |
 | `ts:qa dor-check <id>` | DoR checklist |
 | `ts:qa dod-check <id>` | DoD checklist |
 | `ts:qa execute` | Execute test run |
@@ -354,20 +351,18 @@ Default to the minimum output needed to progress to the next gate. Don't over-do
 | Command | Description |
 |---------|-------------|
 | `ts:sm` | Open SM menu |
-| `ts:sm sprint create` | Create sprint |
+| `ts:sm sprint` | Create and manage sprints |
 | `ts:sm sprint plan` | Sprint planning |
 | `ts:sm sprint add <id>` | Add story to sprint |
 | `ts:sm sprint status` | Sprint status |
 | `ts:sm sprint close` | Close sprint |
 | `ts:sm deploy-checklist` | Generate deployment checklist |
-| `ts:sm standup` | Standup agenda |
-| `ts:sm retro` | Retrospective |
 
 ### Universal Commands
 
 | Command | Description |
 |---------|-------------|
-| `ts:status` | Project/product status overview |
+| `ts:fix` | Auto-fix lint errors |
 | `ts:lint` | Run linter (includes TS-PROD-*, TS-FI-*, TS-EPIC-*) |
 | `ts:context` | Show/validate team context |
 | `ts:deploy` | **DEPRECATED** — Use `ts:po sync` instead |

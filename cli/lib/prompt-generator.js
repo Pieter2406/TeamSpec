@@ -21,7 +21,7 @@ const COMMANDS = {
 2. Create project folder structure in projects/{id}/
 3. Generate project.yml with metadata
 4. Create README.md
-5. Initialize folders: features/, stories/backlog/, stories/ready-to-refine/, stories/ready-for-development/, adr/, decisions/, dev-plans/, qa/test-cases/, epics/, sprints/
+5. Initialize folders: features/, stories/backlog/, stories/ready-to-refine/, stories/ready-for-development/, technical-architecture-increments/, decisions/, dev-plans/, qa/test-cases/, epics/, sprints/
 6. Create features-index.md and story-ledger.md
 Wait for user confirmation before creating files.`
             },
@@ -138,18 +138,18 @@ A story CANNOT be Done until Canon is synchronized.`
             }
         ]
     },
-    arch: {
+    sa: {
         name: 'Solution Architect',
         commands: [
             {
-                name: 'adr',
-                description: 'Create Architecture Decision Record',
-                prompt: `Create an ADR:
+                name: 'ta',
+                description: 'Create Technical Architecture document',
+                prompt: `Create a Technical Architecture document:
 1. Identify technical decision
 2. Document context and options
 3. Record decision and rationale
 4. Link to affected features
-5. Create ADR file in adr/ folder using ADR-XXX-name.md format`
+5. Create TA file in technical-architecture-increments/ folder using tai-PRX-NNN-name.md format`
             }
         ]
     },
@@ -266,7 +266,7 @@ Report any gaps.`
 3. Apply fixes for each error category
 4. Re-run linter to verify fixes
 
-Supports: TS-PROJ, TS-FEAT, TS-STORY, TS-ADR, TS-DEVPLAN, TS-DOD, TS-NAMING rules.`
+Supports: TS-PROJ, TS-FEAT, TS-STORY, TS-TA, TS-DEVPLAN, TS-DOD, TS-NAMING rules.`
             }
         ]
     }
@@ -278,7 +278,7 @@ Supports: TS-PROJ, TS-FEAT, TS-STORY, TS-ADR, TS-DEVPLAN, TS-DOD, TS-NAMING rule
 const ROLE_TO_AGENT = {
     ba: 'AGENT_BA',
     fa: 'AGENT_FA',
-    arch: 'AGENT_SA',  // Solution Architect
+    sa: 'AGENT_SA',  // Solution Architect
     dev: 'AGENT_DEV',
     qa: 'AGENT_QA',
     sm: 'AGENT_SM',

@@ -1,24 +1,34 @@
-# F-XXX: [Feature Name]
+# Feature: `f-{PRX}-{NNN}-{description}`
 
-<!-- 
+<!--
   ⚠️ FEATURE CANON RULES
-  
+
   This Feature file is the SOURCE OF TRUTH for system behavior.
-  
+
   RULES:
   1. Implementation-agnostic (describe WHAT, not HOW)
   2. No technical implementation details
-  3. Business rules use BR-XXX format
+  3. Business rules use BR-{PRX}-NNN format
   4. Change Log is append-only
-  
+  5. Feature ID uses product prefix (PRX)
+
+  NAMING PATTERN: f-{PRX}-{NNN}-{description}.md
+  EXAMPLE: f-ACME-001-user-login.md
+
   TEAMSPEC RULES ENFORCED:
   - TS-FEAT-001: Feature must have unique ID
   - TS-FEAT-002: All required sections must be present
   - TS-FEAT-003: Feature ID must be unique
 -->
 
-> **Template Version**: 2.0  
-> **Last Updated**: 2026-01-07
+> **Template Version**: 4.0
+> **Last Updated**: 2026-01-11
+
+---
+
+**Document Owner:** FA (Functional Analyst)
+**Artifact Type:** Feature (Product Canon)
+**Lifecycle:** Permanent, updated via Canon Sync after deployment
 
 ---
 
@@ -26,15 +36,16 @@
 
 | Field | Value |
 |-------|-------|
-| **Feature ID** | F-XXX |
+| **Feature ID** | f-{PRX}-{NNN} |
+| **Product** | {product-id} ({PRX}) |
 | **Status** | Planned / Active / Deprecated / Retired |
-| **Owner** | [BA creates, FA maintains behavior] |
+| **Owner** | FA (Functional Analyst) |
 | **Created** | YYYY-MM-DD |
 | **Last Updated** | YYYY-MM-DD |
 
-**Document Ownership:**
-- **BA owns:** Purpose, Business Value, Scope (In/Out)
-- **FA owns:** Current Behavior, Business Rules, Edge Cases
+**Section Ownership:**
+- **BA provides:** Purpose, Business Value, Scope (In/Out) via Business Analysis
+- **FA owns:** Current Behavior, Business Rules, Edge Cases, all updates
 
 ---
 
@@ -50,12 +61,12 @@
 | Scope (Out) | [ ] | What's excluded |
 | Actors/Personas | [ ] | Who uses it |
 | Current Behavior | [ ] | Primary behavior (authoritative) |
-| Business Rules | [ ] | BR-XXX format |
+| Business Rules | [ ] | BR-{PRX}-NNN format |
 | Edge Cases | [ ] | Known exceptions |
 | Non-Goals | [ ] | Explicitly excluded capabilities |
-| Change Log | [ ] | Story references |
+| Change Log | [ ] | Feature-Increment references |
 
-> ⚠️ Feature cannot be referenced by stories until all sections are complete.
+> ⚠️ Feature cannot be referenced by Feature-Increments until all sections are complete.
 
 ---
 
@@ -65,7 +76,7 @@ _Business decisions that shaped this feature's scope, behavior, or priority._
 
 | Decision ID | Summary | Impact on This Feature |
 |-------------|---------|------------------------|
-| [DEC-XXX](../decisions/DEC-XXX-*.md) | [One-line decision summary] | [Scoped in / Scoped out / Behavior changed / Priority set] |
+| [dec-{PRX}-{NNN}](../decisions/dec-{PRX}-{NNN}-*.md) | [One-line decision summary] | [Scoped in / Scoped out / Behavior changed / Priority set] |
 
 ---
 
@@ -165,8 +176,8 @@ _Logic that governs this feature's behavior._
 
 | Rule ID | Rule Description | Applies When |
 |---------|------------------|--------------|
-| BR-XXX-001 | [Rule description] | [Context] |
-| BR-XXX-002 | [Rule description] | [Context] |
+| BR-{PRX}-001 | [Rule description] | [Context] |
+| BR-{PRX}-002 | [Rule description] | [Context] |
 
 ---
 
@@ -220,7 +231,7 @@ _Features that interact with or depend on this one._
 
 | Feature ID | Relationship |
 |------------|--------------|
-| [F-XXX] | [Depends on / Extends / Conflicts with] |
+| [f-{PRX}-{NNN}](../features/f-{PRX}-{NNN}-*.md) | [Depends on / Extends / Conflicts with] |
 
 ---
 
@@ -231,21 +242,23 @@ _Features that interact with or depend on this one._
 > ⚠️ **APPEND-ONLY**: Never delete entries. This is the audit trail.  
 > Every completed story that adds/changes behavior MUST be logged here.
 
-| Date | Story ID | Change Summary | Author |
-|------|----------|----------------|--------|
-| YYYY-MM-DD | — | Initial feature creation | [BA Name] |
-| YYYY-MM-DD | S-XXX | [Description of change] | [FA Name] |
+| Date | Source | Change Summary | Author |
+|------|--------|----------------|--------|
+| YYYY-MM-DD | — | Initial feature creation | [FA Name] |
+| YYYY-MM-DD | fi-{PRX}-{NNN} | [Description of change synced from FI] | [FA Name] |
 
 ---
 
-## Story Ledger Reference
+## Feature-Increment Ledger
 
-> All stories that have modified this feature:
+> All Feature-Increments that have modified this feature (via Canon Sync):
 
-See [story-ledger.md](./story-ledger.md) for the complete history.
+| FI ID | Project | Sync Date | Summary |
+|-------|---------|-----------|---------|
+| [fi-{PRX}-{NNN}](../../projects/{project-id}/feature-increments/fi-{PRX}-{NNN}-*.md) | {project-id} | YYYY-MM-DD | [Change summary] |
 
-**Last Story:** S-XXX  
-**Last Update:** YYYY-MM-DD
+**Last FI:** fi-{PRX}-{NNN}
+**Last Sync:** YYYY-MM-DD
 
 ---
 
@@ -263,7 +276,7 @@ _Links to code, APIs, or technical documentation. Maintained by DEV._
 
 | Rule | Description |
 |------|-------------|
-| TS-FEAT-001 | Feature file must exist before stories can reference it |
+| TS-FEAT-001 | Feature file must exist before Feature-Increments can reference it |
 | TS-FEAT-002 | All required sections must be present |
-| TS-FEAT-003 | Feature ID must be unique |
-| TS-DOD-001 | Change Log must be updated when stories complete |
+| TS-FEAT-003 | Feature ID must be unique within product |
+| TS-NAMING-FEAT | Feature naming must follow f-{PRX}-{NNN}-{description}.md pattern |

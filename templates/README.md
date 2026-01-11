@@ -27,18 +27,32 @@ These templates create **canonical artifacts** — the authoritative source of t
 |----------|-------|--------------|---------|
 | [feature-template.md](feature-template.md) | BA/FA | TS-FEAT-* | Feature Canon entries |
 | [decision-log-template.md](decision-log-template.md) | BA | TS-DEC-* | Business decisions |
-| [adr-template.md](adr-template.md) | SA | TS-ADR-* | Architecture decisions |
+| [sd-template.md](sd-template.md) | SA | TS-SD-* | Solution Design |
+| [ta-template.md](ta-template.md) | SA | TS-TA-* | Technical Architecture |
 
-### Execution Templates
+### Project-Level Execution Templates
 
-These templates create **execution artifacts** — deltas to the source of truth.
+These templates create **project-level artifacts** — change proposals (TO-BE state).
 
 | Template | Owner | Linter Rules | Purpose |
 |----------|-------|--------------|---------|
 | [story-template.md](story-template.md) | FA | TS-STORY-* | User stories (deltas) |
-| [testcases-template.md](testcases-template.md) | QA | TS-QA-* | Feature-level test cases |
+| [feature-increment-template.md](feature-increment-template.md) | FA | TS-FI-* | Feature increments |
+| [sdi-template.md](sdi-template.md) | SA | TS-SDI-* | Solution Design increments |
+| [tai-template.md](tai-template.md) | SA | TS-TAI-* | Technical Architecture increments |
+| [bai-template.md](bai-template.md) | BA | TS-BAI-* | Business Analysis increments |
+| [tc-template.md](tc-template.md) | QA | TS-TC-* | Test cases (project-level) |
 | [bug-report-template.md](bug-report-template.md) | QA | TS-QA-002 | Bug reports with classification |
 | [uat-pack-template.md](uat-pack-template.md) | QA | TS-UAT-* | User acceptance testing |
+
+### Product-Level Execution Templates
+
+These templates create **product-level artifacts** — canon (AS-IS truth).
+
+| Template | Owner | Linter Rules | Purpose |
+|----------|-------|--------------|---------|
+| [ri-template.md](ri-template.md) | QA | TS-RI-* | Regression impact records |
+| [testcases-template.md](testcases-template.md) | QA | TS-QA-* | Regression tests (product-level) |
 
 ### Planning Templates
 
@@ -71,7 +85,7 @@ Planning Artifacts          Source of Truth          Execution Artifacts
 ─────────────────          ──────────────────        ────────────────────
 BA Doc ─────────────────▶  Feature Canon  ◀─────────  Stories (deltas)
 Functional Spec ────────▶  Decision Log   ◀─────────  Bug Reports
-Story Map ──────────────▶  ADRs           ◀─────────  Test Cases
+Story Map ──────────────▶  TA             ◀─────────  Test Cases
 
       (Historical)           (Canonical)             (Sprint-bound)
 ```
@@ -150,11 +164,11 @@ Before sprint close, verify Canon is updated:
 
 | Role | Templates Owned |
 |------|-----------------|
-| **BA** | business-analysis, decision-log, feature (Purpose/Scope) |
-| **FA** | story, functional-spec, storymap, refinement-notes, feature (Behavior) |
-| **SA** | adr |
+| **BA** | business-analysis, decision-log, feature (Purpose/Scope), bai |
+| **FA** | story, functional-spec, storymap, refinement-notes, feature (Behavior), feature-increment |
+| **SA** | sd, ta, sdi, tai |
 | **DEV** | — (uses dev-plans, not templated here) |
-| **QA** | testcases, bug-report, uat-pack |
+| **QA** | tc, testcases, bug-report, uat-pack, ri |
 | **SM** | sprint, sprint-goal, active-sprint, sprints-index |
 
 ---
@@ -172,8 +186,9 @@ Before sprint close, verify Canon is updated:
 | TS-FEAT-002 | Features | All sections required |
 | TS-FEAT-003 | Features | Feature ID unique |
 | TS-DEC-001 | Decisions | Must link to features |
-| TS-ADR-001 | ADRs | Required for architecture changes |
-| TS-ADR-002 | ADRs | Must link to features |
+| TS-SD-001 | Solution Designs | Required for solution architecture |
+| TS-TA-001 | Technical Architecture | Required for architecture changes |
+| TS-TA-002 | Technical Architecture | Must link to features |
 | TS-QA-001 | Tests | Must reference Feature Canon |
 | TS-QA-002 | Bugs | Classification required |
 | TS-DOD-001 | All | Canon sync before Done |

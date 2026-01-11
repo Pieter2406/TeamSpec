@@ -1,7 +1,10 @@
 # Definition of Done (DoD)
 
-> **Version:** 2.0  
-> **Owner:** QA (validates completeness), SM (enforces at sprint close)
+> **Version:** 4.0  
+> **Status:** Normative  
+> **Owner:** FA (gates story completion)  
+> **Verifier:** QA (validates acceptance criteria)  
+> **Source:** [registry.yml](../registry.yml)
 
 A story is **Done** when ALL of the following are satisfied.
 
@@ -9,33 +12,9 @@ A story is **Done** when ALL of the following are satisfied.
 
 ## Mandatory Checklist
 
-### 1. Code Complete ✓
+Before a story moves to `done/`:
 
-| Check | Required |
-|-------|----------|
-| All tasks in dev plan marked complete | ✓ |
-| Code merged to main/develop branch | ✓ |
-| No outstanding TODOs in code (for this story) | ✓ |
-
-### 2. Tests Pass ✓
-
-| Check | Required |
-|-------|----------|
-| Unit tests written and passing | ✓ |
-| Integration tests passing (if applicable) | ✓ |
-| Test coverage meets team threshold | ✓ |
-
-**Linter Rule:** `TS-DOD-002` — Tests are feature-level
-
-### 3. Code Reviewed ✓
-
-| Check | Required |
-|-------|----------|
-| Pull request reviewed and approved | ✓ |
-| All review comments addressed | ✓ |
-| CI/CD pipeline passing | ✓ |
-
-### 4. Acceptance Criteria Verified ✓
+### 1. Acceptance Criteria Verified ✓
 
 | Check | Required |
 |-------|----------|
@@ -43,87 +22,71 @@ A story is **Done** when ALL of the following are satisfied.
 | QA sign-off obtained | ✓ |
 | No critical bugs outstanding | ✓ |
 
-### 5. Feature Canon Updated ✓ (CRITICAL)
+### 2. Code Complete ✓
 
 | Check | Required |
 |-------|----------|
-| Feature file updated to reflect new behavior | ✓ |
-| Change Log entry added with story reference | ✓ |
-| Story Ledger updated | ✓ |
-| FA verified Canon sync | ✓ |
+| Code reviewed and approved | ✓ |
+| Code merged to main/develop branch | ✓ |
+| CI/CD pipeline passing | ✓ |
 
-**Linter Rule:** `TS-DOD-001` — Canon sync required before Done
+### 3. Tests Passing ✓
 
-> ⚠️ **A story CANNOT be Done if it changes behavior and the Feature Canon is NOT updated.**
+| Check | Required |
+|-------|----------|
+| Unit tests written and passing | ✓ |
+| Integration tests passing (if applicable) | ✓ |
+| All automated tests green | ✓ |
 
----
+### 4. Feature-Increment Complete ✓
 
-## Canon Sync Process
+| Check | Required |
+|-------|----------|
+| Feature-Increment TO-BE section complete | ✓ |
+| TO-BE accurately reflects implemented behavior | ✓ |
+| Ready for deployment | ✓ |
 
-Before marking a story Done:
-
-1. **FA runs `ts:fa sync`** — Updates Feature Canon
-2. **FA updates Change Log** — Links to story ID
-3. **FA updates Story Ledger** — Records in `features/story-ledger.md`
-4. **QA verifies** — Tests match updated Canon
-
-### Change Log Entry Format
-
-```markdown
-| Date | Story | Change Summary | Author |
-|------|-------|----------------|--------|
-| YYYY-MM-DD | S-XXX | Brief description | FA Name |
-```
-
-### Story Ledger Entry Format
-
-```markdown
-| Story ID | Title | Sprint | Features Modified | Merged Date |
-|----------|-------|--------|-------------------|-------------|
-| S-XXX | Story title | Sprint N | F-001, F-002 | YYYY-MM-DD |
-```
+**Note:** Feature-Increment TO-BE is merged into Product Canon AFTER deployment via `ts:po sync`.
 
 ---
 
-## Optional (Profile-Dependent)
+## What Done Does NOT Include
 
-These checks apply based on team profile:
+| Action | When It Happens |
+|--------|-----------------|
+| Deployment to production | After DoD, during sprint close |
+| Canon sync (`ts:po sync`) | After deployment + QA verification |
+| Regression test update | At Deployment Verification Gate |
 
-### Regulated Profile
-
-| Check | Applies To |
-|-------|------------|
-| Compliance checklist signed off | regulated |
-| Audit trail documented | regulated |
-| Release notes updated | regulated |
-
-### Enterprise Profile
-
-| Check | Applies To |
-|-------|------------|
-| Documentation updated | enterprise |
-| Stakeholder notification sent | enterprise |
+> ⚠️ **Canon is NEVER updated at DoD.** Canon sync happens POST-DEPLOY only.
 
 ---
 
-## Sprint Close Verification
+## Enforcement
 
-At sprint close, SM verifies:
-
-| Check | Owner |
-|-------|-------|
-| All "Done" stories have Canon sync | SM |
-| Story Ledger is current | FA |
-| No orphan stories (behavior change without Canon update) | QA |
+| Actor | Responsibility |
+|-------|----------------|
+| FA | Marks story Done after QA verification |
+| QA | Verifies all ACs, provides sign-off |
+| DEV | Ensures code complete and merged |
+| Linter | Automated validation via `teamspec lint` |
 
 ---
 
-## Quick Reference
+## Story State Flow
 
 ```
-DoD = Code + Tests + Review + ACs + Feature Canon Updated
+backlog/ → ready-to-refine/ → in-progress/ → done/
+                   ↑                          │
+                 DoR gate                   DoD gate
 ```
 
-**Most Common Failure:** Story marked "Done" without updating Feature Canon.
+After `done/`, story proceeds to deployment and eventually Canon sync.
 
-If Canon is not updated, the story is **NOT DONE**.
+---
+
+## Related
+
+- [Definition of Ready](definition-of-ready.md)
+- [Gates Overview](../gates.md)
+- [Registry (Source of Truth)](../registry.yml)

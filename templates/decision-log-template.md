@@ -1,27 +1,30 @@
-# DEC-XXX: [Decision Title]
+# Decision: `dec-{PRX}-{NNN}-{description}`
 
-<!-- 
+<!--
   ⚠️ DECISION LOG RULES
-  
-  Business decisions must be logged and linked to affected features.
-  
+
+  Product-level business decisions must be logged and linked to affected features.
+
   RULES:
   1. Decisions must link to at least one feature
-  2. BA owns business decisions
+  2. PO owns product decisions (not BA)
   3. Decisions that affect scope require feature review
   4. Cross-feature decisions require SA acknowledgment
-  
+
+  NAMING PATTERN: dec-{PRX}-{NNN}-{description}.md
+  EXAMPLE: dec-ACME-001-payment-provider.md
+
   TEAMSPEC RULES ENFORCED:
   - TS-DEC-001: Decision must link to features
 -->
 
-> **Template Version**: 2.0  
-> **Last Updated**: 2026-01-07
+> **Template Version**: 4.0
+> **Last Updated**: 2026-01-11
 
 ---
 
-**Document Owner:** BA (Business Analyst)  
-**Artifact Type:** Business Decision (Canonical)  
+**Document Owner:** PO (Product Owner)
+**Artifact Type:** Product Decision (Canonical)
 **Lifecycle:** Permanent
 
 ---
@@ -30,16 +33,17 @@
 
 | Field | Value |
 |-------|-------|
-| **Decision ID** | DEC-XXX |
+| **Decision ID** | dec-{PRX}-{NNN} |
+| **Product** | {product-id} ({PRX}) |
 | **Date Proposed** | YYYY-MM-DD |
 | **Date Confirmed** | YYYY-MM-DD (or "Pending") |
-| **Decision Owner(s)** | [Stakeholder Name(s)] |
+| **Decision Owner** | PO (Product Owner) |
 | **Facilitator** | [BA Name] |
 | **Status** | Proposed / Confirmed / Superseded |
 | **Type** | Reversible / Costly / Irreversible |
 | **Severity** | Minor / Major / Critical |
 | **Scope** | Feature / Cross-Feature / Product |
-| **Superseded By** | [DEC-YYY if applicable] |
+| **Superseded By** | [dec-{PRX}-{NNN} if applicable] |
 
 ---
 
@@ -86,7 +90,7 @@ _What did we decide? State explicitly and unambiguously._
 
 | Feature ID | Feature Name | Impact Description |
 |------------|--------------|-------------------|
-| [F-XXX](../features/F-XXX-name.md) | [Feature Name] | [Scoped in / Scoped out / Behavior changed / Priority set] |
+| [f-{PRX}-{NNN}](../features/f-{PRX}-{NNN}-*.md) | [Feature Name] | [Scoped in / Scoped out / Behavior changed / Priority set] |
 
 ---
 
@@ -158,8 +162,8 @@ _What would it cost to reverse this decision later?_
 |-------|-------|
 | **Acknowledged By** | [SA Name] |
 | **Date** | YYYY-MM-DD |
-| **Assessment** | No Impact / Requires ADR / Approved |
-| **ADR Reference** | [ADR-XXX](../adr/ADR-XXX-*.md) (if required) |
+| **Assessment** | No Impact / Requires TA / Approved |
+| **TA Reference** | [ta-{PRX}-{NNN}](../technical-architecture/ta-{PRX}-{NNN}-*.md) (if required) |
 
 **Architecture Notes**:
 [SA assessment of technical implications]
@@ -187,17 +191,17 @@ _Stakeholder confirmation that decision is accurate and approved._
 |----------|------|------------------|
 | [BA Title] | [Link] | [Section] |
 
-### Related Stories (if applicable)
+### Related Feature-Increments (if applicable)
 
-| Story ID | Story Title | Relationship |
-|----------|-------------|--------------|
-| [S-XXX](../stories/*/S-XXX-*.md) | [Title] | Created from this decision |
+| FI ID | Description | Relationship |
+|-------|-------------|--------------|
+| [fi-{PRX}-{NNN}](../../projects/{project-id}/feature-increments/fi-{PRX}-{NNN}-*.md) | [Brief description] | Created from this decision |
 
 ### Related Decisions
 
 | Decision ID | Relationship |
 |-------------|--------------|
-| [DEC-YYY] | Depends on / Superseded by / Related to |
+| [dec-{PRX}-{NNN}] | Depends on / Superseded by / Related to |
 
 ---
 

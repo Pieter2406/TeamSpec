@@ -348,21 +348,19 @@ ts:<family> [subcommand] [options]
 | Family | Owner | Purpose |
 |--------|-------|---------|
 | `ts:po` | PO | Product management |
-| `ts:context` | Any | Context management |
 | `ts:ba` | BA | Business analysis |
 | `ts:fa` | FA | Functional analysis |
-| `ts:arch` | SA | Architecture |
+| `ts:sa` | SA | Solution architecture |
 | `ts:dev` | DEV | Development |
 | `ts:qa` | QA | Quality assurance |
 | `ts:sm` | SM | Scrum master |
-| `ts:status` | Any | Project status |
 
 ### 7.3 Universal Commands
 
 Available to all roles:
-- `ts:status` — Project overview
-- `ts:context show` — Display effective context
-- `ts:context validate` — Validate configuration
+- `ts:lint` — Run linter
+- `ts:fix` — Auto-fix lint errors
+- `ts:agent <role>` — Load role-specific agent
 
 ---
 

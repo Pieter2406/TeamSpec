@@ -1,28 +1,30 @@
 # ADR-XXX: [Decision Title]
 
-<!-- 
-  ⚠️ ADR RULES
-  
-  Architecture Decision Records document technical decisions.
-  
-  RULES:
-  1. ADRs link to features they affect
-  2. ADRs link to business decisions that triggered them
-  3. SA does NOT update Feature Canon directly - ADRs inform FA
-  4. If behavior is affected, FA must review Feature Canon
-  
-  TEAMSPEC RULES ENFORCED:
-  - TS-ADR-001: ADR required for architecture-impacting changes
-  - TS-ADR-002: ADR must link to affected features
+<!--
+  ⛔ DEPRECATED TEMPLATE - DO NOT USE
+
+  This template is DEPRECATED as of TeamSpec 4.0.
+
+  USE INSTEAD: ta-template.md (Technical Architecture)
+
+  REASON: TeamSpec 4.0 renamed "ADR" to "Technical Architecture" (TA)
+  - Artifact naming: ta-{PRX}-{NNN}-{description}.md
+  - Commands: ts:sa ta (not ts:sa adr)
+
+  The commands ts:sa design and ts:sa adr were REMOVED in 4.0.
+  See: spec/4.0/registry.yml commands section (REMOVED commands)
+
+  See: spec/4.0/registry.yml for correct artifact patterns
 -->
 
-> **Template Version**: 2.0  
+> **Template Version**: 2.0 (DEPRECATED)
 > **Last Updated**: 2026-01-07
+> **Status**: ⛔ DEPRECATED - Use ta-template.md instead
 
 ---
 
-**Document Owner:** SA (Solution Architect)  
-**Artifact Type:** Technical Decision (Canonical)  
+**Document Owner:** SA (Solution Architect)
+**Artifact Type:** Technical Decision (DEPRECATED - use Technical Architecture)
 **Lifecycle:** Permanent, versioned
 
 ---

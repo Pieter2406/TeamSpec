@@ -1,22 +1,24 @@
 # Sprint {N}
 
-<!-- 
+<!--
   ⚠️ SPRINT ≠ SCOPE DEFINITION
-  
+
   This sprint is a TIME-BOXED execution snapshot.
-  
+
   RULES:
   1. Sprint does not define scope (Features do)
-  2. Sprint does not change priority (BA does)
+  2. Sprint does not change priority (PO does)
   3. Only SM can modify sprint contents
   4. Scope changes require explicit Decision Log entry
-  
+
   After sprint commitment, scope changes must be logged in /decisions/
+
+  LOCATION: projects/{project-id}/sprints/sprint-{N}/
 -->
 
-> **Template Version**: 2.0  
-> **Last Updated**: 2026-01-07  
-> **Location**: `sprints/sprint-{N}/sprint-goal.md`
+> **Template Version**: 4.0
+> **Last Updated**: 2026-01-11
+> **Location**: `projects/{project-id}/sprints/sprint-{N}/sprint-goal.md`
 
 ---
 
@@ -60,8 +62,8 @@
 
 > ⚠️ After commitment, any scope change requires:
 > 1. SM to facilitate discussion
-> 2. BA to approve scope change
-> 3. Decision logged in /decisions/DEC-XXX.md
+> 2. PO to approve scope change
+> 3. Decision logged in /decisions/dec-{PRX}-{NNN}.md
 > 4. Story removed/added with explicit note
 
 ---
@@ -72,7 +74,7 @@
 
 | Story ID | Title | Points | Dev Plan | Owner | Status |
 |----------|-------|--------|----------|-------|--------|
-| [S-XXX](../../stories/ready-for-development/S-XXX-*.md) | {Title} | {N} | [Plan](../../dev-plans/story-XXX-tasks.md) | @dev | ⚪ Not Started |
+| [s-e{EEE}-{SSS}](../stories/in-progress/s-e{EEE}-{SSS}-*.md) | {Title} | {N} | [dp-e{EEE}-s{SSS}](../dev-plans/dp-e{EEE}-s{SSS}-*.md) | @dev | ⚪ Not Started |
 
 > ⚠️ All committed stories must have a Dev Plan before implementation starts.
 
@@ -125,11 +127,11 @@
 
 ## Canon Sync Verification
 
-> ⚠️ Before sprint close, verify Feature Canon is updated for all behavior-changing stories.
+> ⚠️ Before sprint close, verify Feature-Increments TO-BE sections are complete for all behavior-changing stories.
 
-| Story | Impact Type | Canon Updated? | FA Verified |
-|-------|-------------|----------------|-------------|
-| S-XXX | Adds/Changes | [ ] | [ ] |
+| Story | FI | Impact Type | FI TO-BE Complete? | FA Verified |
+|-------|-----|-------------|-------------------|-------------|
+| s-e{EEE}-{SSS} | fi-{PRX}-{NNN} | Adds/Changes | [ ] | [ ] |
 
 ---
 

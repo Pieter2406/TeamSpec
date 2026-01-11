@@ -170,7 +170,7 @@
 
 **Reviews:**
 - Stories (for implementation clarity)
-- ADRs
+- Technical Architecture (when requested)
 
 **Refuses:**
 - Feature definitions

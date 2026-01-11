@@ -110,7 +110,7 @@ projects/                           # CHANGE PROPOSALS (TO-BE)
 | **PO** | Products, Projects, Canon sync | `product.yml`, `project.yml`, `dec-PRX-*.md` | Stories, Technical design |
 | **BA** | Business Analysis | `ba-PRX-*.md`, `bai-PRX-*.md` | Projects, Features, Epics, Stories |
 | **FA** | Features, Feature-Increments, Epics, Stories | `f-PRX-*.md`, `fi-PRX-*.md`, `epic-PRX-*.md`, `s-eXXX-YYY-*.md` | Products, Projects, Canon sync |
-| **SA** | Solution Designs, Technical Architecture, ADRs | `sd-PRX-*.md`, `ta-PRX-*.md`, `sdi-PRX-*.md`, `tai-PRX-*.md` | Business requirements, Features |
+| **SA** | Solution Designs, Technical Architecture | `sd-PRX-*.md`, `ta-PRX-*.md`, `sdi-PRX-*.md`, `tai-PRX-*.md` | Business requirements, Features |
 | **DEV** | Implementation, Dev plans | `dp-eXXX-sYYY-*.md` | Feature definitions, Scope changes |
 | **QA** | Test cases (project), Regression tests (product) | `tc-fi-PRX-*.md`, `rt-f-PRX-*.md`, `bug-*.md` | Feature definitions |
 | **SM** | Sprint operations, Deployment checklist | `sprint-N/*` | Prioritization, Acceptance |
@@ -208,7 +208,7 @@ teamspec update           # Update TeamSpec core files
 - `ts:sa ta` → Create technical architecture
 - `ts:sa sd-increment` → Create SD increment in project
 - `ts:sa ta-increment` → Create TA increment in project
-- `ts:sa adr` → Create Architecture Decision Record
+- `ts:sa review` → Review technical approach
 
 #### DEV Commands (Development)
 - `ts:dev plan` → Create dev plan for story
@@ -224,9 +224,9 @@ teamspec update           # Update TeamSpec core files
 - `ts:sm deploy-checklist` → Run deployment readiness checklist
 
 #### Universal Commands
-- `ts:status` → Project status overview
 - `ts:lint` → Run linter
 - `ts:fix` → Auto-fix lint errors
+- `ts:agent <role>` → Load role-specific agent
 
 ---
 
@@ -243,7 +243,7 @@ teamspec update           # Update TeamSpec core files
 | Regression Test (product) | `rt-f-{PRX}-{NNN}-{description}.md` | `rt-f-ACME-001-auth-regression.md` |
 | Business Analysis | `ba-{PRX}-{NNN}-{description}.md` | `ba-ACME-001-checkout-flow.md` |
 | Solution Design | `sd-{PRX}-{NNN}-{description}.md` | `sd-ACME-001-oauth-design.md` |
-| ADR | `adr-{PRX}-{NNN}-{description}.md` | `adr-ACME-003-jwt-tokens.md` |
+| Technical Architecture | `ta-{PRX}-{NNN}-{description}.md` | `ta-ACME-001-api-architecture.md` |
 
 **PRX** = 3-4 character uppercase product prefix (immutable after creation)
 **NNN** = Sequential number within artifact type
@@ -362,8 +362,8 @@ All document templates are available in `.teamspec/templates/`:
 | `story-template.md` | FA | `ts:fa story` |
 | `epic-template.md` | FA | `ts:fa epic` |
 | `business-analysis-template.md` | BA | `ts:ba analysis` |
-| `solution-design-template.md` | SA | `ts:sa sd` |
-| `adr-template.md` | SA | `ts:sa adr` |
+| `sd-template.md` | SA | `ts:sa sd` |
+| `ta-template.md` | SA | `ts:sa ta` |
 | `testcases-template.md` | QA | `ts:qa test` |
 | `regression-template.md` | QA | `ts:qa regression` |
 | `sprint-template.md` | SM | `ts:sm sprint` |

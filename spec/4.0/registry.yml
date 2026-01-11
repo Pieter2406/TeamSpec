@@ -127,6 +127,7 @@ roles:
       - "ts:fa epic"
       - "ts:fa story"
       - "ts:fa sync-proposal"
+      - "ts:fa slice"
 
   SA:
     name: "Solution Architect"
@@ -160,7 +161,7 @@ roles:
       - "projects/{id}/dev-plans/dp-eXXX-sYYY-*.md"
     reviews:
       - "Stories (for implementation clarity)"
-      - "ADRs"
+      - "Technical Architecture (when requested)"
     refuses:
       - "Feature definitions"
       - "Scope changes"
@@ -179,6 +180,7 @@ roles:
       - "projects/{id}/qa/test-cases/tc-fi-PRX-NNN-*.md"
       - "projects/{id}/qa/bug-reports/bug-{project-id}-NNN-*.md"
       - "products/{id}/qa/regression-tests/rt-f-PRX-NNN-*.md"
+      - "projects/{id}/qa/regression-impact/ri-fi-*.md"
     reviews:
       - "Stories (for testability)"
       - "Feature-Increments (for test coverage)"
@@ -192,6 +194,8 @@ roles:
       - "ts:qa test"
       - "ts:qa verify"
       - "ts:qa regression"
+      - "ts:qa bug"
+      - "ts:qa uat"
     promotion_rule: |
       At deployment gate, QA must confirm regression coverage is updated:
       - For each fi-PRX-NNN delivered, either:
@@ -216,6 +220,10 @@ roles:
     commands:
       - "ts:sm sprint"
       - "ts:sm deploy-checklist"
+      - "ts:sm planning"
+      - "ts:sm standup"
+      - "ts:sm retro"
+      - "ts:sm sync"
 
   DES:
     name: "Designer"
@@ -496,6 +504,12 @@ commands:
     purpose: "Prepare sync proposal for PO"
     output: "Sync proposal document"
 
+  - id: fa.slice
+    invocation: "ts:fa slice"
+    role: "FA"
+    purpose: "Refine epic into stories"
+    output: "Stories"
+
   # SA commands
   - id: sa.ta
     invocation: "ts:sa ta"
@@ -559,6 +573,18 @@ commands:
     purpose: "Validate DoD compliance"
     output: "Verification report"
 
+  - id: qa.bug
+    invocation: "ts:qa bug"
+    role: "QA"
+    purpose: "Create bug reports"
+    output: "projects/{id}/qa/bug-reports/bug-*.md"
+
+  - id: qa.uat
+    invocation: "ts:qa uat"
+    role: "QA"
+    purpose: "Create UAT test pack"
+    output: "UAT artifacts"
+
   # SM commands
   - id: sm.sprint
     invocation: "ts:sm sprint"
@@ -571,6 +597,30 @@ commands:
     role: "SM"
     purpose: "Run deployment readiness checklist"
     output: "Deployment checklist"
+
+  - id: sm.planning
+    invocation: "ts:sm planning"
+    role: "SM"
+    purpose: "Facilitate sprint planning"
+    output: "Sprint plan artifacts"
+
+  - id: sm.standup
+    invocation: "ts:sm standup"
+    role: "SM"
+    purpose: "Facilitate daily standup"
+    output: "Standup notes"
+
+  - id: sm.retro
+    invocation: "ts:sm retro"
+    role: "SM"
+    purpose: "Facilitate sprint retrospective"
+    output: "Retrospective notes"
+
+  - id: sm.sync
+    invocation: "ts:sm sync"
+    role: "SM"
+    purpose: "Facilitate cross-team sync"
+    output: "Sync notes"
 
   # Universal commands
   - id: lint
@@ -666,3 +716,183 @@ canon_rules:
     
   - id: CANON-009
     rule: "Every product has a unique 3-4 character prefix (PRX) used in all artifact filenames"
+
+# =============================================================================
+# TEMPLATES (source of truth for template files)
+# =============================================================================
+templates:
+  # PO templates
+  - file: "product-template.yml"
+    artifact: "product"
+    role: "PO"
+    command: "ts:po product"
+    description: "Product metadata and configuration"
+
+  - file: "project-template.yml"
+    artifact: "project"
+    role: "PO"
+    command: "ts:po project"
+    description: "Project metadata and target products"
+
+  - file: "decision-log-template.md"
+    artifact: "product-decision"
+    role: "PO"
+    command: null
+    description: "Product-level decision record"
+
+  # BA templates
+  - file: "business-analysis-template.md"
+    artifact: "business-analysis"
+    role: "BA"
+    command: "ts:ba analysis"
+    description: "Business analysis document"
+
+  - file: "bai-template.md"
+    artifact: "ba-increment"
+    role: "BA"
+    command: "ts:ba ba-increment"
+    description: "Business analysis increment for projects"
+
+  # FA templates
+  - file: "feature-template.md"
+    artifact: "feature"
+    role: "FA"
+    command: "ts:fa feature"
+    description: "Product feature specification"
+
+  - file: "feature-increment-template.md"
+    artifact: "feature-increment"
+    role: "FA"
+    command: "ts:fa feature-increment"
+    description: "Feature increment with AS-IS/TO-BE"
+
+  - file: "epic-template.md"
+    artifact: "epic"
+    role: "FA"
+    command: "ts:fa epic"
+    description: "Epic grouping related stories"
+
+  - file: "story-template.md"
+    artifact: "story"
+    role: "FA"
+    command: "ts:fa story"
+    description: "Story describing a delta"
+
+  - file: "storymap-template.md"
+    artifact: null
+    role: "FA"
+    command: null
+    description: "Story mapping visualization"
+
+  - file: "functional-spec-template.md"
+    artifact: null
+    role: "FA"
+    command: null
+    description: "Detailed functional specification"
+
+  - file: "increments-index-template.md"
+    artifact: null
+    role: "FA"
+    command: null
+    description: "Index of feature increments"
+
+  # SA templates
+  - file: "sd-template.md"
+    artifact: "solution-design"
+    role: "SA"
+    command: "ts:sa sd"
+    description: "Solution design document"
+
+  - file: "sdi-template.md"
+    artifact: "sd-increment"
+    role: "SA"
+    command: "ts:sa sd-increment"
+    description: "Solution design increment for projects"
+
+  - file: "ta-template.md"
+    artifact: "technical-architecture"
+    role: "SA"
+    command: "ts:sa ta"
+    description: "Technical architecture document"
+
+  - file: "tai-template.md"
+    artifact: "ta-increment"
+    role: "SA"
+    command: "ts:sa ta-increment"
+    description: "Technical architecture increment for projects"
+
+  # DEV templates
+  - file: "dev-plan-template.md"
+    artifact: "dev-plan"
+    role: "DEV"
+    command: "ts:dev plan"
+    description: "Development plan for story implementation"
+
+  # QA templates
+  - file: "tc-template.md"
+    artifact: "project-test-case"
+    role: "QA"
+    command: "ts:qa test"
+    description: "Test case for feature increment"
+
+  - file: "rt-template.md"
+    artifact: "product-regression-test"
+    role: "QA"
+    command: "ts:qa regression"
+    description: "Product-level regression test for feature"
+
+  - file: "ri-template.md"
+    artifact: "regression-impact"
+    role: "QA"
+    command: null
+    description: "Regression impact assessment"
+
+  - file: "bug-report-template.md"
+    artifact: "bug-report"
+    role: "QA"
+    command: null
+    description: "Bug report for defects"
+
+  - file: "uat-pack-template.md"
+    artifact: null
+    role: "QA"
+    command: null
+    description: "UAT test pack"
+
+  # SM templates
+  - file: "sprint-template.md"
+    artifact: "sprint"
+    role: "SM"
+    command: "ts:sm sprint"
+    description: "Sprint planning and tracking"
+
+  - file: "active-sprint-template.md"
+    artifact: null
+    role: "SM"
+    command: null
+    description: "Active sprint status board"
+
+  - file: "sprint-goal-template.md"
+    artifact: null
+    role: "SM"
+    command: null
+    description: "Sprint goal definition"
+
+  - file: "sprints-index-template.md"
+    artifact: null
+    role: "SM"
+    command: null
+    description: "Index of all sprints"
+
+  - file: "refinement-notes-template.md"
+    artifact: null
+    role: "SM"
+    command: null
+    description: "Backlog refinement session notes"
+
+  # Index templates (multi-role)
+  - file: "products-index-template.md"
+    artifact: null
+    role: "PO"
+    command: null
+    description: "Index of all products"

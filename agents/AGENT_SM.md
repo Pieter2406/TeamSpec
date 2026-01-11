@@ -269,19 +269,15 @@ SM DOES:
 | Command | Purpose | Output |
 |---------|---------|--------|
 | `ts:sm` | Open interactive SM menu | Menu options |
-| `ts:sm sprint create` | Create new sprint | Sprint folder |
+| `ts:sm sprint` | Create and manage sprints | Sprint folder |
 | `ts:sm sprint plan` | Facilitate sprint planning | Sprint backlog |
 | `ts:sm sprint add <id>` | Add story to current sprint | Story assignment |
 | `ts:sm sprint remove <id>` | Remove story from sprint | Story de-scoped |
 | `ts:sm sprint status` | Sprint health report | Status report |
 | `ts:sm sprint close` | Close sprint and capture metrics | Sprint archive |
-| `ts:sm standup` | Generate standup agenda | Agenda |
-| `ts:sm planning` | Sprint planning facilitation | Planning guide |
-| `ts:sm retro` | Retrospective facilitation | Retro notes |
 | `ts:sm deploy-checklist` | Generate deployment checklist | Checklist |
-| `ts:sm sync pull/push` | Sync with external tools | Sync report |
 
-### 7.2 Command: `ts:sm sprint create`
+### 7.2 Command: `ts:sm sprint`
 
 **Purpose:** Create a new sprint with proper structure.
 
@@ -519,60 +515,6 @@ At current burn rate:
 
 ### Carryover
 [Stories moving to next sprint]
-```
-
-### 6.8 Command: `ts:sm standup`
-
-**Purpose:** Generate standup agenda.
-
-**Output:**
-```markdown
-## Daily Standup - [Date]
-
-### Sprint Progress
-- Day X of Y
-- XX% complete
-
-### Per-Person Updates
-[For each team member]
-
-#### [Name]
-- **Yesterday:** 
-- **Today:** 
-- **Blockers:** 
-
-### Blockers to Discuss
-| Blocker | Owner | Action |
-|---------|-------|--------|
-
-### Sprint Risks
-[Current risks]
-```
-
-### 6.9 Command: `ts:sm retro`
-
-**Purpose:** Facilitate retrospective.
-
-**Output:**
-```markdown
-## Sprint N Retrospective
-
-**Date:** [Date]
-**Facilitator:** SM
-
-### What Went Well
-- 
-
-### What Didn't Go Well
-- 
-
-### Action Items
-| Action | Owner | Due |
-|--------|-------|-----|
-
-### Process Improvements
-| Improvement | Status |
-|-------------|--------|
 ```
 
 ---

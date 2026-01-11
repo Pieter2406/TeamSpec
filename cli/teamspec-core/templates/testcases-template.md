@@ -1,28 +1,31 @@
 # Test Cases: [Feature Name]
 
-<!-- 
-  ⚠️ TESTS ARE FEATURE-LEVEL, NOT STORY-LEVEL
-  
-  Test cases validate Feature Canon behavior, not individual stories.
-  
-  RULES:
-  1. Tests reference Feature Canon sections
-  2. Tests are canonical (survive story completion)
-  3. If behavior doesn't match Canon, classify the issue
-  4. Do not create story-specific test cases
-  
-  TEAMSPEC RULES ENFORCED:
-  - TS-DOD-002: Tests are feature-level
-  - TS-QA-001: Tests must reference Feature Canon
+<!--
+  ⛔ DEPRECATED TEMPLATE - DO NOT USE
+
+  This template is DEPRECATED as of TeamSpec 4.0.
+
+  USE INSTEAD:
+  - tc-template.md for PROJECT test cases (tc-fi-{PRX}-{NNN}-*.md)
+  - Product regression tests use rt-f-{PRX}-{NNN}-*.md pattern
+
+  REASON: TeamSpec 4.0 uses a two-layer QA model:
+  1. Project Test Cases (tc-fi-*) → validate Feature-Increments
+  2. Product Regression Tests (rt-f-*) → long-term regression coverage
+
+  This old template doesn't follow the 4.0 naming conventions or QA model.
+
+  See: spec/4.0/registry.yml for correct artifact patterns
 -->
 
-> **Template Version**: 2.0  
+> **Template Version**: 2.0 (DEPRECATED)
 > **Last Updated**: 2026-01-07
+> **Status**: ⛔ DEPRECATED - Use tc-template.md instead
 
 ---
 
-**Document Owner:** QA (QA Engineer)  
-**Artifact Type:** Canonical (Feature-level)  
+**Document Owner:** QA (QA Engineer)
+**Artifact Type:** Canonical (Feature-level) - DEPRECATED
 **Lifecycle:** Permanent, evolves with Feature Canon
 
 ---

@@ -25,14 +25,14 @@
 
 | Field | Value |
 |-------|-------|
-| **Epic ID** | epic-PRX-XXX |
+| **Epic ID** | epic-{PRX}-{NNN} |
 | **Status** | Draft / Proposed / Approved / In Progress / Done |
-| **Product** | [product-id] (PRX) |
-| **Owner** | [BA/PO Name] |
+| **Product** | {product-id} ({PRX}) |
+| **Owner** | FA (Functional Analyst) |
 | **Created** | YYYY-MM-DD |
 
-**Document Owner:** BA (Business Analyst) / PO (Product Owner)  
-**Artifact Type:** Execution (Groups Feature-Increments)  
+**Document Owner:** FA (Functional Analyst)
+**Artifact Type:** Execution (Groups Feature-Increments)
 **Lifecycle:** Project-bound, archived after completion
 
 ---

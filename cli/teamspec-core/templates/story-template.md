@@ -1,24 +1,25 @@
-# S-XXX: [Title]
+# Story: `s-eXXX-YYY-description`
 
-<!-- TEAMSPEC RULE: TS-STORY-002 -->
 <!-- 
-  ⚠️ STORIES ARE DELTAS, NOT DOCUMENTATION
+  ⚠️ TEAMSPEC 4.0 STORY TEMPLATE
   
-  This story describes a CHANGE to the Feature Canon.
+  Stories in 4.0 are linked to Epics via filename.
+  Filename pattern: s-eXXX-YYY-description.md
   
-  DO NOT:
-  - Restate full feature behavior
-  - Include complete specifications
-  - Document end-to-end flows
+  RULES:
+  - Story filename MUST include Epic ID (eXXX)
+  - YYY is the story sequence within the Epic
+  - Stories describe DELTAS, not full behavior
   
-  DO:
-  - Reference Feature Canon (F-XXX) for current behavior
-  - Describe only what changes (Before → After)
-  - Link to Feature Canon rules (BR-XXX)
+  TEAMSPEC RULES ENFORCED:
+  - TS-STORY-006: Story must link to Epic (via filename)
+  - TS-STORY-007: Linked Epic must exist
+  - TS-STORY-002: Delta-only format required
+  - TS-STORY-003: Acceptance Criteria required
 -->
 
-> **Template Version**: 2.0  
-> **Last Updated**: 2026-01-07
+> **Template Version**: 4.0  
+> **Last Updated**: 2026-01-10
 
 ---
 
@@ -26,7 +27,8 @@
 
 | Field | Value |
 |-------|-------|
-| **Story ID** | S-XXX |
+| **Story ID** | s-eXXX-YYY |
+| **Epic** | epic-PRX-XXX |
 | **Status** | Backlog |
 | **Estimate** | [Points] |
 | **Author** | [FA Name] |
@@ -48,34 +50,24 @@
 
 ---
 
-## Linked Project
-
-> ⚠️ **MANDATORY**: Link to the project this story belongs to.
-
-| Project ID | Name |
-|------------|------|
-| [PROJECT-ID](../project.yml) | [Project Name] |
-
----
-
 ## Linked Epic
 
-> Recommended: Link to the parent epic.
+> ⚠️ **MANDATORY**: Epic link is embedded in filename (eXXX).  
+> **TEAMSPEC RULE:** TS-STORY-006 - Epic link required (via filename)
 
-| Epic ID | Epic Name |
-|---------|-----------|
-| [EPIC-XXX](../epics/EPIC-XXX.md) | [Epic Name] |
+| Epic ID | Epic Name | Product |
+|---------|-----------|---------|
+| [epic-PRX-XXX](../epics/epic-PRX-XXX-description.md) | [Epic Name] | [Product Name] (PRX) |
 
 ---
 
-## Linked Feature
+## Linked Feature-Increment
 
-> ⚠️ **MANDATORY**: Every story must link to at least one feature.  
-> **TEAMSPEC RULE:** TS-STORY-001 - Feature link required
+> Recommended: Link to the Feature-Increment this story implements.
 
-| Feature ID | Feature Name |
-|------------|--------------|
-| [F-XXX](../features/F-XXX-feature-name.md) | [Feature Name] |
+| FI ID | Description |
+|-------|-------------|
+| [fi-PRX-XXX](../feature-increments/fi-PRX-XXX-description.md) | [Brief description] |
 
 ---
 
@@ -84,7 +76,7 @@
 > Describe what this story CHANGES relative to current documented behavior.  
 > **Do NOT restate full feature behavior here.**
 
-<!-- TEAMSPEC RULE: TS-STORY-002 requires Before/After format -->
+<!-- TEAMSPEC RULE: TS-STORY-002 requires Before/After (AS-IS/TO-BE) format -->
 
 ### Impact Type
 
@@ -93,20 +85,20 @@
 - [ ] **Fixes Defect** — Restores behavior to match documentation (no feature update needed)
 - [ ] **Technical Only** — Refactor/performance with no user-observable change
 
-### Before (current behavior)
+### AS-IS (current behavior)
 
 <!-- 
-  Describe the CURRENT behavior as documented in Feature Canon.
-  Reference: F-XXX, Section: [section name]
+  Describe the CURRENT behavior as documented in Product Feature Canon.
+  Reference: f-PRX-XXX, Section: [section name]
   
-  Example: "Currently, users must log in with email/password (F-001, Main Flow Step 1)"
+  Example: "Currently, users must log in with email/password (f-DIT-001, Main Flow Step 1)"
 -->
 
-**Reference:** F-XXX, Section: [section]
+**Reference:** f-PRX-XXX, Section: [section]
 
 [Brief description of current behavior per Feature Canon]
 
-### After (new behavior)
+### TO-BE (new behavior)
 
 <!-- 
   Describe ONLY what changes.
@@ -118,8 +110,9 @@
 [ONLY the delta - what changes]
 
 > ⚠️ **FEATURE CANON RULE**  
-> If this story adds or changes behavior, the Feature Canon MUST be updated before this story can be marked Done.  
-> See: Definition of Done - TS-DOD-001
+> If this story adds or changes behavior, the Feature-Increment TO-BE must be complete  
+> and Canon sync must happen before project closure.  
+> See: TS-DOD-003 - Product sync after deployment
 
 ---
 
@@ -136,33 +129,16 @@
 
 ---
 
-## Decision References
-
-_Business decisions that drove this story's existence or scope._
-
-> **When Required**: If this story has "Adds Behavior" or "Changes Behavior" impact, it MUST either:
->
-> - Reference at least one DEC ID, OR
-> - Explicitly check "No new business decision required" below
-
-| Decision ID | Summary | Impact on This Story |
-|-------------|---------|----------------------|
-| [DEC-XXX](../decisions/DEC-XXX-*.md) | [One-line summary] | [Why this story exists / what changed] |
-
-- [ ] **No new business decision required** (for stories without scope/behavior decisions)
-
----
-
 ## Acceptance Criteria (AC)
 
-> AC must map to Feature Canon behavior. Reference feature business rules where applicable.
+> ⚠️ **MANDATORY**: AC must be present and testable.  
+> **TEAMSPEC RULE:** TS-STORY-003 - AC required
 
 ### Scenario 1: [Happy Path]
 
 - **Given** [Context]
 - **When** [Action]
 - **Then** [Result]
-- **Feature Rule**: [BR-XXX if applicable]
 
 ### Scenario 2: [Edge Case]
 
@@ -176,7 +152,7 @@ _Business decisions that drove this story's existence or scope._
 
 - **API**: [Endpoint]
 - **DB**: [Table/Schema]
-- **ADR**: [ADR-XXX if applicable]
+- **TAI**: [tai-PRX-XXX if applicable]
 
 ---
 
@@ -187,31 +163,14 @@ _Business decisions that drove this story's existence or scope._
 
 ---
 
-## FA Acceptance Gate
-
-> This story must be reviewed by FA before moving to Ready for Development.
-
-| Check | Status | FA Initials |
-|-------|--------|-------------|
-| Story describes delta only | [ ] | |
-| Feature link is correct | [ ] | |
-| ACs reference Feature Canon | [ ] | |
-| No full behavior restatement | [ ] | |
-
-**FA Approved:** [ ] Yes  
-**FA Name:** ________________  
-**Date:** ________________
-
----
-
 ## DoR Checklist (Feature Alignment)
 
-- [ ] Linked to one or more Feature IDs
-- [ ] Feature file(s) exist and are current
+- [ ] Linked to Epic (via filename s-eXXX-YYY)
+- [ ] Linked Epic exists in epics folder
+- [ ] Linked Feature-Increment exists (if applicable)
 - [ ] Story describes DELTA only, not full behavior
 - [ ] Feature impact type is marked
 - [ ] ACs map to feature behavior / business rules
-- [ ] Open questions tracked at feature level (not here)
 
 ## DoR Checklist (Standard)
 
@@ -225,10 +184,9 @@ _Business decisions that drove this story's existence or scope._
 
 - [ ] Code Complete
 - [ ] Tests Passed
-- [ ] **Feature Canon updated** (if behavior changed) — TS-DOD-001
-- [ ] Feature Change Log entry added
-- [ ] Story Ledger updated
+- [ ] Feature-Increment TO-BE complete (if behavior changed)
 - [ ] FA Accepted
+- [ ] Story marked Done in backlog
 
 ---
 
@@ -236,9 +194,9 @@ _Business decisions that drove this story's existence or scope._
 
 | Rule | Description | Status |
 |------|-------------|--------|
-| TS-STORY-001 | Feature link required | Checked on save |
-| TS-STORY-002 | Delta-only format | Checked on save |
+| TS-STORY-006 | Epic link required (via filename) | Checked on save |
+| TS-STORY-007 | Linked Epic must exist | Checked on save |
+| TS-STORY-002 | Delta-only format (AS-IS/TO-BE) | Checked on save |
 | TS-STORY-003 | ACs testable | Checked on Ready |
 | TS-STORY-004 | Sprint assignment by SM only | Checked on assignment |
 | TS-STORY-005 | DoR complete | Checked on Ready |
-| TS-DOD-001 | Canon sync | Checked on Done |
