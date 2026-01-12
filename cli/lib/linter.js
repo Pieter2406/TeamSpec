@@ -177,6 +177,32 @@ function parseConfigYaml(filePath) {
 // NAMING PATTERN VALIDATION
 // =============================================================================
 
+// =============================================================================
+// MARKER VOCABULARY - Controlled Values (from spec/4.0/marker-vocabulary.md)
+// =============================================================================
+
+const MARKER_VOCABULARY = {
+    // artifact_kind controlled vocabulary
+    artifactKinds: new Set([
+        'feature', 'fi', 'story', 'epic', 'ba', 'bai', 'ta', 'tai', 'sd', 'sdi',
+        'decision', 'tc', 'rt', 'ri', 'bug', 'devplan', 'sprint', 'uat',
+        'refinement-notes', 'functional-spec', 'storymap', 'sprint-goal',
+        'active-sprint', 'sprints-index'
+    ]),
+
+    // role_owner controlled vocabulary
+    roleOwners: new Set(['FA', 'BA', 'PO', 'SA', 'DEV', 'QA', 'SM', 'DES']),
+
+    // Required frontmatter fields
+    requiredFrontmatter: ['artifact_kind', 'spec_version', 'role_owner'],
+
+    // Recommended frontmatter fields
+    recommendedFrontmatter: ['keywords'],
+
+    // Required sections (universal)
+    requiredSections: ['## Purpose', '## Links']
+};
+
 // Cache for naming patterns loaded from registry
 let _namingPatterns = null;
 let _registry = null;
@@ -244,6 +270,127 @@ function getNamingPatterns(workspaceDir) {
 function resetNamingPatterns() {
     _namingPatterns = null;
     _registry = null;
+}
+
+// =============================================================================
+// MARKER VOCABULARY RULES (MV-*)
+// =============================================================================
+
+/**
+ * MV-001: artifact_kind present and valid
+ */
+function checkArtifactKind(filePath, frontmatter, result) {
+    const filename = path.basename(filePath);
+
+    if (!frontmatter.artifact_kind) {
+        result.add('MV-001', `Missing required frontmatter field: artifact_kind`, filePath, SEVERITY.ERROR);
+        return;
+    }
+
+    if (!MARKER_VOCABULARY.artifactKinds.has(frontmatter.artifact_kind)) {
+        result.add('MV-001', `Invalid artifact_kind: '${frontmatter.artifact_kind}'. Must be one of: ${[...MARKER_VOCABULARY.artifactKinds].join(', ')}`, filePath, SEVERITY.ERROR);
+    }
+}
+
+/**
+ * MV-002: spec_version present
+ */
+function checkSpecVersion(filePath, frontmatter, result) {
+    if (!frontmatter.spec_version) {
+        result.add('MV-002', `Missing required frontmatter field: spec_version`, filePath, SEVERITY.ERROR);
+    }
+}
+
+/**
+ * MV-003: role_owner present and valid
+ */
+function checkRoleOwner(filePath, frontmatter, result) {
+    if (!frontmatter.role_owner) {
+        result.add('MV-003', `Missing required frontmatter field: role_owner`, filePath, SEVERITY.ERROR);
+        return;
+    }
+
+    if (!MARKER_VOCABULARY.roleOwners.has(frontmatter.role_owner)) {
+        result.add('MV-003', `Invalid role_owner: '${frontmatter.role_owner}'. Must be one of: ${[...MARKER_VOCABULARY.roleOwners].join(', ')}`, filePath, SEVERITY.ERROR);
+    }
+}
+
+/**
+ * MV-004: keywords present (warning if missing)
+ */
+function checkKeywords(filePath, frontmatter, result) {
+    if (!frontmatter.keywords) {
+        result.add('MV-004', `Missing recommended frontmatter field: keywords (aids LLM retrieval)`, filePath, SEVERITY.WARNING);
+    }
+}
+
+/**
+ * MV-010: ## Purpose section exists
+ */
+function checkPurposeSection(filePath, content, result) {
+    // Skip templates (they don't have filled purpose)
+    if (filePath.includes('-template.md')) return;
+
+    if (!content.includes('## Purpose') && !content.includes('## 1. Purpose')) {
+        result.add('MV-010', `Missing required section: ## Purpose`, filePath, SEVERITY.ERROR);
+    }
+}
+
+/**
+ * MV-011: ## Links section exists (warning)
+ */
+function checkLinksSection(filePath, content, result) {
+    // Skip templates
+    if (filePath.includes('-template.md')) return;
+
+    if (!content.includes('## Links') && !content.includes('## Related')) {
+        result.add('MV-011', `Missing recommended section: ## Links`, filePath, SEVERITY.WARNING);
+    }
+}
+
+/**
+ * Check all marker vocabulary rules for a file
+ */
+function checkMarkerVocabulary(filePath, result, options = {}) {
+    // Only check .md files
+    if (!filePath.endsWith('.md')) return;
+
+    // Skip non-artifact files
+    const filename = path.basename(filePath);
+    const skipFiles = ['README.md', 'readme.md', 'index.md', '.gitkeep'];
+    if (skipFiles.includes(filename)) return;
+
+    try {
+        const content = fs.readFileSync(filePath, 'utf-8');
+        const frontmatter = parseFrontmatter(content);
+
+        // Skip files without frontmatter (not TeamSpec artifacts)
+        if (Object.keys(frontmatter).length === 0) return;
+
+        // MV-001 to MV-004: Frontmatter checks
+        if (!options.rule || options.rule === 'MV-001') {
+            checkArtifactKind(filePath, frontmatter, result);
+        }
+        if (!options.rule || options.rule === 'MV-002') {
+            checkSpecVersion(filePath, frontmatter, result);
+        }
+        if (!options.rule || options.rule === 'MV-003') {
+            checkRoleOwner(filePath, frontmatter, result);
+        }
+        if (!options.rule || options.rule === 'MV-004') {
+            checkKeywords(filePath, frontmatter, result);
+        }
+
+        // MV-010, MV-011: Section checks
+        if (!options.rule || options.rule === 'MV-010') {
+            checkPurposeSection(filePath, content, result);
+        }
+        if (!options.rule || options.rule === 'MV-011') {
+            checkLinksSection(filePath, content, result);
+        }
+    } catch (err) {
+        // Skip files that can't be read
+    }
 }
 
 // =============================================================================
@@ -684,6 +831,10 @@ function lintProduct(workspaceDir, productId, result, options) {
 
                 for (const feature of features) {
                     checkArtifactNaming(path.join(featuresDir, feature), 'feature', result, workspaceDir);
+                    // MV-*: Marker vocabulary checks
+                    if (!options.rule || options.rule.startsWith('MV-')) {
+                        checkMarkerVocabulary(path.join(featuresDir, feature), result, options);
+                    }
                 }
             }
 
@@ -693,6 +844,10 @@ function lintProduct(workspaceDir, productId, result, options) {
                 const rtFiles = fs.readdirSync(rtDir).filter(f => f.endsWith('.md') && !f.toLowerCase().startsWith('readme'));
                 for (const rt of rtFiles) {
                     checkArtifactNaming(path.join(rtDir, rt), 'product-regression-test', result, workspaceDir);
+                    // MV-*: Marker vocabulary checks
+                    if (!options.rule || options.rule.startsWith('MV-')) {
+                        checkMarkerVocabulary(path.join(rtDir, rt), result, options);
+                    }
                 }
             }
         }
@@ -759,6 +914,11 @@ function lintProject(workspaceDir, projectId, result, options) {
                     checkRegressionImpact(fiPath, projectDir, workspaceDir, result);
                 }
             }
+
+            // MV-*: Marker vocabulary checks
+            if (!options.rule || options.rule.startsWith('MV-')) {
+                checkMarkerVocabulary(fiPath, result, options);
+            }
         }
     }
 
@@ -801,6 +961,11 @@ function lintProject(workspaceDir, projectId, result, options) {
                 if (!options.rule || options.rule === 'TS-STORY-002') {
                     checkStoryDelta(storyPath, result);
                 }
+
+                // MV-*: Marker vocabulary checks
+                if (!options.rule || options.rule.startsWith('MV-')) {
+                    checkMarkerVocabulary(storyPath, result, options);
+                }
             }
         }
     }
@@ -829,6 +994,11 @@ function lintProject(workspaceDir, projectId, result, options) {
                 if (!options.rule || options.rule === 'TS-DOD-001') {
                     checkDoneStoryAC(storyPath, result);
                 }
+
+                // MV-*: Marker vocabulary checks
+                if (!options.rule || options.rule.startsWith('MV-')) {
+                    checkMarkerVocabulary(storyPath, result, options);
+                }
             }
         }
     }
@@ -838,7 +1008,12 @@ function lintProject(workspaceDir, projectId, result, options) {
     if (fs.existsSync(tcDir)) {
         const tcFiles = fs.readdirSync(tcDir).filter(f => f.endsWith('.md') && !f.toLowerCase().startsWith('readme'));
         for (const tc of tcFiles) {
-            checkArtifactNaming(path.join(tcDir, tc), 'project-test-case', result, workspaceDir);
+            const tcPath = path.join(tcDir, tc);
+            checkArtifactNaming(tcPath, 'project-test-case', result, workspaceDir);
+            // MV-*: Marker vocabulary checks
+            if (!options.rule || options.rule.startsWith('MV-')) {
+                checkMarkerVocabulary(tcPath, result, options);
+            }
         }
     }
 
@@ -847,7 +1022,12 @@ function lintProject(workspaceDir, projectId, result, options) {
     if (fs.existsSync(bugDir)) {
         const bugFiles = fs.readdirSync(bugDir).filter(f => f.endsWith('.md') && !f.toLowerCase().startsWith('readme'));
         for (const bug of bugFiles) {
-            checkArtifactNaming(path.join(bugDir, bug), 'bug-report', result, workspaceDir);
+            const bugPath = path.join(bugDir, bug);
+            checkArtifactNaming(bugPath, 'bug-report', result, workspaceDir);
+            // MV-*: Marker vocabulary checks
+            if (!options.rule || options.rule.startsWith('MV-')) {
+                checkMarkerVocabulary(bugPath, result, options);
+            }
         }
     }
 }
@@ -919,6 +1099,7 @@ module.exports = {
     formatResults,
     LintResult,
     SEVERITY,
+    MARKER_VOCABULARY,
     getNamingPatterns,
     resetNamingPatterns,
     // Export individual checks for testing
@@ -935,5 +1116,13 @@ module.exports = {
     checkCanonSync,
     checkFITestCoverage,
     checkRegressionImpact,
-    checkArtifactNaming
+    checkArtifactNaming,
+    // Marker vocabulary checks
+    checkMarkerVocabulary,
+    checkArtifactKind,
+    checkSpecVersion,
+    checkRoleOwner,
+    checkKeywords,
+    checkPurposeSection,
+    checkLinksSection
 };
