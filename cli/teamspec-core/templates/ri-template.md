@@ -1,3 +1,49 @@
+---
+# === LLM Retrieval Metadata ===
+artifact_kind: ri
+spec_version: "4.0"
+template_version: "4.0.1"
+
+# === Ownership ===
+role_owner: QA
+artifact_type: Project Execution
+canonicity: project-execution
+lifecycle: project-bound
+
+# === Naming ===
+id_pattern: "ri-fi-{PRX}-{NNN}"
+filename_pattern: "ri-fi-{PRX}-{NNN}.md"
+
+# === Required Relationships ===
+links_required:
+  - type: feature-increment
+    pattern: "fi-{PRX}-{NNN}"
+    optional: false
+
+# === Search Optimization ===
+keywords:
+  - regression impact
+  - impact assessment
+  - deployment gate
+  - regression coverage
+aliases:
+  - impact record
+anti_keywords:
+  - test case
+  - bug report
+  - story
+
+# === Generation Contract ===
+completion_rules:
+  placeholders: "Fill {braces} only"
+  assessment_required: true
+  required_sections:
+    - Required Fields
+    - Regression Test Updates
+  optional_sections:
+    - Notes
+---
+
 # Regression Impact: `ri-fi-{PRX}-{NNN}`
 
 <!--

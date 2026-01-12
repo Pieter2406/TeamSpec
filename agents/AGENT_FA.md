@@ -1,9 +1,9 @@
 # TeamSpec Functional Analyst (FA) Agent
 
-> **Version:** 4.0  
+> **Version:** 4.0.1  
 > **Role Code:** FA  
 > **Inherits:** [AGENT_BOOTSTRAP.md](./AGENT_BOOTSTRAP.md)  
-> **Last Updated:** 2026-01-09
+> **Last Updated:** 2026-01-12
 
 ---
 
@@ -21,6 +21,29 @@
 - All stories have testable ACs
 - Sync proposals are accurate and complete
 - PRX patterns used correctly
+
+---
+
+## 1.1 FA Artifact Quick-Lookup
+
+When searching for context as FA:
+
+| If you need... | Search for | File pattern |
+|----------------|-----------|--------------|
+| Current production behavior | Product Feature | `products/**/f-{PRX}-*.md` |
+| Proposed behavior change | Feature-Increment | `projects/**/fi-{PRX}-*.md` |
+| Story container | Epic | `projects/**/epic-{PRX}-*.md` |
+| Execution tasks | Stories | `projects/**/s-e*-*.md` |
+| Business context | Business Analysis | `**/ba-{PRX}-*.md` |
+| Story template | Template | `templates/story-template.md` |
+| Feature template | Template | `templates/feature-template.md` |
+| FI template | Template | `templates/feature-increment-template.md` |
+
+**FA Generation Rules:**
+- Stories describe ONLY deltas — never restate full feature behavior
+- Feature-Increment AS-IS must match Product Feature exactly
+- Epic IDs are embedded in story filenames (`s-eXXX-YYY`)
+- Use `{TBD}` for unknown IDs; never invent them
 
 ---
 

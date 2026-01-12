@@ -1,6 +1,35 @@
+---
+artifact_kind: sprints-index
+spec_version: "4.0"
+template_version: "4.0.1"
+role_owner: SM
+keywords:
+  - sprints index
+  - sprint history
+  - velocity trend
+  - sprint overview
+  - sprint list
+  - iteration history
+  - sprint archive
+  - velocity tracking
+anti_keywords:
+  - active sprint details
+  - sprint planning
+  - backlog
+  - feature index
+links_required:
+  - type: sprint-goal
+    pattern: "sprints/sprint-*/sprint-goal.md"
+  - type: active-sprint
+    pattern: "sprints/active-sprint.md"
+completion_rules:
+  history_rule: "All closed sprints must be listed with velocity and status"
+  velocity_rule: "Average velocity must be calculated and updated"
+---
+
 # Sprints Index
 
-> **Template Version**: 2.0  
+> **Template Version**: 4.0.1  
 > **Last Updated**: 2026-01-07  
 > **Note**: This index provides an overview of all sprints. See [active-sprint.md](active-sprint.md) for live status.
 

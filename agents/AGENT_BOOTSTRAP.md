@@ -1,11 +1,88 @@
 # TeamSpec Bootstrap Agent
 
-> **Version:** 4.0  
+> **Version:** 4.0.1  
 > **Type:** Core Foundation Prompt  
 > **Required By:** All role-specific agents  
-> **Last Updated:** 2026-01-09
+> **Last Updated:** 2026-01-12
 
 This is the **foundational prompt** that defines the TeamSpec operating model. All role-specific agents MUST inherit these rules.
+
+---
+
+## 0. LLM Agent Guidance
+
+### 0.1 Search Strategy
+
+When searching for context in a TeamSpec workspace:
+
+**Priority Order:**
+| Priority | Source | Use When |
+|----------|--------|----------|
+| 1 | `spec/4.0/registry.yml` | Need normative rules (roles, artifacts, commands) |
+| 2 | Product Canon (`products/**/`) | Need current production truth |
+| 3 | Feature-Increment (`projects/**/fi-*.md`) | Need proposed changes |
+| 4 | Story files (`projects/**/s-e*.md`) | Need execution details |
+| 5 | Templates (`templates/`) | Need structure guidance |
+
+**Quick Intent Mapping:**
+| If you want to know... | Look in | Pattern |
+|------------------------|---------|---------|
+| What the system does NOW | Product Feature | `products/**/f-*.md` |
+| What the system WILL do | Feature-Increment | `projects/**/fi-*.md` |
+| WHY we're building something | Business Analysis | `**/ba-*.md` |
+| HOW to build it | Technical Architecture | `**/ta-*.md` |
+| WHAT to test | Feature (regression), FI (new) | `f-*.md`, `fi-*.md` |
+| Work breakdown | Dev Plan | `**/dp-*.md` |
+| Sprint scope | Sprint folder | `sprints/sprint-N/` |
+
+**Chunking Hints:**
+- Read section by section — each H2 is a self-contained chunk
+- Prefer headings with `> **Contract:**` lines — these are authoritative
+- Skip `## Change Log` sections unless auditing history
+
+### 0.2 Generation Rules
+
+When creating or editing TeamSpec artifacts:
+
+1. **Never invent IDs** — Use `{TBD}` if unknown; IDs are assigned by process
+2. **Never hallucinate links** — Verify file exists before referencing
+3. **Respect section contracts** — Read the `> **Contract:**` line in each section
+4. **Honor required relationships** — Check frontmatter `links_required`
+5. **Use anti-keywords** — If your content matches `anti_keywords`, you're in wrong artifact
+6. **Delta-only for stories** — Stories describe changes, NEVER full behavior
+7. **PRX is immutable** — Never change a product's prefix after creation
+
+### 0.3 Artifact Quick-Lookup
+
+| If you need... | Search for | File pattern |
+|----------------|-----------|--------------|
+| Current production behavior | Product Feature | `products/**/f-{PRX}-*.md` |
+| Proposed behavior change | Feature-Increment | `projects/**/fi-{PRX}-*.md` |
+| Business context & rationale | Business Analysis | `**/ba-{PRX}-*.md` |
+| Technical constraints | Technical Architecture | `**/ta-{PRX}-*.md` |
+| Story execution details | Story | `**/s-e*-*.md` |
+| Architecture decisions | TA/TAI | `**/ta-*.md`, `**/tai-*.md` |
+| Test requirements | Test Cases | `**/tc-*.md` |
+| Regression tests | Regression | `**/rt-*.md` |
+
+### 0.4 Frontmatter Awareness
+
+Templates and artifacts contain YAML frontmatter with LLM-relevant metadata:
+
+```yaml
+---
+artifact_kind: feature | story | epic | fi | ...
+keywords: [searchable terms]
+anti_keywords: [terms that indicate wrong artifact]
+links_required: [mandatory relationships]
+completion_rules: [generation constraints]
+---
+```
+
+**Use frontmatter to:**
+- Verify you're editing the correct artifact type
+- Check required relationships before generating links
+- Understand section requirements before filling content
 
 ---
 

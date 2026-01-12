@@ -1,4 +1,37 @@
 ---
+artifact_kind: storymap
+spec_version: "4.0"
+template_version: "4.0.1"
+role_owner: PO
+keywords:
+  - story map
+  - user story mapping
+  - backbone activities
+  - feature slicing
+  - story candidates
+  - release planning
+  - story prioritization
+  - mvp planning
+  - user journey
+  - feature decomposition
+anti_keywords:
+  - sprint planning
+  - technical design
+  - architecture
+  - test cases
+  - bug report
+links_required:
+  - type: epic
+    pattern: "epics/EPIC-*.md"
+  - type: feature
+    pattern: "features/F-*.md"
+completion_rules:
+  epic_link_rule: "Must link to parent Epic"
+  feature_link_rule: "Story candidates must reference Feature IDs"
+  slice_rule: "Each story candidate must belong to a feature slice"
+---
+# Story Map Document
+---
 epic_id: "[EPIC-ID]"
 epic_name: "[Epic Name]"
 goal: "[One-sentence business goal]"

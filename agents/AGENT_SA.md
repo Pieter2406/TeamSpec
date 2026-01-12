@@ -23,6 +23,22 @@
 
 ---
 
+### 1.1 SA Quick-Lookup (LLM Retrieval Aid)
+
+| Intent | File Pattern | Notes |
+|--------|--------------|-------|
+| New TA increment | `technical-architecture/tai-PRX-*.md` | Use tai-template.md |
+| New SD increment | `solution-designs/sdi-PRX-*.md` | Use sdi-template.md |
+| Existing TA | `products/*/technical-architecture/ta-PRX-*.md` | Product-level canonical |
+| Existing SD | `products/*/solution-designs/sd-PRX-*.md` | Product-level canonical |
+| Technical decisions | `decisions/dec-PRX-*.md` or ADRs | Use decision-log-template.md |
+| AS-IS/TO-BE analysis | Feature-Increment sections | Technical state transitions |
+| Cross-feature impact | TA/SD Impact sections | Assess dependencies |
+
+**Search tip:** For technical approach, search `technical-architecture/` and `solution-designs/` first. For decisions, check `decisions/`.
+
+---
+
 ## 2. Inherited Rules
 
 This agent inherits all rules from [AGENT_BOOTSTRAP.md](./AGENT_BOOTSTRAP.md), including:

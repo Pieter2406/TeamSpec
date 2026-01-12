@@ -1,4 +1,55 @@
-# Test Cases: `<tc-fi-PRX-XXX-description>`
+---
+# === LLM Retrieval Metadata ===
+artifact_kind: tc
+spec_version: "4.0"
+template_version: "4.0.1"
+
+# === Ownership ===
+role_owner: QA
+artifact_type: Project Execution
+canonicity: project-execution
+lifecycle: project-bound
+
+# === Naming ===
+id_pattern: "tc-fi-{PRX}-{NNN}"
+filename_pattern: "tc-fi-{PRX}-{NNN}-{description}.md"
+
+# === Required Relationships ===
+links_required:
+  - type: feature-increment
+    pattern: "fi-{PRX}-{NNN}"
+    optional: false
+  - type: feature
+    pattern: "f-{PRX}-{NNN}"
+    optional: true
+
+# === Search Optimization ===
+keywords:
+  - test case
+  - test scenario
+  - validation
+  - verification
+  - acceptance test
+aliases:
+  - test spec
+  - test script
+anti_keywords:
+  - regression test
+  - automated test code
+  - unit test
+
+# === Generation Contract ===
+completion_rules:
+  placeholders: "Fill {braces} only"
+  required_sections:
+    - Test Case Reference
+    - Test Scenarios
+  optional_sections:
+    - Test Data
+    - Automation Notes
+---
+
+# Test Cases: `tc-fi-{PRX}-{NNN}-{description}`
 
 <!-- 
   ⚠️ PROJECT-LEVEL TEST CASES

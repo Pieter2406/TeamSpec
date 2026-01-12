@@ -1,3 +1,49 @@
+---
+# === LLM Retrieval Metadata ===
+artifact_kind: rt
+spec_version: "4.0"
+template_version: "4.0.1"
+
+# === Ownership ===
+role_owner: QA
+artifact_type: Product Canon
+canonicity: canon
+lifecycle: permanent
+
+# === Naming ===
+id_pattern: "rt-f-{PRX}-{NNN}"
+filename_pattern: "rt-f-{PRX}-{NNN}-{description}.md"
+
+# === Required Relationships ===
+links_required:
+  - type: feature
+    pattern: "f-{PRX}-{NNN}"
+    optional: false
+
+# === Search Optimization ===
+keywords:
+  - regression test
+  - regression scenario
+  - production test
+  - feature validation
+aliases:
+  - regression suite
+  - feature tests
+anti_keywords:
+  - project test
+  - acceptance test
+  - story test
+
+# === Generation Contract ===
+completion_rules:
+  placeholders: "Fill {braces} only"
+  required_sections:
+    - Overview
+    - Regression Scenarios
+  optional_sections:
+    - Automation Status
+---
+
 # Regression Test: rt-f-{PRX}-{NNN}-{description}
 
 > **Product:** {product-id}  

@@ -1,3 +1,52 @@
+---
+# === LLM Retrieval Metadata ===
+artifact_kind: ba
+spec_version: "4.0"
+template_version: "4.0.1"
+
+# === Ownership ===
+role_owner: BA
+artifact_type: Product Canon
+canonicity: canon
+lifecycle: permanent
+
+# === Naming ===
+id_pattern: "ba-{PRX}-{NNN}"
+filename_pattern: "ba-{PRX}-{NNN}-{description}.md"
+
+# === Required Relationships ===
+links_required:
+  - type: product
+    pattern: "product.yml"
+    optional: false
+
+# === Search Optimization ===
+keywords:
+  - business analysis
+  - domain analysis
+  - business context
+  - stakeholder analysis
+  - business process
+aliases:
+  - BA document
+  - business requirements
+anti_keywords:
+  - technical design
+  - implementation
+  - story
+  - feature behavior
+
+# === Generation Contract ===
+completion_rules:
+  placeholders: "Fill {braces} only"
+  required_sections:
+    - Executive Summary
+    - Business Context
+  optional_sections:
+    - Stakeholder Analysis
+    - Process Flows
+---
+
 # Business Analysis: `ba-{PRX}-{NNN}-{description}`
 
 <!--

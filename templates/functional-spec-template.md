@@ -1,3 +1,37 @@
+---
+artifact_kind: functional-spec
+spec_version: "4.0"
+template_version: "4.0.1"
+role_owner: FA
+keywords:
+  - functional specification
+  - functional spec
+  - feature elaboration
+  - functional analysis
+  - behavior specification
+  - transitional document
+  - business rules elaboration
+  - acceptance criteria
+  - functional requirements
+  - feature spec
+anti_keywords:
+  - technical design
+  - solution design
+  - architecture
+  - deployment
+  - feature canon
+  - product canon
+links_required:
+  - type: business-analysis
+    pattern: "analysis/BA-*.md"
+  - type: feature
+    pattern: "features/F-*.md"
+completion_rules:
+  transitional_rule: "This document is retired once Feature Canon stabilizes"
+  feature_link_rule: "Must link to target Feature Canon document"
+  ba_source_rule: "Must reference source Business Analysis document"
+---
+
 # Functional Specification: [Feature Name]
 
 <!-- 
@@ -14,7 +48,7 @@
   this document should be archived and marked as superseded.
 -->
 
-> **Template Version**: 2.0  
+> **Template Version**: 4.0.1  
 > **Last Updated**: 2026-01-07
 
 ---

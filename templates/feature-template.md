@@ -1,3 +1,69 @@
+---
+# === LLM Retrieval Metadata ===
+artifact_kind: feature
+spec_version: "4.0"
+template_version: "4.0.1"
+
+# === Ownership ===
+role_owner: FA
+artifact_type: Product Canon
+canonicality: canon
+lifecycle: permanent
+
+# === Naming ===
+id_pattern: "f-{PRX}-{NNN}"
+filename_pattern: "f-{PRX}-{NNN}-{description}.md"
+
+# === Required Relationships ===
+links_required:
+  - type: product
+    pattern: "product.yml"
+    optional: false
+  - type: decision
+    pattern: "dec-{PRX}-{NNN}"
+    optional: true
+
+# === Search Optimization ===
+keywords:
+  - feature canon
+  - product canon
+  - system behavior
+  - production truth
+  - behavioral specification
+  - functional requirements
+aliases:
+  - requirements document
+  - functional specification
+  - BRD
+anti_keywords:
+  - implementation details
+  - technical design
+  - architecture
+  - story
+  - delta
+  - proposed change
+
+# === Generation Contract ===
+completion_rules:
+  placeholders: "Fill {braces} only; leave {TBD} if unknown"
+  id_generation: "Never invent IDs; use {TBD} until assigned"
+  max_lengths:
+    purpose: 150 words
+    business_value: 300 words
+  required_sections:
+    - Purpose
+    - Business Value
+    - In Scope
+    - Out of Scope
+    - Current Behavior
+    - Business Rules
+    - Change Log
+  optional_sections:
+    - Non-Functional Notes
+    - Open Questions
+    - Implementation References
+---
+
 # Feature: `f-{PRX}-{NNN}-{description}`
 
 <!--
@@ -21,13 +87,13 @@
   - TS-FEAT-003: Feature ID must be unique
 -->
 
-> **Template Version**: 4.0
-> **Last Updated**: 2026-01-11
+> **Template Version**: 4.0.1  
+> **Last Updated**: 2026-01-12
 
 ---
 
-**Document Owner:** FA (Functional Analyst)
-**Artifact Type:** Feature (Product Canon)
+**Document Owner:** FA (Functional Analyst)  
+**Artifact Type:** Feature (Product Canon)  
 **Lifecycle:** Permanent, updated via Canon Sync after deployment
 
 ---
@@ -83,8 +149,10 @@ _Business decisions that shaped this feature's scope, behavior, or priority._
 ## Purpose
 
 > **Owner:** BA (Business Analyst)
-
-_One to three sentences describing what this feature enables users to do._
+>
+> **Contract:** One to three sentences describing what this feature enables users to do.  
+> **Required precision:** User-centric language; focus on capability, not implementation.  
+> **Not this:** Technical details, architecture decisions, or HOW it works.
 
 [What capability does this provide? What user need does it address?]
 
@@ -141,9 +209,12 @@ _Who uses this feature and what are their goals._
 ## Current Behavior
 
 > **Owner:** FA (Functional Analyst)
-> 
-> ⚠️ **AUTHORITATIVE SECTION**: This describes what the system does TODAY.  
-> Update this section whenever a story changes observable behavior.
+>
+> **Contract:** Authoritative description of production behavior. Updated ONLY via `ts:po sync` after deployment.  
+> **Required precision:** Testable statements in present tense. Reference BR-{PRX}-NNN rules.  
+> **Not this:** Proposed changes, future plans, implementation details, or story-level deltas.
+>
+> ⚠️ **AUTHORITATIVE SECTION**: This describes what the system does TODAY.
 
 ### [Behavior Area 1]
 
@@ -171,8 +242,10 @@ _Who uses this feature and what are their goals._
 ## Business Rules
 
 > **Owner:** FA (Functional Analyst)
-
-_Logic that governs this feature's behavior._
+>
+> **Contract:** Explicit logic governing feature behavior. Each rule has unique BR-{PRX}-NNN ID.  
+> **Required precision:** Unambiguous, testable conditions and outcomes.  
+> **Not this:** Implementation logic, code patterns, or technical constraints (those go in TA).
 
 | Rule ID | Rule Description | Applies When |
 |---------|------------------|--------------|
@@ -237,10 +310,11 @@ _Features that interact with or depend on this one._
 
 ## Change Log
 
-<!-- TEAMSPEC RULE: TS-DOD-001 - Stories must be referenced here -->
-
-> ⚠️ **APPEND-ONLY**: Never delete entries. This is the audit trail.  
-> Every completed story that adds/changes behavior MUST be logged here.
+> **Contract:** Append-only audit trail of all changes synced to this feature.  
+> **Required precision:** Date, FI reference, one-line summary, author.  
+> **Not this:** Planning notes, proposed changes, or draft entries.
+>
+> ⚠️ **APPEND-ONLY**: Never delete entries. This is the audit trail.
 
 | Date | Source | Change Summary | Author |
 |------|--------|----------------|--------|

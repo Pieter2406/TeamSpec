@@ -1,6 +1,38 @@
+---
+artifact_kind: sprint-goal
+spec_version: "4.0"
+template_version: "4.0.1"
+role_owner: SM
+keywords:
+  - sprint goal
+  - sprint objective
+  - sprint commitment
+  - sprint planning output
+  - iteration goal
+  - sprint success criteria
+  - sprint focus
+  - sprint capacity
+  - committed stories
+anti_keywords:
+  - product backlog
+  - feature canon
+  - epic planning
+  - release planning
+  - retrospective
+links_required:
+  - type: story
+    pattern: "stories/S-*.md"
+  - type: sprint
+    pattern: "sprints/sprint-*/"
+completion_rules:
+  goal_rule: "Sprint goal must be one clear, measurable objective"
+  success_criteria_rule: "Must have specific, measurable success criteria"
+  story_link_rule: "Committed stories must link to story files"
+---
+
 # Sprint {N} Goal
 
-> **Template Version**: 2.0  
+> **Template Version**: 4.0.1  
 > **Last Updated**: 2026-01-07  
 > **Sprint Duration**: {YYYY-MM-DD} to {YYYY-MM-DD}  
 > **Status**: Planning | Active | Closed

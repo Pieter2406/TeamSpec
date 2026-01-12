@@ -1,8 +1,37 @@
+---
+artifact_kind: active-sprint
+spec_version: "4.0"
+template_version: "4.0.1"
+role_owner: SM
+keywords:
+  - active sprint
+  - current sprint
+  - sprint status
+  - sprint progress
+  - burndown
+  - sprint dashboard
+  - live sprint
+  - sprint tracker
+  - work in progress
+anti_keywords:
+  - sprint history
+  - closed sprint
+  - retrospective
+  - sprint planning
+  - backlog
+links_required:
+  - type: sprint-goal
+    pattern: "sprints/sprint-*/sprint-goal.md"
+completion_rules:
+  living_doc_rule: "This file always reflects current active sprint"
+  status_rule: "Progress summary must be kept current"
+---
+
 # Active Sprint
 
 > **Living Document**: This file always reflects the current active sprint.
 
-> **Template Version**: 2.0  
+> **Template Version**: 4.0.1  
 > **Last Updated**: 2026-01-07
 
 ---

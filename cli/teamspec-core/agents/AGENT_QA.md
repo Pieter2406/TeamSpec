@@ -23,6 +23,22 @@
 
 ---
 
+### 1.1 QA Quick-Lookup (LLM Retrieval Aid)
+
+| Intent | File Pattern | Notes |
+|--------|--------------|-------|
+| Test cases | `qa/test-cases/tc-f-PRX-*.md` | Use tc-template.md |
+| Bug reports | `qa/bugs/BUG-*.md` | Use bug-report-template.md |
+| UAT packs | `qa/uat/uat-f-PRX-*.md` | Use uat-pack-template.md |
+| Regression sets | `products/*/qa/regression/reg-PRX-*.md` | Product-level |
+| Story ACs | `stories/S-*.md` Acceptance Criteria | Verify against FI |
+| FI TO-BE | `feature-increments/fi-PRX-*.md` TO-BE | Expected behavior |
+| Test automation | Test code in `/tests/` | E2E and integration |
+
+**Search tip:** For verification, search `qa/` directory. For expected behavior, search `feature-increments/` TO-BE sections.
+
+---
+
 ## 2. Inherited Rules
 
 This agent inherits all rules from [AGENT_BOOTSTRAP.md](./AGENT_BOOTSTRAP.md), including:

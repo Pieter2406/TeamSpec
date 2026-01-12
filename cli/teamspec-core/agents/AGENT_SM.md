@@ -23,6 +23,23 @@
 
 ---
 
+### 1.1 SM Quick-Lookup (LLM Retrieval Aid)
+
+| Intent | File Pattern | Notes |
+|--------|--------------|-------|
+| Current sprint | `sprints/active-sprint.md` | Living document |
+| Sprint goal | `sprints/sprint-N/sprint-goal.md` | Use sprint-goal-template.md |
+| Sprint history | `sprints/sprints-index.md` | All sprints index |
+| Story status | `stories/S-*.md` Status field | Track progress |
+| Velocity metrics | Sprint metrics in sprint folder | Historical data |
+| Definition of Ready | `definitions/definition-of-ready.md` | Story readiness |
+| Definition of Done | `definitions/definition-of-done.md` | Completion criteria |
+| Deployment checklist | Deployment gate section | Before PO sync |
+
+**Search tip:** For sprint operations, search `sprints/`. For story tracking, search `stories/`. Never assign priorities (PO domain).
+
+---
+
 ## 2. Inherited Rules
 
 This agent inherits all rules from [AGENT_BOOTSTRAP.md](./AGENT_BOOTSTRAP.md), including:

@@ -1,3 +1,65 @@
+---
+# === LLM Retrieval Metadata ===
+artifact_kind: story
+spec_version: "4.0"
+template_version: "4.0.1"
+
+# === Ownership ===
+role_owner: FA
+artifact_type: Project Execution
+canonicality: project-execution
+lifecycle: sprint-bound
+
+# === Naming ===
+id_pattern: "s-e{EEE}-{SSS}"
+filename_pattern: "s-e{EEE}-{SSS}-{description}.md"
+
+# === Required Relationships ===
+links_required:
+  - type: epic
+    pattern: "epic-{PRX}-{NNN}"
+    optional: false
+    note: "Epic ID embedded in filename (eXXX)"
+  - type: feature-increment
+    pattern: "fi-{PRX}-{NNN}"
+    optional: true
+    note: "Recommended for behavior changes"
+
+# === Search Optimization ===
+keywords:
+  - user story
+  - delta
+  - change request
+  - acceptance criteria
+  - sprint work
+  - execution task
+aliases:
+  - ticket
+  - work item
+  - task
+  - backlog item
+anti_keywords:
+  - full behavior
+  - production truth
+  - canon
+  - feature specification
+  - requirements document
+
+# === Generation Contract ===
+completion_rules:
+  placeholders: "Fill {braces} only; leave {TBD} if unknown"
+  id_generation: "Story ID derived from epic (eXXX) + sequence (YYY)"
+  delta_rule: "NEVER restate full feature behavior; describe ONLY what changes"
+  required_sections:
+    - User Story
+    - Linked Epic
+    - Feature Impact
+    - Acceptance Criteria
+  optional_sections:
+    - Technical Notes
+    - UX & Copy
+---
+
 # Story: `s-eXXX-YYY-description`
 
 <!-- 
@@ -18,8 +80,8 @@
   - TS-STORY-003: Acceptance Criteria required
 -->
 
-> **Template Version**: 4.0  
-> **Last Updated**: 2026-01-10
+> **Template Version**: 4.0.1  
+> **Last Updated**: 2026-01-12
 
 ---
 
@@ -73,8 +135,9 @@
 
 ## Feature Impact
 
-> Describe what this story CHANGES relative to current documented behavior.  
-> **Do NOT restate full feature behavior here.**
+> **Contract:** Describes ONLY what this story changes relative to current documented behavior.  
+> **Required precision:** Reference specific feature section; use AS-IS/TO-BE format.  
+> **Not this:** Full behavior restatement, implementation details, or technical approach.
 
 <!-- TEAMSPEC RULE: TS-STORY-002 requires Before/After (AS-IS/TO-BE) format -->
 
@@ -131,6 +194,10 @@
 
 ## Acceptance Criteria (AC)
 
+> **Contract:** Testable conditions that define "done" for this story.  
+> **Required precision:** Gherkin format (Given/When/Then) or explicit checklist.  
+> **Not this:** Vague descriptions, implementation tasks, or test scripts.
+>
 > ⚠️ **MANDATORY**: AC must be present and testable.  
 > **TEAMSPEC RULE:** TS-STORY-003 - AC required
 

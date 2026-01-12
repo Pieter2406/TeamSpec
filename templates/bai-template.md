@@ -1,4 +1,52 @@
-# Business Analysis Increment: `<bai-PRX-XXX-description>`
+---
+# === LLM Retrieval Metadata ===
+artifact_kind: bai
+spec_version: "4.0"
+template_version: "4.0.1"
+
+# === Ownership ===
+role_owner: BA
+artifact_type: Project Execution
+canonicity: project-execution
+lifecycle: project-bound
+
+# === Naming ===
+id_pattern: "bai-{PRX}-{NNN}"
+filename_pattern: "bai-{PRX}-{NNN}-{description}.md"
+
+# === Required Relationships ===
+links_required:
+  - type: business-analysis
+    pattern: "ba-{PRX}-{NNN}"
+    optional: false
+  - type: feature-increment
+    pattern: "fi-{PRX}-{NNN}"
+    optional: true
+
+# === Search Optimization ===
+keywords:
+  - business analysis increment
+  - BAI
+  - business delta
+  - domain change
+aliases:
+  - business change proposal
+anti_keywords:
+  - technical design
+  - implementation
+  - story
+
+# === Generation Contract ===
+completion_rules:
+  placeholders: "Fill {braces} only"
+  required_sections:
+    - Overview
+    - Business Context
+  optional_sections:
+    - Impact Analysis
+---
+
+# Business Analysis Increment: `bai-{PRX}-{NNN}-{description}`
 
 > **ID:** bai-PRX-XXX  
 > **Product:** `<product-id>` (PRX)  

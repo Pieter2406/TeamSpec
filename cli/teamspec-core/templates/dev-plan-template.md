@@ -1,3 +1,50 @@
+---
+# === LLM Retrieval Metadata ===
+artifact_kind: devplan
+spec_version: "4.0"
+template_version: "4.0.1"
+
+# === Ownership ===
+role_owner: DEV
+artifact_type: Project Execution
+canonicity: project-execution
+lifecycle: sprint-bound
+
+# === Naming ===
+id_pattern: "dp-e{EEE}-s{SSS}"
+filename_pattern: "dp-e{EEE}-s{SSS}-{description}.md"
+
+# === Required Relationships ===
+links_required:
+  - type: story
+    pattern: "s-e{EEE}-{SSS}"
+    optional: false
+
+# === Search Optimization ===
+keywords:
+  - dev plan
+  - development plan
+  - implementation plan
+  - task breakdown
+aliases:
+  - implementation approach
+  - technical plan
+anti_keywords:
+  - story
+  - feature
+  - requirements
+
+# === Generation Contract ===
+completion_rules:
+  placeholders: "Fill {braces} only"
+  required_sections:
+    - Metadata
+    - Tasks
+  optional_sections:
+    - Dependencies
+    - Risks
+---
+
 # Dev Plan: `dp-e{EEE}-s{SSS}-{description}`
 
 <!--

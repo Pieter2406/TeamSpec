@@ -1,3 +1,58 @@
+---
+# === LLM Retrieval Metadata ===
+artifact_kind: ta
+spec_version: "4.0"
+template_version: "4.0.1"
+
+# === Ownership ===
+role_owner: SA
+artifact_type: Product Canon
+canonicity: canon
+lifecycle: permanent
+
+# === Naming ===
+id_pattern: "ta-{PRX}-{NNN}"
+filename_pattern: "ta-{PRX}-{NNN}-{description}.md"
+
+# === Required Relationships ===
+links_required:
+  - type: product
+    pattern: "product.yml"
+    optional: false
+  - type: feature
+    pattern: "f-{PRX}-{NNN}"
+    optional: true
+    note: "Link to affected features"
+
+# === Search Optimization ===
+keywords:
+  - technical architecture
+  - ADR
+  - architecture decision
+  - constraints
+  - patterns
+  - technical design
+aliases:
+  - architecture document
+  - technical decision record
+anti_keywords:
+  - business requirements
+  - user behavior
+  - story
+  - feature behavior
+
+# === Generation Contract ===
+completion_rules:
+  placeholders: "Fill {braces} only; leave {TBD} if unknown"
+  required_sections:
+    - Context
+    - Decision
+    - Consequences
+  optional_sections:
+    - Alternatives Considered
+    - Related Decisions
+---
+
 # Technical Architecture: `ta-{PRX}-{NNN}-{description}`
 
 <!--

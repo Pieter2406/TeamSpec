@@ -1,8 +1,8 @@
 # TeamSpec 4.0 Specification
 
 > **Status:** Normative  
-> **Version:** 4.0  
-> **Last Updated:** 2026-01-11
+> **Version:** 4.0.1  
+> **Last Updated:** 2026-01-12
 
 This directory contains the **authoritative specification** for TeamSpec 4.0.
 
@@ -23,6 +23,40 @@ Everything in this directory is **normative** (rules that must be followed):
 | [commands.md](commands.md) | CLI and agent commands (generated from registry) |
 | [lint-rules.md](lint-rules.md) | Linter rule IDs, intents, and checks |
 | [glossary.md](glossary.md) | Term definitions |
+| [agent-index.md](agent-index.md) | **LLM retrieval index** — fast artifact lookup for agents |
+
+---
+
+## If You're Looking For...
+
+Quick disambiguation for common questions:
+
+| You need... | Go to |
+|-------------|-------|
+| Single source of truth for ALL rules | [registry.yml](registry.yml) |
+| Role ownership matrix | [roles.md](roles.md) |
+| Artifact naming patterns & locations | [artifacts.md](artifacts.md) |
+| Gate checklists (DoR/DoD/Deploy) | [gates.md](gates.md) |
+| Term definitions | [glossary.md](glossary.md) |
+| LLM retrieval patterns | [agent-index.md](agent-index.md) |
+| Template for creating artifacts | `/templates/` folder |
+| Agent instructions for AI assistants | `/agents/` folder |
+| Current production behavior | `products/**/f-*.md` (Feature Canon) |
+| Proposed changes | `projects/**/fi-*.md` (Feature-Increments) |
+
+---
+
+## Keyword Cross-Reference
+
+| Keyword | Relevant Files |
+|---------|---------------|
+| canon, canonical, truth | registry.yml, model.md, glossary.md |
+| story, user story, delta | artifacts.md (story), templates/story-template.md |
+| feature, behavior, requirements | artifacts.md (feature), templates/feature-template.md |
+| gate, ready, done, deploy | gates.md, definitions/ |
+| role, owner, responsibility | roles.md, registry.yml |
+| PRX, prefix, naming | artifacts.md, model.md |
+| sync, deployment, canon update | gates.md, commands.md |
 
 ---
 
@@ -30,7 +64,7 @@ Everything in this directory is **normative** (rules that must be followed):
 
 1. **For humans:** Read the .md files for understanding
 2. **For tooling:** Parse registry.yml for automation
-3. **For agents:** Role tables and commands come from registry.yml
+3. **For agents:** Use agent-index.md for fast lookup; role tables from registry.yml
 4. **For README/docs:** Tables are generated, not hand-written
 
 ---

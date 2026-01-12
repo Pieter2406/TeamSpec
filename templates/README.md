@@ -1,8 +1,27 @@
 # TeamSpec 4.0 Templates
 
-> **Version:** 4.0  
-> **Last Updated:** 2026-01-11  
+> **Version:** 4.0.1  
+> **Last Updated:** 2026-01-12  
 > **Purpose:** Aligned templates for Product-Canon operating model
+
+---
+
+## Template Selection Guide
+
+Quick lookup for common tasks:
+
+| I need to... | Use Template | Owner | Artifact Type |
+|--------------|--------------|-------|---------------|
+| Document production behavior | [feature-template.md](feature-template.md) | FA | Product Canon |
+| Propose a behavior change | [feature-increment-template.md](feature-increment-template.md) | FA | Project Execution |
+| Write a development task | [story-template.md](story-template.md) | FA | Project Execution |
+| Group stories for delivery | [epic-template.md](epic-template.md) | FA | Project Execution |
+| Record an architecture decision | [ta-template.md](ta-template.md) | SA | Product Canon |
+| Document a solution design | [sd-template.md](sd-template.md) | SA | Product Canon |
+| Track a bug | [bug-report-template.md](bug-report-template.md) | QA | Project Execution |
+| Write test cases | [tc-template.md](tc-template.md) | QA | Project Execution |
+| Document business context | [business-analysis-template.md](business-analysis-template.md) | BA | Planning |
+| Plan a sprint | [sprint-template.md](sprint-template.md) | SM | Operational |
 
 ---
 
@@ -14,6 +33,23 @@ These templates are designed for the TeamSpec 4.0 Product-Canon operating model.
 2. **States its artifact type** — Source of Truth, Execution, Planning, or Operational
 3. **Enforces linter rules** — Which TS-* rules apply
 4. **Links to Feature Canon** — How it relates to the canonical source of truth
+5. **Contains YAML frontmatter** — Machine-readable metadata for LLM retrieval
+
+---
+
+## LLM-Optimized Features
+
+Templates include frontmatter with:
+- `artifact_kind` — For filtering and validation
+- `keywords` / `aliases` — Search optimization
+- `anti_keywords` — "Not this artifact" guidance
+- `links_required` — Mandatory relationships
+- `completion_rules` — Generation constraints
+
+Templates include section contracts with:
+- `> **Contract:**` — What the section contains
+- `> **Required precision:**` — How specific to be
+- `> **Not this:**` — What doesn't belong
 
 ---
 

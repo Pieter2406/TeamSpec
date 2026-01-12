@@ -1,4 +1,51 @@
-# UAT Pack: [Feature Name]
+---
+# === LLM Retrieval Metadata ===
+artifact_kind: uat
+spec_version: "4.0"
+template_version: "4.0.1"
+
+# === Ownership ===
+role_owner: QA
+artifact_type: Project Execution
+canonicity: project-execution
+lifecycle: release-bound
+
+# === Naming ===
+id_pattern: "uat-f-{PRX}-{NNN}"
+filename_pattern: "uat-f-{PRX}-{NNN}.md"
+
+# === Required Relationships ===
+links_required:
+  - type: feature
+    pattern: "f-{PRX}-{NNN}"
+    optional: false
+
+# === Search Optimization ===
+keywords:
+  - UAT
+  - user acceptance testing
+  - stakeholder validation
+  - acceptance pack
+aliases:
+  - acceptance test
+  - stakeholder signoff
+anti_keywords:
+  - regression test
+  - unit test
+  - story
+
+# === Generation Contract ===
+completion_rules:
+  placeholders: "Fill {braces} only"
+  required_sections:
+    - Pre-UAT Checklist
+    - Test Scenarios
+    - Sign-off
+  optional_sections:
+    - Notes
+---
+
+# UAT Pack: `uat-f-{PRX}-{NNN}-{feature-name}`
 
 <!-- 
   ⚠️ UAT VALIDATES FEATURE CANON

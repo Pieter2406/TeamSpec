@@ -1,3 +1,36 @@
+---
+artifact_kind: refinement-notes
+spec_version: "4.0"
+template_version: "4.0.1"
+role_owner: FA
+keywords:
+  - refinement meeting
+  - backlog refinement
+  - story refinement
+  - grooming session
+  - story estimation
+  - ready check
+  - definition of ready
+  - acceptance criteria review
+  - refinement agenda
+  - sprint prep
+anti_keywords:
+  - sprint planning
+  - retrospective
+  - daily standup
+  - sprint review
+  - demo
+links_required:
+  - type: story
+    pattern: "stories/S-*.md"
+  - type: feature
+    pattern: "features/F-*.md"
+completion_rules:
+  story_link_rule: "Every story in table must link to Feature(s)"
+  impact_type_rule: "Impact Type column required for each story"
+  ready_check_rule: "Ready status must be determined for each story"
+---
+
 # Refinement Agenda: [Date]
 
 <!-- 
@@ -12,7 +45,7 @@
   4. No orphan stories allowed
 -->
 
-> **Template Version**: 2.0  
+> **Template Version**: 4.0.1  
 > **Last Updated**: 2026-01-07
 
 ---

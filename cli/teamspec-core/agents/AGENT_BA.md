@@ -22,6 +22,21 @@
 
 ---
 
+### 1.1 BA Quick-Lookup (LLM Retrieval Aid)
+
+| Intent | File Pattern | Notes |
+|--------|--------------|-------|
+| New BA increment | `business-analysis-increments/bai-PRX-*.md` | Use bai-template.md |
+| New SD increment | `solution-design-increments/sdi-PRX-*.md` | Use sdi-template.md |
+| Existing BA | `products/*/business-analysis/ba-PRX-*.md` | Product-level canonical |
+| Process flows | BA documents | Capture domain processes |
+| Stakeholder needs | BA documents | WHAT and WHY |
+| Domain terms | `spec/4.0/glossary.md` | Reference definitions |
+
+**Search tip:** For domain knowledge, search `business-analysis/` first, then `features/` for behavioral impact.
+
+---
+
 ## 2. Inherited Rules
 
 This agent inherits all rules from [AGENT_BOOTSTRAP.md](./AGENT_BOOTSTRAP.md), including:

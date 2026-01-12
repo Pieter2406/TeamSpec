@@ -1,4 +1,53 @@
-# Solution Design Increment: `<sdi-PRX-XXX-description>`
+---
+# === LLM Retrieval Metadata ===
+artifact_kind: sdi
+spec_version: "4.0"
+template_version: "4.0.1"
+
+# === Ownership ===
+role_owner: SA
+artifact_type: Project Execution
+canonicity: project-execution
+lifecycle: project-bound
+
+# === Naming ===
+id_pattern: "sdi-{PRX}-{NNN}"
+filename_pattern: "sdi-{PRX}-{NNN}-{description}.md"
+
+# === Required Relationships ===
+links_required:
+  - type: solution-design
+    pattern: "sd-{PRX}-{NNN}"
+    optional: false
+  - type: feature-increment
+    pattern: "fi-{PRX}-{NNN}"
+    optional: true
+
+# === Search Optimization ===
+keywords:
+  - solution design increment
+  - SDI
+  - design delta
+  - integration change
+aliases:
+  - design change proposal
+anti_keywords:
+  - architecture decision
+  - story
+  - feature behavior
+
+# === Generation Contract ===
+completion_rules:
+  placeholders: "Fill {braces} only"
+  required_sections:
+    - Overview
+    - AS-IS
+    - TO-BE
+  optional_sections:
+    - Risks
+---
+
+# Solution Design Increment: `sdi-{PRX}-{NNN}-{description}`
 
 > **ID:** sdi-PRX-XXX  
 > **Product:** `<product-id>` (PRX)  

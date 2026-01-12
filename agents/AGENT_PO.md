@@ -25,6 +25,23 @@
 
 ---
 
+### 1.1 PO Quick-Lookup (LLM Retrieval Aid)
+
+| Intent | File Pattern | Notes |
+|--------|--------------|-------|
+| Product definition | `products/*/product.yml` | Use product-template.yml |
+| Product features | `products/*/features/f-PRX-*.md` | Canonical Feature Canon |
+| Product BA | `products/*/business-analysis/ba-PRX-*.md` | Production BA |
+| Product TA/SD | `products/*/technical-architecture/ta-PRX-*.md` | Production arch |
+| New project | `projects/*/project.yml` | Use project-template.yml |
+| Deployment decisions | Deployment gate checklist | PO approves sync |
+| PRX registry | `spec/4.0/registry.yml` | Prefix assignments |
+| Product lifecycle | `product.yml` status field | active/deprecated/retired |
+
+**Search tip:** For production truth, search `products/*/features/`. For proposed changes, search `projects/*/feature-increments/`.
+
+---
+
 ## 2. Inherited Rules
 
 This agent inherits all rules from [AGENT_BOOTSTRAP.md](./AGENT_BOOTSTRAP.md), including:

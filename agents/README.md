@@ -1,8 +1,8 @@
 # TeamSpec 4.0 Agent Prompts
 
-> **Version:** 4.0  
+> **Version:** 4.0.1  
 > **Purpose:** Predefined AI agents for TeamSpec-driven software delivery  
-> **Last Updated:** 2026-01-09
+> **Last Updated:** 2026-01-12
 
 ---
 
@@ -20,6 +20,36 @@ Each agent:
 - Knows when to refuse (and why)
 - Can escalate to appropriate roles
 - Follows quality gates
+
+---
+
+## LLM Search Guide
+
+When searching for context, use these patterns:
+
+| If you need... | Search for | File pattern |
+|----------------|-----------|--------------|
+| Current production behavior | Product Feature | `products/**/f-{PRX}-*.md` |
+| Proposed behavior change | Feature-Increment | `projects/**/fi-{PRX}-*.md` |
+| Business context & rationale | Business Analysis | `**/ba-{PRX}-*.md` |
+| Technical constraints | Technical Architecture | `**/ta-{PRX}-*.md` |
+| Story execution details | Story | `**/s-e*-*.md` |
+| Normative rules | Registry | `spec/4.0/registry.yml` |
+
+---
+
+## Template Selection Guide
+
+| I need to... | Use Template | Owner |
+|--------------|--------------|-------|
+| Document production behavior | `feature-template.md` | FA |
+| Propose a behavior change | `feature-increment-template.md` | FA |
+| Write a development task | `story-template.md` | FA |
+| Group stories into a deliverable | `epic-template.md` | FA |
+| Record an architecture decision | `ta-template.md` | SA |
+| Track a bug | `bug-report-template.md` | QA |
+| Plan a sprint | `sprint-template.md` | SM |
+| Document business context | `business-analysis-template.md` | BA |
 
 ---
 

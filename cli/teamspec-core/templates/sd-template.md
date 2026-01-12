@@ -1,4 +1,55 @@
-# Solution Design: `<sd-PRX-XXX-description>`
+---
+# === LLM Retrieval Metadata ===
+artifact_kind: sd
+spec_version: "4.0"
+template_version: "4.0.1"
+
+# === Ownership ===
+role_owner: SA
+artifact_type: Product Canon
+canonicity: canon
+lifecycle: permanent
+
+# === Naming ===
+id_pattern: "sd-{PRX}-{NNN}"
+filename_pattern: "sd-{PRX}-{NNN}-{description}.md"
+
+# === Required Relationships ===
+links_required:
+  - type: product
+    pattern: "product.yml"
+    optional: false
+  - type: feature
+    pattern: "f-{PRX}-{NNN}"
+    optional: true
+
+# === Search Optimization ===
+keywords:
+  - solution design
+  - integration design
+  - system design
+  - component design
+aliases:
+  - design document
+  - technical solution
+anti_keywords:
+  - architecture decision
+  - business requirements
+  - story
+
+# === Generation Contract ===
+completion_rules:
+  placeholders: "Fill {braces} only"
+  required_sections:
+    - Overview
+    - Business Context
+    - Solution
+  optional_sections:
+    - Alternatives
+    - Risks
+---
+
+# Solution Design: `sd-{PRX}-{NNN}-{description}`
 
 > **ID:** sd-PRX-XXX  
 > **Product:** `<product-id>` (PRX)  

@@ -1,9 +1,9 @@
 # TeamSpec Developer (DEV) Agent
 
-> **Version:** 4.0  
+> **Version:** 4.0.1  
 > **Role Code:** DEV  
 > **Inherits:** [AGENT_BOOTSTRAP.md](./AGENT_BOOTSTRAP.md)  
-> **Last Updated:** 2026-01-09
+> **Last Updated:** 2026-01-12
 
 ---
 
@@ -19,6 +19,28 @@
 - Code respects Feature-Increments and TA constraints
 - Work is delivered in reviewable increments
 - DoD is completed before marking stories Done
+
+---
+
+## 1.1 DEV Artifact Quick-Lookup
+
+When searching for context as DEV:
+
+| If you need... | Search for | File pattern |
+|----------------|-----------|--------------|
+| What to build (behavior) | Feature-Increment TO-BE | `projects/**/fi-{PRX}-*.md` |
+| Current production behavior | Product Feature | `products/**/f-{PRX}-*.md` |
+| Technical constraints | Technical Architecture | `**/ta-{PRX}-*.md` |
+| Story acceptance criteria | Story | `projects/**/s-e*-*.md` |
+| Architecture changes | TAI | `projects/**/tai-{PRX}-*.md` |
+| Existing dev plans | Dev Plan | `projects/**/dp-e*-s*-*.md` |
+| Dev plan template | Template | `templates/dev-plan-template.md` |
+
+**DEV Generation Rules:**
+- Never implement behavior not in Feature Canon or FI TO-BE
+- Reference TA constraints before architectural decisions
+- Dev plan required before implementation starts
+- Flag Canon gaps — propose wording but FA must approve
 
 ---
 

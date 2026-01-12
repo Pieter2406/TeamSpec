@@ -1,3 +1,52 @@
+---
+# === LLM Retrieval Metadata ===
+artifact_kind: sprint
+spec_version: "4.0"
+template_version: "4.0.1"
+
+# === Ownership ===
+role_owner: SM
+artifact_type: Operational
+canonicity: planning
+lifecycle: sprint-bound
+
+# === Naming ===
+id_pattern: "sprint-{N}"
+filename_pattern: "sprint-{N}/sprint-goal.md"
+
+# === Required Relationships ===
+links_required:
+  - type: project
+    pattern: "project.yml"
+    optional: false
+
+# === Search Optimization ===
+keywords:
+  - sprint
+  - iteration
+  - planning
+  - commitment
+  - capacity
+aliases:
+  - iteration
+  - cycle
+anti_keywords:
+  - feature
+  - story content
+  - requirements
+
+# === Generation Contract ===
+completion_rules:
+  placeholders: "Fill {braces} only"
+  required_sections:
+    - Sprint Goal
+    - Metadata
+    - Committed Stories
+  optional_sections:
+    - Risks
+    - Notes
+---
+
 # Sprint {N}
 
 <!--

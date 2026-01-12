@@ -22,6 +22,22 @@
 
 ---
 
+### 1.1 DES Quick-Lookup (LLM Retrieval Aid)
+
+| Intent | File Pattern | Notes |
+|--------|--------------|-------|
+| Feature designs | External design system | Linked from features |
+| Feature flows | `designs/` or linked | User journey flows |
+| FI reference | `feature-increments/fi-PRX-*.md` | Design serves FI |
+| Personas | Design docs or BA | User personas |
+| Wireframes | Design system | Validation artifacts |
+| Prototypes | Design system | Interactive validation |
+| Feature scope | `features/f-PRX-*.md` | Design at feature level |
+
+**Search tip:** For design context, search `feature-increments/` for TO-BE behavior. Designs are feature-level, NOT story-level.
+
+---
+
 ## 2. Inherited Rules
 
 This agent inherits all rules from [AGENT_BOOTSTRAP.md](./AGENT_BOOTSTRAP.md), including:

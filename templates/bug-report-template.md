@@ -1,3 +1,54 @@
+---
+# === LLM Retrieval Metadata ===
+artifact_kind: bug
+spec_version: "4.0"
+template_version: "4.0.1"
+
+# === Ownership ===
+role_owner: QA
+artifact_type: Project Execution
+canonicity: project-execution
+lifecycle: project-bound
+
+# === Naming ===
+id_pattern: "bug-{project-id}-{NNN}"
+filename_pattern: "bug-{project-id}-{NNN}-{description}.md"
+
+# === Required Relationships ===
+links_required:
+  - type: project
+    pattern: "project.yml"
+    optional: false
+
+# === Search Optimization ===
+keywords:
+  - bug
+  - defect
+  - issue
+  - error
+  - problem
+  - regression
+aliases:
+  - defect report
+  - issue report
+anti_keywords:
+  - feature request
+  - enhancement
+  - story
+
+# === Generation Contract ===
+completion_rules:
+  placeholders: "Fill {braces} only"
+  classification_required: true
+  required_sections:
+    - Description
+    - Steps to Reproduce
+    - Bug Classification
+  optional_sections:
+    - Screenshots
+    - Logs
+---
+
 # Bug Report: `bug-{project-id}-{NNN}-{description}`
 
 <!--

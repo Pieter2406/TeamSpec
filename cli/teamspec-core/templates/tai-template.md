@@ -1,4 +1,53 @@
-# Technical Architecture Increment: `<tai-PRX-XXX-description>`
+---
+# === LLM Retrieval Metadata ===
+artifact_kind: tai
+spec_version: "4.0"
+template_version: "4.0.1"
+
+# === Ownership ===
+role_owner: SA
+artifact_type: Project Execution
+canonicity: project-execution
+lifecycle: project-bound
+
+# === Naming ===
+id_pattern: "tai-{PRX}-{NNN}"
+filename_pattern: "tai-{PRX}-{NNN}-{description}.md"
+
+# === Required Relationships ===
+links_required:
+  - type: technical-architecture
+    pattern: "ta-{PRX}-{NNN}"
+    optional: false
+  - type: feature-increment
+    pattern: "fi-{PRX}-{NNN}"
+    optional: true
+
+# === Search Optimization ===
+keywords:
+  - technical architecture increment
+  - TAI
+  - architecture delta
+  - technical change
+aliases:
+  - architecture change proposal
+anti_keywords:
+  - business requirements
+  - story
+  - feature behavior
+
+# === Generation Contract ===
+completion_rules:
+  placeholders: "Fill {braces} only"
+  required_sections:
+    - Overview
+    - AS-IS
+    - TO-BE
+  optional_sections:
+    - Risks
+---
+
+# Technical Architecture Increment: `tai-{PRX}-{NNN}-{description}`
 
 > **ID:** tai-PRX-XXX  
 > **Product:** `<product-id>` (PRX)  

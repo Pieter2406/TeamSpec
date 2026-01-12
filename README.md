@@ -189,6 +189,51 @@ After deployment, the Feature-Increment is synced into the Feature Canon via `ts
 
 **Do not use "Canon" unqualified — always specify Product Canon or Feature Canon.**
 
+---
+
+## For AI Agents
+
+TeamSpec is optimized for LLM-assisted editing and retrieval.
+
+### Retrieval Hints
+
+| If you need... | Look in | Pattern |
+|----------------|---------|---------|
+| Normative rules | Registry | `spec/4.0/registry.yml` |
+| Production truth | Product Canon | `products/{product-id}/` |
+| Proposed changes | Project | `projects/{project-id}/` |
+| Fast artifact lookup | Agent Index | `spec/4.0/agent-index.md` |
+
+### Generation Hints
+
+- **Frontmatter is authoritative** — Check `artifact_kind`, `links_required`
+- **Section contracts** — Each section has a `> **Contract:**` line
+- **IDs are immutable** — Never change PRX after product creation
+- **Stories are deltas** — Never restate full feature behavior
+
+### Quick Commands
+
+| Intent | Command | Output |
+|--------|---------|--------|
+| Start new product | `ts:po product` | `products/{id}/` |
+| Propose feature change | `ts:fa feature-increment` | `fi-{PRX}-*.md` |
+| Write execution task | `ts:fa story` | `s-e*-*.md` |
+| Check project health | `ts:po status` | Status report |
+
+### Template Frontmatter
+
+All templates include YAML frontmatter:
+```yaml
+---
+artifact_kind: feature | story | epic | fi | ...
+keywords: [searchable terms]
+anti_keywords: [terms indicating wrong artifact]
+links_required: [mandatory relationships]
+---
+```
+
+---
+
 ### Epics
 
 Epics are containers for related stories within a project. Stories MUST link to an Epic via their filename pattern.

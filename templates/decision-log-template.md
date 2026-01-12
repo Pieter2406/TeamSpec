@@ -1,3 +1,55 @@
+---
+# === LLM Retrieval Metadata ===
+artifact_kind: decision
+spec_version: "4.0"
+template_version: "4.0.1"
+
+# === Ownership ===
+role_owner: PO
+artifact_type: Product Canon
+canonicity: canon
+lifecycle: permanent
+
+# === Naming ===
+id_pattern: "dec-{PRX}-{NNN}"
+filename_pattern: "dec-{PRX}-{NNN}-{description}.md"
+
+# === Required Relationships ===
+links_required:
+  - type: product
+    pattern: "product.yml"
+    optional: false
+  - type: feature
+    pattern: "f-{PRX}-{NNN}"
+    optional: false
+    note: "Must link to affected features"
+
+# === Search Optimization ===
+keywords:
+  - decision
+  - business decision
+  - rationale
+  - scope decision
+  - priority decision
+aliases:
+  - decision record
+  - decision log entry
+anti_keywords:
+  - technical architecture
+  - implementation
+  - story
+
+# === Generation Contract ===
+completion_rules:
+  placeholders: "Fill {braces} only"
+  required_sections:
+    - Context
+    - Decision
+    - Impact
+  optional_sections:
+    - Alternatives Considered
+---
+
 # Decision: `dec-{PRX}-{NNN}-{description}`
 
 <!--

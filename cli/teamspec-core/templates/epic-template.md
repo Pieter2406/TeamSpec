@@ -1,4 +1,63 @@
-# Epic: `epic-PRX-XXX-description`
+---
+# === LLM Retrieval Metadata ===
+artifact_kind: epic
+spec_version: "4.0"
+template_version: "4.0.1"
+
+# === Ownership ===
+role_owner: FA
+artifact_type: Project Execution
+canonicality: project-execution
+lifecycle: project-bound
+
+# === Naming ===
+id_pattern: "epic-{PRX}-{NNN}"
+filename_pattern: "epic-{PRX}-{NNN}-{description}.md"
+
+# === Required Relationships ===
+links_required:
+  - type: product
+    pattern: "product.yml"
+    optional: false
+  - type: feature-increment
+    pattern: "fi-{PRX}-{NNN}"
+    optional: false
+    note: "At least one FI required"
+
+# === Search Optimization ===
+keywords:
+  - epic
+  - story container
+  - business outcome
+  - delivery grouping
+  - feature delivery
+aliases:
+  - initiative
+  - theme
+  - capability group
+anti_keywords:
+  - individual task
+  - implementation detail
+  - code
+  - test case
+
+# === Generation Contract ===
+completion_rules:
+  placeholders: "Fill {braces} only; leave {TBD} if unknown"
+  id_generation: "Use product PRX; NNN is sequential within project"
+  story_naming: "Stories use s-eXXX-YYY pattern where XXX matches epic NNN"
+  required_sections:
+    - Epic Summary
+    - Linked Product
+    - Feature-Increments
+    - TO-BE / Business Value
+  optional_sections:
+    - Dependencies
+    - Risks & Assumptions
+    - Technical Considerations
+---
+
+# Epic: `epic-{PRX}-{NNN}-{description}`
 
 <!-- 
   ⚠️ TEAMSPEC 4.0 EPIC TEMPLATE
@@ -16,8 +75,8 @@
   - TS-EPIC-003: Epic ID must be unique
 -->
 
-> **Template Version**: 4.0  
-> **Last Updated**: 2026-01-10
+> **Template Version**: 4.0.1  
+> **Last Updated**: 2026-01-12
 
 ---
 
@@ -31,15 +90,17 @@
 | **Owner** | FA (Functional Analyst) |
 | **Created** | YYYY-MM-DD |
 
-**Document Owner:** FA (Functional Analyst)
-**Artifact Type:** Execution (Groups Feature-Increments)
+**Document Owner:** FA (Functional Analyst)  
+**Artifact Type:** Execution (Groups Feature-Increments)  
 **Lifecycle:** Project-bound, archived after completion
 
 ---
 
 ## Epic Summary
 
-_One to three sentences describing the epic's purpose and value._
+> **Contract:** High-level description of what this epic delivers (1-3 sentences + user story format).  
+> **Required precision:** Business outcome focus, not implementation details.  
+> **Not this:** Technical approach, individual story details, or full feature specs.
 
 **As a** [Persona/Stakeholder],  
 **I want** [High-level capability],  
@@ -59,6 +120,10 @@ _One to three sentences describing the epic's purpose and value._
 
 ## Feature-Increments
 
+> **Contract:** Links to all Feature-Increments this epic delivers. At least one required.  
+> **Required precision:** FI ID, description, status for each.  
+> **Not this:** Story-level details or implementation tasks.
+>
 > ⚠️ **MANDATORY**: At least one Feature-Increment must be linked.  
 > **TEAMSPEC RULE:** TS-EPIC-001 - Feature-Increment link required
 
@@ -71,6 +136,10 @@ _One to three sentences describing the epic's purpose and value._
 
 ## TO-BE / Business Value
 
+> **Contract:** Defines the target state and measurable business value this epic delivers.  
+> **Required precision:** Specific metrics, user/business impact statements.  
+> **Not this:** Vague goals, implementation details, or technical outcomes.
+>
 > ⚠️ **MANDATORY**: Define the target state or business value.  
 > **TEAMSPEC RULE:** TS-EPIC-002 - TO-BE section required
 
