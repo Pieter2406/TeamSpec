@@ -80,6 +80,10 @@ completion_rules:
 
 ## 1. Feature Overview
 
+> **Contract:** Summary of what is being built and key constraints.  
+> **Required precision:** Building/constraints/risks in developer terms.  
+> **Not this:** Full requirements or business justification.
+
 > Summary for Developers - Read this first!
 
 - **Building**: [What]
@@ -91,6 +95,10 @@ completion_rules:
 ---
 
 ## 2. Functional Requirements
+
+> **Contract:** Detailed functional requirements with validation rules.  
+> **Required precision:** Each FR must have description, alignment, and validation.  
+> **Not this:** User stories or acceptance criteria (those go in Feature Canon).
 
 ### FR-01: [Requirement Name]
 

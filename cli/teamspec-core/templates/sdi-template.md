@@ -79,11 +79,19 @@ completion_rules:
 
 ## 1. Overview
 
+> **Contract:** Summary of this design increment.  
+> **Required precision:** What changes and why for this project.  
+> **Not this:** Full SD document (that's the Product SD).
+
 _Brief description of the solution design increment specific to this project._
 
 ---
 
 ## 2. AS-IS (Current Product SD)
+
+> **Contract:** Current production design state.  
+> **Required precision:** Copy from Product SD, do not paraphrase.  
+> **Not this:** Proposed changes (those go in TO-BE).
 
 > _Auto-populated from Product Solution Design. DO NOT EDIT unless correcting errors._
 
@@ -92,6 +100,10 @@ _Copy relevant sections from the Product SD._
 ---
 
 ## 3. TO-BE (Project Solution Design)
+
+> **Contract:** Proposed design after this increment.  
+> **Required precision:** Specific changes, not full restatement.  
+> **Not this:** Current state (that's AS-IS).
 
 ### 3.1 New/Changed Design Elements
 

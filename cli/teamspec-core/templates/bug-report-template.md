@@ -98,6 +98,10 @@ completion_rules:
 
 ## Description
 
+> **Contract:** Clear summary of what's wrong.  
+> **Required precision:** Observable symptom, not root cause guess.  
+> **Not this:** Steps to reproduce (those go in next section).
+
 > Brief summary of the bug.
 
 [Clear, concise description of what's wrong]
@@ -142,6 +146,10 @@ completion_rules:
 ---
 
 ## Bug Classification (MANDATORY)
+
+> **Contract:** Exactly one classification determining fix responsibility.  
+> **Required precision:** Select ONE with evidence.  
+> **Not this:** Multiple classifications or "unknown".
 
 <!-- TEAMSPEC RULE: TS-QA-002 - Exactly one must be checked -->
 

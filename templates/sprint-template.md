@@ -79,6 +79,10 @@ completion_rules:
 
 ## Sprint Goal
 
+> **Contract:** One clear, measurable objective with success criteria.  
+> **Required precision:** Specific, testable outcomes by sprint end.  
+> **Not this:** Vague aspirations or feature lists.
+
 > {One-sentence sprint objective that describes what value will be delivered}
 
 ---

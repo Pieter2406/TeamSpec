@@ -98,6 +98,10 @@ completion_rules:
 
 ## Test Scenarios
 
+> **Contract:** Specific test cases validating FI behavior.  
+> **Required precision:** Steps, expected results, AC mapping.  
+> **Not this:** Automation code or unit tests.
+
 ### TC-001: [Title]
 
 - **Type**: Positive / Negative / Boundary

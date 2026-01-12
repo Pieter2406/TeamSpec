@@ -47,6 +47,10 @@ completion_rules:
 
 ## Sprint Goal
 
+> **Contract:** One clear, measurable objective for the sprint.  
+> **Required precision:** Specific outcomes that can be verified.  
+> **Not this:** Feature lists, vague themes, or multiple goals.
+
 > {One clear, measurable objective that the team commits to achieving this sprint}
 
 **Success Criteria**:
@@ -69,6 +73,10 @@ completion_rules:
 ---
 
 ## Committed Stories
+
+> **Contract:** Stories committed for this sprint with links and status.  
+> **Required precision:** Each story must link to its dev plan and owner.  
+> **Not this:** Uncommitted backlog items or wishlist entries.
 
 | Story ID | Title | Points | Dev Plan | Owner | Status |
 |----------|-------|--------|----------|-------|--------|

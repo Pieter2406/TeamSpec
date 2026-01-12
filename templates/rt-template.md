@@ -56,6 +56,10 @@ completion_rules:
 
 ## Overview
 
+> **Contract:** Summary of regression coverage for this feature.  
+> **Required precision:** What behaviors are protected.  
+> **Not this:** Detailed test steps (those go in Scenarios).
+
 Brief description of the regression test coverage for this feature.
 
 ---
@@ -71,6 +75,10 @@ Brief description of the regression test coverage for this feature.
 ---
 
 ## Regression Scenarios
+
+> **Contract:** Tests validating production feature behavior.  
+> **Required precision:** Steps, expected results, criticality.  
+> **Not this:** Project-specific tests (those are tc-* files).
 
 ### Scenario 1: {Scenario Name}
 

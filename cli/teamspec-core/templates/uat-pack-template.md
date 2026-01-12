@@ -78,6 +78,10 @@ completion_rules:
 
 ## Pre-UAT Checklist
 
+> **Contract:** Prerequisites before stakeholder validation.  
+> **Required precision:** All items checked before UAT begins.  
+> **Not this:** Test results (those go in Sign-off).
+
 Before you begin UAT, please note:
 
 - [ ] Feature Canon is current (no pending documentation syncs)

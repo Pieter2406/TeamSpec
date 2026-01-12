@@ -101,6 +101,12 @@ completion_rules:
 
 ## Context
 
+> **Contract:** Business context and constraints that led to this decision.  
+> **Required precision:** Specific situation, stakeholders, and drivers.  
+> **Not this:** The decision itself or technical implementation.
+
+## Context
+
 _What situation or problem prompted this decision?_
 
 [Describe the business situation, trigger event, or problem that requires a decision.]

@@ -64,6 +64,10 @@ completion_rules:
 
 ## Stories to Refine
 
+> **Contract:** Stories under refinement with feature links and impact type.  
+> **Required precision:** Each story must link to features and specify impact type.  
+> **Not this:** Already-ready stories or sprint-committed items.
+
 | Story ID | Title | Feature(s) | Impact Type | Est | Ready? |
 |:---------|:------|-----------|-------------|:---:|:------:|
 | S-XXX | [Title] | F-XXX | Adds/Changes/Fixes/Tech | ? | [ ] |

@@ -78,11 +78,19 @@ completion_rules:
 
 ## 1. Overview
 
+> **Contract:** Brief description of the business analysis increment.  
+> **Required precision:** What this BAI adds or changes to the parent BA.  
+> **Not this:** Full BA content or implementation details.
+
 _Brief description of the business analysis increment specific to this project._
 
 ---
 
 ## 2. Business Context
+
+> **Contract:** Business problem, stakeholders, and goals for this increment.  
+> **Required precision:** Specific business justification for the change.  
+> **Not this:** Technical solutions or implementation approach.
 
 ### 2.1 Business Problem
 

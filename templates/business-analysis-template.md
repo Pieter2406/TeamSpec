@@ -85,6 +85,10 @@ completion_rules:
 
 ## 1. Executive Summary
 
+> **Contract:** Problem, solution, and value proposition in brief.  
+> **Required precision:** Clear who/what/why for the business need.  
+> **Not this:** Detailed requirements or implementation scope.
+
 - **Problem Statement**: Who is the user? What is their pain?
 - **Proposed Solution**: High-level description.
 - **Value**: Why are we doing this? (Revenue, Compliance, UX).
@@ -92,6 +96,10 @@ completion_rules:
 ---
 
 ## 2. Scope
+
+> **Contract:** Explicit boundaries of what is and is not included.  
+> **Required precision:** Specific inclusions and exclusions.  
+> **Not this:** Feature details or implementation approach.
 
 ### In Scope
 

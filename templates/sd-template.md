@@ -79,11 +79,19 @@ completion_rules:
 
 ## 1. Overview
 
+> **Contract:** What this solution accomplishes at a glance.  
+> **Required precision:** One paragraph summary.  
+> **Not this:** Full technical details (those go in Solution Architecture).
+
 _Brief description of the solution design and what it accomplishes._
 
 ---
 
 ## 2. Business Context
+
+> **Contract:** Business driver for this design.  
+> **Required precision:** Link to Feature Canon and requirements.  
+> **Not this:** Technical rationale (that goes in Design Rationale).
 
 > Reference to Feature Canon and business requirements that drove this design.
 

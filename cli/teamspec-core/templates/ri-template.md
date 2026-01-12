@@ -77,6 +77,10 @@ completion_rules:
 
 ## Required Fields (TS-QA-003)
 
+> **Contract:** Mandatory fields for deployment gate.  
+> **Required precision:** All fields completed with evidence.  
+> **Not this:** Optional commentary (that goes in Notes).
+
 > ⚠️ **BLOCKER**: All fields below must be completed before deployment gate can pass.
 
 | Field | Value |

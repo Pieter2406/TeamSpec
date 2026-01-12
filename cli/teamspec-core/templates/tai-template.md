@@ -79,11 +79,19 @@ completion_rules:
 
 ## 1. Overview
 
+> **Contract:** Summary of this architecture increment.  
+> **Required precision:** What changes and why for this project.  
+> **Not this:** Full TA document (that's the Product TA).
+
 _Brief description of the technical architecture increment specific to this project._
 
 ---
 
 ## 2. AS-IS (Current Product TA)
+
+> **Contract:** Current production architecture state.  
+> **Required precision:** Copy from Product TA, do not paraphrase.  
+> **Not this:** Proposed changes (those go in TO-BE).
 
 > _Auto-populated from Product Technical Architecture. DO NOT EDIT unless correcting errors._
 
@@ -92,6 +100,10 @@ _Copy relevant sections from the Product TA._
 ---
 
 ## 3. TO-BE (Project Technical Architecture)
+
+> **Contract:** Proposed architecture after this increment.  
+> **Required precision:** Specific changes, not full restatement.  
+> **Not this:** Current state (that's AS-IS).
 
 ### 3.1 New/Changed Architecture Elements
 

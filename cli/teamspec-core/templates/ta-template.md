@@ -100,6 +100,10 @@ completion_rules:
 
 ## Context
 
+> **Contract:** The technical situation requiring a decision.  
+> **Required precision:** Problem statement, constraints, forces.  
+> **Not this:** The solution itself or implementation details.
+
 > What is the problem? Why do we need to make a technical decision?
 
 [Describe the technical situation, constraints, and forces that require a decision.]
@@ -134,6 +138,10 @@ completion_rules:
 
 ## Decision
 
+> **Contract:** The chosen option and why.  
+> **Required precision:** Clear statement of choice with primary rationale.  
+> **Not this:** Detailed implementation, code samples.
+
 > We are choosing **Option X** because...
 
 [Clear statement of the decision and primary rationale]
@@ -141,6 +149,10 @@ completion_rules:
 ---
 
 ## Consequences
+
+> **Contract:** Trade-offs accepted by this decision.  
+> **Required precision:** Specific positive and negative impacts.  
+> **Not this:** Vague "may impact performance" statements.
 
 ### Positive
 

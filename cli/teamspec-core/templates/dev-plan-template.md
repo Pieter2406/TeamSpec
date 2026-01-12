@@ -77,6 +77,10 @@ completion_rules:
 
 ## Metadata
 
+> **Contract:** Key identifiers and story linkage for this dev plan.  
+> **Required precision:** Story ID, owner, dates, and status must be filled.  
+> **Not this:** Implementation details or requirements.
+
 | Field | Value |
 |-------|-------|
 | **Dev Plan ID** | dp-e{EEE}-s{SSS} |
