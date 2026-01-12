@@ -22,6 +22,22 @@
 
 ---
 
+### 1.1 FIX Quick-Lookup (LLM Retrieval Aid)
+
+| Intent | File Pattern | Notes |
+|--------|--------------|-------|
+| Lint rules | `spec/4.0/lint-rules.md` | All TS-* rule definitions |
+| Registry validation | `spec/4.0/registry.yml` | Roles, artifacts, commands |
+| Product index | `products/products-index.md` | Product registration |
+| Project index | `projects/projects-index.md` | Project registration |
+| Feature validation | `products/**/f-*.md` | Canon structure |
+| FI validation | `projects/**/fi-*.md` | Delta structure |
+| Naming patterns | `spec/4.0/model.md` | PRX and ID patterns |
+
+**Search tip:** For lint errors, find the TS-* rule in `lint-rules.md` first, then locate the violating file.
+
+---
+
 ## 2. Inherited Rules
 
 This agent inherits all rules from [AGENT_BOOTSTRAP.md](./AGENT_BOOTSTRAP.md), including:

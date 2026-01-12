@@ -24,6 +24,7 @@ Everything in this directory is **normative** (rules that must be followed):
 | [lint-rules.md](lint-rules.md) | Linter rule IDs, intents, and checks |
 | [glossary.md](glossary.md) | Term definitions |
 | [agent-index.md](agent-index.md) | **LLM retrieval index** — fast artifact lookup for agents |
+| [marker-vocabulary.md](marker-vocabulary.md) | **Marker spec** — standard markers for LLM optimization |
 
 ---
 
@@ -39,6 +40,7 @@ Quick disambiguation for common questions:
 | Gate checklists (DoR/DoD/Deploy) | [gates.md](gates.md) |
 | Term definitions | [glossary.md](glossary.md) |
 | LLM retrieval patterns | [agent-index.md](agent-index.md) |
+| Standard marker vocabulary | [marker-vocabulary.md](marker-vocabulary.md) |
 | Template for creating artifacts | `/templates/` folder |
 | Agent instructions for AI assistants | `/agents/` folder |
 | Current production behavior | `products/**/f-*.md` (Feature Canon) |
