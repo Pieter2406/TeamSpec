@@ -1204,8 +1204,18 @@ Use template: \`/.teamspec/templates/testcases-template.md\`
 function updateTeamspecCore(targetDir, sourceDir) {
   const targetTeamspec = path.join(targetDir, '.teamspec');
 
+  // Directories to fully replace (core TeamSpec content)
   const dirsToUpdate = ['agents', 'definitions', 'profiles', 'templates'];
-  const filesToUpdate = ['teamspec.yml'];
+
+  // Root-level files to update (core configuration)
+  const filesToUpdate = [
+    'teamspec.yml',           // Core configuration
+    'registry.yml',           // Roles, artifacts, commands, gates
+    'copilot-instructions.md', // GitHub Copilot integration
+    'FOLDER_STRUCTURE.yml'    // Folder structure validation
+  ];
+
+  // Context files to update (schema only, preserve user data)
   const contextFilesToUpdate = ['_schema.yml'];
 
   console.log(`\n${colored('Updating TeamSpec core files...', colors.blue)}`);
@@ -1238,6 +1248,7 @@ function updateTeamspecCore(targetDir, sourceDir) {
 
   const contextDir = path.join(targetTeamspec, 'context');
   if (fs.existsSync(contextDir)) {
+    // Update schema files from source
     for (const fileName of contextFilesToUpdate) {
       const src = path.join(sourceDir, 'context', fileName);
       const dest = path.join(contextDir, fileName);
@@ -1247,9 +1258,25 @@ function updateTeamspecCore(targetDir, sourceDir) {
         console.log(`  ✓ Updated context/${fileName}`);
       }
     }
-    if (fs.existsSync(path.join(contextDir, 'team.yml'))) {
-      skipped.push('context/team.yml');
-      console.log(`  ⏭ Preserved context/team.yml`);
+
+    // Preserve team-specific context files (never overwrite)
+    const preservedContextFiles = ['team.yml', 'org.yml', 'conventions.yml'];
+    for (const fileName of preservedContextFiles) {
+      const filePath = path.join(contextDir, fileName);
+      if (fs.existsSync(filePath)) {
+        skipped.push(`context/${fileName}`);
+        console.log(`  ⏭ Preserved context/${fileName}`);
+      }
+    }
+  }
+
+  // Preserve products/ and projects/ directories (user content)
+  const userDirs = ['products', 'projects'];
+  for (const dirName of userDirs) {
+    const dirPath = path.join(targetDir, dirName);
+    if (fs.existsSync(dirPath)) {
+      skipped.push(`${dirName}/`);
+      console.log(`  ⏭ Preserved ${dirName}/`);
     }
   }
 
