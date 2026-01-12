@@ -51,6 +51,45 @@ Templates include section contracts with:
 - `> **Required precision:**` — How specific to be
 - `> **Not this:**` — What doesn't belong
 
+> **Full specification:** [spec/4.0/marker-vocabulary.md](../spec/4.0/marker-vocabulary.md)
+
+### Marker Vocabulary Overview
+
+TeamSpec uses a minimal set of standard markers for LLM optimization:
+
+| Marker Type | Location | Examples |
+|-------------|----------|----------|
+| **Frontmatter** | YAML block at top | `artifact_kind`, `role_owner`, `spec_version` |
+| **Section** | `## Heading` | `## Purpose`, `## Scope`, `## Current Behavior` |
+| **Contract** | Blockquote after heading | `> **Contract:**`, `> **Required precision:**` |
+| **Inline** | Within content | `{TBD}`, `BR-XXX-NNN:` |
+
+### Required Frontmatter (MV-001 to MV-003)
+
+Every artifact MUST include:
+
+```yaml
+---
+artifact_kind: feature    # From controlled vocabulary
+spec_version: "4.0"       # TeamSpec version
+role_owner: FA            # Owning role code
+keywords: [...]           # RECOMMENDED for retrieval
+---
+```
+
+### Linter Enforcement
+
+Marker vocabulary is enforced by MV-* linter rules:
+
+| Rule | Check | Severity |
+|------|-------|----------|
+| MV-001 | `artifact_kind` present and valid | Error |
+| MV-002 | `spec_version` present | Error |
+| MV-003 | `role_owner` present and valid | Error |
+| MV-004 | `keywords` present | Warning |
+| MV-010 | `## Purpose` section exists | Error |
+| MV-011 | `## Links` section exists | Warning |
+
 ---
 
 ## Template Index

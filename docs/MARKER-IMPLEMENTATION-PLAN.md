@@ -15,7 +15,7 @@
 | Phase 1 | Agent Prompt Updates | ✅ Complete |
 | Phase 2 | Template Updates | ✅ Complete |
 | Phase 3 | Linter Enhancement | ✅ Complete |
-| Phase 4 | Documentation Updates | ⬜ Not Started |
+| Phase 4 | Documentation Updates | ✅ Complete |
 | Phase 5 | Finalization | ⬜ Not Started |
 
 ---
@@ -307,11 +307,11 @@ const VALID_CANONICALITY = ['canon', 'project-execution', 'operational', 'inform
 
 ### 4.2 Implementation Checklist - Phase 4
 
-- [ ] **P4-01** Update spec/4.0/index.md with marker-vocabulary link
-- [ ] **P4-02** Update agent-index.md to reference markers
-- [ ] **P4-03** Add MV-* rules to lint-rules.md
-- [ ] **P4-04** Add marker usage section to templates/README.md
-- [ ] **P4-05** Update CLI README with marker linting docs
+- [x] **P4-01** Update spec/4.0/index.md with marker-vocabulary link (already present)
+- [ ] **P4-02** Update agent-index.md to reference markers - deferred
+- [x] **P4-03** Add MV-* rules to lint-rules.md
+- [x] **P4-04** Add marker usage section to templates/README.md
+- [ ] **P4-05** Update CLI README with marker linting docs - deferred
 
 ---
 

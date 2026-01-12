@@ -24,6 +24,7 @@ TeamSpec enforces consistency through linter rules. Each rule has a unique ID, c
 | TS-DOD | Definition of Done | DoD gate compliance |
 | TS-DOR | Definition of Ready | DoR gate compliance |
 | TS-QA | QA Coverage | Test coverage and regression rules |
+| MV | Marker Vocabulary | Frontmatter and section marker compliance |
 
 ---
 
@@ -330,6 +331,116 @@ ri-fi-ACME-001.md has assessment: no-impact but no rationale provided
 
 **Severity:** Error (blocks deployment gate)  
 **Owner:** QA
+
+---
+
+## Marker Vocabulary Rules (MV)
+
+> Reference: [marker-vocabulary.md](marker-vocabulary.md)
+
+### MV-001: artifact_kind present and valid
+
+**Intent:** Every artifact must declare its type for LLM retrieval.
+
+**Checks:**
+- Frontmatter contains `artifact_kind` field
+- Value is from controlled vocabulary (feature, fi, story, epic, etc.)
+
+**Failure Message:**
+```
+Missing required frontmatter field: artifact_kind
+Invalid artifact_kind: 'thing'. Must be one of: feature, fi, story, epic, ...
+```
+
+**Severity:** Error  
+**Owner:** All roles
+
+---
+
+### MV-002: spec_version present
+
+**Intent:** Artifacts must declare which spec version they follow.
+
+**Checks:**
+- Frontmatter contains `spec_version` field
+
+**Failure Message:**
+```
+Missing required frontmatter field: spec_version
+```
+
+**Severity:** Error  
+**Owner:** All roles
+
+---
+
+### MV-003: role_owner present and valid
+
+**Intent:** Every artifact must declare its owning role.
+
+**Checks:**
+- Frontmatter contains `role_owner` field
+- Value is valid role code (FA, BA, PO, SA, DEV, QA, SM, DES)
+
+**Failure Message:**
+```
+Missing required frontmatter field: role_owner
+Invalid role_owner: 'PM'. Must be one of: FA, BA, PO, SA, DEV, QA, SM, DES
+```
+
+**Severity:** Error  
+**Owner:** All roles
+
+---
+
+### MV-004: keywords present
+
+**Intent:** Artifacts should have keywords to aid LLM retrieval.
+
+**Checks:**
+- Frontmatter contains `keywords` field (array)
+
+**Failure Message:**
+```
+Missing recommended frontmatter field: keywords (aids LLM retrieval)
+```
+
+**Severity:** Warning  
+**Owner:** All roles
+
+---
+
+### MV-010: ## Purpose section exists
+
+**Intent:** Every artifact should explain its purpose.
+
+**Checks:**
+- Document contains `## Purpose` or `## 1. Purpose` section
+
+**Failure Message:**
+```
+Missing required section: ## Purpose
+```
+
+**Severity:** Error  
+**Owner:** All roles
+
+---
+
+### MV-011: ## Links section exists
+
+**Intent:** Artifacts should link to related documents.
+
+**Checks:**
+- Document contains `## Links` or `## Related` section
+
+**Failure Message:**
+```
+Missing recommended section: ## Links
+```
+
+**Severity:** Warning  
+**Owner:** All roles
 
 ---
 
