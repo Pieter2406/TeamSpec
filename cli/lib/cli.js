@@ -1294,24 +1294,24 @@ function updateTeamspecCore(targetDir, sourceDir) {
  */
 function checkGitStatus(targetDir) {
   const { execSync } = require('child_process');
-  
+
   try {
     // Check if it's a git repo
-    execSync('git rev-parse --git-dir', { 
-      cwd: targetDir, 
+    execSync('git rev-parse --git-dir', {
+      cwd: targetDir,
       stdio: 'pipe',
       encoding: 'utf-8'
     });
-    
+
     // Check for uncommitted changes (staged + unstaged + untracked)
     const status = execSync('git status --porcelain', {
       cwd: targetDir,
       stdio: 'pipe',
       encoding: 'utf-8'
     });
-    
+
     const changedFiles = status.trim().split('\n').filter(line => line.trim()).length;
-    
+
     return {
       isGitRepo: true,
       hasChanges: changedFiles > 0,
@@ -1339,27 +1339,27 @@ async function warnUncommittedChanges(rl, gitStatus, force, nonInteractive) {
   if (!gitStatus.isGitRepo || !gitStatus.hasChanges) {
     return true; // No warning needed
   }
-  
+
   console.log(colored(`\n⚠️  Git repository has ${gitStatus.changedFiles} uncommitted change(s)`, colors.yellow));
   console.log(colored('   Recommendation: Commit your changes first so TeamSpec updates can be', colors.yellow));
   console.log(colored('   easily verified and rolled back if needed.', colors.yellow));
-  
+
   if (force) {
     console.log(colored('   Proceeding anyway (--force flag used)', colors.yellow));
     return true;
   }
-  
+
   if (nonInteractive) {
     console.log(colored('\n❌ Uncommitted changes detected. Use --force to proceed anyway.', colors.red));
     return false;
   }
-  
+
   const proceed = await promptYesNo(
     rl,
     `\n${colored('Proceed with uncommitted changes?', colors.bold)} `,
     false
   );
-  
+
   return proceed;
 }
 
