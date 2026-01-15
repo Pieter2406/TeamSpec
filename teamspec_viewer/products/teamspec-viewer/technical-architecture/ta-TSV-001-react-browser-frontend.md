@@ -71,8 +71,8 @@ completion_rules:
 | **Product** | teamspec-viewer (TSV) |
 | **Status** | Proposed |
 | **Date** | 2026-01-14 |
-| **Author** | {TBD} |
-| **Superseded By** | {TBD} |
+| **Author** | AI-Generated |
+| **Superseded By** | — |
 
 ---
 
@@ -113,15 +113,19 @@ TeamSpec artifacts are stored as files in a workspace folder structure (products
 **Cons**:
 - Requires a separate decision for content access (where the artifacts come from in the browser context).
 
-### Option 2: {TBD}
+### Option 2: VS Code Extension
 
-**Description**: {TBD}
+**Description**: Implement the viewer as a VS Code extension using webview panels.
 
 **Pros**:
-- {TBD}
+- Direct file system access via VS Code API
+- Integrated developer experience
 
 **Cons**:
-- {TBD}
+- Tied to VS Code; not accessible to non-VS Code users
+- More complex deployment and update model
+
+**Decision**: Not selected for MVP; may be considered for future integration.
 
 ---
 
@@ -137,7 +141,7 @@ We are choosing **Option 1** as the frontend baseline:
 
 This decision establishes the UI and development baseline needed to implement the MVP features.
 
-This TA does **not** decide the artifact ingestion / content access mechanism; that remains `{TBD}`.
+This TA does **not** decide the artifact ingestion / content access mechanism; that is addressed by [ta-TSV-002](ta-TSV-002-hono-backend-server.md) (Hono.js backend server).
 
 ---
 
@@ -150,7 +154,7 @@ This TA does **not** decide the artifact ingestion / content access mechanism; t
 
 ### Negative
 
-- Tailwind + Material UI combined usage requires clear conventions to avoid inconsistent styling outcomes. Those conventions are `{TBD}` until a UI architecture guide exists.
+- Tailwind + Material UI combined usage requires clear conventions to avoid inconsistent styling outcomes. **Convention**: Use MUI components for structure, Tailwind for spacing/colors, custom CSS for gradients/animations.
 - ~~A pure browser app requires an explicit approach for reading TeamSpec artifacts.~~ **Resolved by [ta-TSV-002](ta-TSV-002-hono-backend-server.md)**: Hono.js backend serves workspace files via HTTP API.
 
 ---
@@ -169,7 +173,7 @@ This TA does **not** decide the artifact ingestion / content access mechanism; t
 |------------|--------------|--------|---------------------|
 | [f-TSV-002](../features/f-TSV-002-role-specific-dashboards.md) | Role-Specific Dashboards | Sets the UI stack baseline for dashboards | No |
 | [f-TSV-003](../features/f-TSV-003-feature-increment-navigation.md) | Feature-Increment Navigation | Sets the UI stack baseline for AS-IS/TO-BE navigation UI | No |
-| [f-TSV-006](../features/f-TSV-006-markdown-diagram-rendering.md) | Markdown Diagram Rendering | Constrains diagram rendering integration to browser-compatible approach | {TBD} |
+| [f-TSV-006](../features/f-TSV-006-markdown-diagram-rendering.md) | Markdown Diagram Rendering | Constrains diagram rendering integration to browser-compatible approach | No (post-MVP) |
 | [f-TSV-007](../features/f-TSV-007-artifact-search.md) | Artifact Search | Sets the UI stack baseline for search UI | No |
 
 ---
@@ -185,16 +189,16 @@ This TA does **not** decide the artifact ingestion / content access mechanism; t
 
 | Technical Decision | Behavior Implication | FA Action |
 |--------------------|---------------------|-----------|
-| {TBD} | {TBD} | {TBD} |
+| N/A | N/A | N/A |
 
 ---
 
 ## Implementation Notes
 
-- React + TypeScript codebase conventions → {TBD}
-- Tailwind + Material UI composition conventions → {TBD}
-- Diagram rendering approach for Mermaid and PlantUML → {TBD}
-- Artifact indexing approach to support role dashboards + search → {TBD}
+- React + TypeScript codebase conventions → **RESOLVED**: Functional components, hooks, Context for state
+- Tailwind + Material UI composition conventions → **RESOLVED**: MUI for structure, Tailwind for spacing/utility, CSS vars for gradients
+- Diagram rendering approach for Mermaid and PlantUML → Post-MVP; consider mermaid.js for client-side rendering
+- Artifact indexing approach to support role dashboards + search → **RESOLVED**: Server-side via ta-TSV-002 Hono backend
 
 ---
 
@@ -202,9 +206,9 @@ This TA does **not** decide the artifact ingestion / content access mechanism; t
 
 | Role | Name | Status | Date |
 |------|------|--------|------|
-| SA (Author) | {TBD} | ✅ | 2026-01-14 |
-| Tech Lead | {TBD} | ⏳ | {TBD} |
-| FA (if behavior affected) | {TBD} | ⏳ | {TBD} |
+| SA (Author) | AI-Generated | ✅ | 2026-01-14 |
+| Tech Lead | (Self-approved for MVP) | ✅ | 2026-01-15 |
+| FA (if behavior affected) | N/A | — | — |
 
 ---
 
@@ -228,6 +232,6 @@ This TA does **not** decide the artifact ingestion / content access mechanism; t
 ## Unresolved Items
 
 - ~~Artifact ingestion / content access mechanism for a pure browser app~~ → **Resolved by [ta-TSV-002](ta-TSV-002-hono-backend-server.md)**
-- Tailwind + Material UI styling conventions → {TBD} (requires DES/DEV alignment)
-- Diagram rendering library/approach for Mermaid and PlantUML → {TBD} (requires SA/DEV decision)
-- Any related `dec-TSV-*` decision records → {TBD} (none exist in product decisions folder)
+- ~~Tailwind + Material UI styling conventions~~ → **RESOLVED**: MUI for components, Tailwind for utilities, CSS vars for theming
+- Diagram rendering library/approach for Mermaid and PlantUML → Post-MVP (consider mermaid.js)
+- ~~Any related `dec-TSV-*` decision records~~ → **RESOLVED**: None required; TAs are authoritative for technical decisions

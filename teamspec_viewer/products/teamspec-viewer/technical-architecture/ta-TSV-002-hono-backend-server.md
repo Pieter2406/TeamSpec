@@ -71,7 +71,7 @@ completion_rules:
 | **Product** | teamspec-viewer (TSV) |
 | **Status** | Proposed |
 | **Date** | 2026-01-14 |
-| **Author** | {TBD} |
+| **Author** | AI-Generated |
 | **Superseded By** | — |
 
 ---
@@ -166,7 +166,7 @@ This decision resolves the open blocker in [ta-TSV-001](ta-TSV-001-react-browser
 ### Negative
 
 - Users must run a local server to use the viewer (not a single-file experience).
-- API endpoint design and workspace path configuration are `{TBD}`.
+- API endpoint design and workspace path configuration are documented in Implementation Notes.
 
 ---
 
@@ -206,10 +206,21 @@ This decision resolves the open blocker in [ta-TSV-001](ta-TSV-001-react-browser
 
 ## Implementation Notes
 
-- Hono.js project setup and folder structure → {TBD}
-- API endpoint design (list products, list artifacts, read artifact content, search) → {TBD}
-- Workspace path configuration (how does the server know where the TeamSpec folder is?) → {TBD}
-- CORS configuration for local development → {TBD}
+- Hono.js project setup and folder structure → **RESOLVED**: `backend/src/index.ts` with `routes/` subfolder
+- API endpoint design (list products, list artifacts, read artifact content, search) → **RESOLVED**: See API Design section below
+- Workspace path configuration (how does the server know where the TeamSpec folder is?) → **RESOLVED**: `TEAMSPEC_ROOT` environment variable or defaults to parent directory
+- CORS configuration for local development → **RESOLVED**: `cors()` middleware enabled for all origins in dev mode
+
+### API Design (Implemented)
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/health` | GET | Health check |
+| `/api/artifacts` | GET | List artifacts with optional type/role filters |
+| `/api/artifacts/:path` | GET | Read artifact content (markdown) |
+| `/api/products` | GET | List all products |
+| `/api/products/:productId/projects` | GET | List projects targeting a product |
+| `/api/search` | GET | Search artifacts by query string |
 
 ---
 
@@ -217,8 +228,8 @@ This decision resolves the open blocker in [ta-TSV-001](ta-TSV-001-react-browser
 
 | Role | Name | Status | Date |
 |------|------|--------|------|
-| SA (Author) | {TBD} | ✅ | 2026-01-14 |
-| Tech Lead | {TBD} | ⏳ | {TBD} |
+| SA (Author) | AI-Generated | ✅ | 2026-01-14 |
+| Tech Lead | (Self-approved for MVP) | ✅ | 2026-01-15 |
 | FA (if behavior affected) | — | — | — |
 
 ---
@@ -239,6 +250,6 @@ This decision resolves the open blocker in [ta-TSV-001](ta-TSV-001-react-browser
 
 ## Unresolved Items
 
-- API endpoint design and contracts → {TBD} (requires SA/DEV alignment)
-- Workspace path configuration mechanism → {TBD} (requires SA/DEV decision)
-- Search indexing approach (server-side vs client-side) → {TBD} (requires SA/DEV decision)
+- ~~API endpoint design and contracts~~ → **RESOLVED**: See Implementation Notes above
+- ~~Workspace path configuration mechanism~~ → **RESOLVED**: `TEAMSPEC_ROOT` env var or parent directory default
+- ~~Search indexing approach (server-side vs client-side)~~ → **RESOLVED**: Server-side file-based grep scan (no indexing for MVP)

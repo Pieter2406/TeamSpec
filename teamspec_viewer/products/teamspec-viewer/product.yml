@@ -4,8 +4,13 @@ product:
   name: "Teamspec Viewer"
   prefix: "TSV"
   description: |
-    # TODO: Add product description - what IS this product (AS-IS)?
+    A read-only browser application for navigating and viewing TeamSpec 4.0 
+    documentation artifacts. Provides role-specific dashboards (BA, FA) for 
+    browsing products, projects, features, feature-increments, epics, and 
+    stories. Highlights {TBD} markers for quick identification of incomplete 
+    documentation.
   status: active  # active, deprecated, archived
   
   # List of projects currently modifying this product
-  active_projects: []
+  active_projects:
+    - teamspecviewermvp

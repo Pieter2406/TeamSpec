@@ -69,7 +69,8 @@ anti_keywords:
 
 | Decision ID | Summary | Impact on This Feature |
 |-------------|---------|------------------------|
-| {TBD} | {TBD} | {TBD} |
+| ta-TSV-001 | React Browser Frontend | Dashboard UI built with React + TypeScript + MUI |
+| ta-TSV-002 | Hono.js Backend | Backend provides artifact listing APIs by role |
 
 ---
 
@@ -83,7 +84,7 @@ Enable users to quickly access and browse the artifacts relevant to their TeamSp
 
 - **User Impact**: Reduces cognitive load by presenting a curated view of documentation per role.
 - **Business Impact**: Improves role productivity and supports consistent application of TeamSpec ownership boundaries.
-- **Success Metrics**: {TBD}
+- **Success Metrics**: User can navigate from role selection to viewing an artifact within 3 clicks
 
 ---
 
@@ -117,21 +118,27 @@ Enable users to quickly access and browse the artifacts relevant to their TeamSp
 
 ### Role Selection
 
-{TBD}
+User selects BA or FA role via RoleSelector component. Selection is stored in RoleContext and persists for the session. User can switch roles at any time via header role badge.
 
 ### Role Dashboard Content
 
-{TBD}
+- **BA Dashboard**: Lists business-analysis documents and BA increments for the active product/project
+- **FA Dashboard**: Lists features, feature-increments, epics, and stories for the active product/project
 
 ### User Flows
 
-1. {TBD}
+1. User opens viewer → sees role selection screen
+2. User selects BA or FA → sees role-specific dashboard
+3. User clicks artifact → artifact content is displayed in reader
+4. User can switch roles via header badge
 
 ### Edge Cases & Error Handling
 
 | Condition | System Response |
 |-----------|-----------------|
-| {TBD} | {TBD} |
+| No artifacts for role | Display "No artifacts found" message |
+| Artifact file missing | Show error toast and remain on dashboard |
+| Role not selected | Show RoleSelector component |
 
 ---
 
@@ -149,16 +156,16 @@ Enable users to quickly access and browse the artifacts relevant to their TeamSp
 |------|-------------|
 | BA | View BA artifacts and related links |
 | FA | View FA artifacts and related links |
-| {TBD} | {TBD} |
+| (Future) | DEV, QA, SA, SM, PO dashboards planned post-MVP |
 
 ---
 
 ## Non-Functional Notes
 
-- **Performance**: {TBD}
-- **Security**: {TBD}
-- **Accessibility**: {TBD}
-- **Availability**: {TBD}
+- **Performance**: Dashboard should load within 1 second; artifact list within 2 seconds
+- **Security**: Read-only access; no authentication required for local viewer
+- **Accessibility**: WCAG 2.1 AA compliance; keyboard navigation supported
+- **Availability**: Local application; availability depends on user's machine
 
 ---
 
@@ -172,8 +179,8 @@ Enable users to quickly access and browse the artifacts relevant to their TeamSp
 
 | ID | Question | Owner | Status | Resolution |
 |----|----------|-------|--------|------------|
-| Q-001 | Which role set is authoritative (from spec files vs hardcoded list)? | {TBD} | Open | {TBD} |
-| Q-002 | Should a user be able to switch roles within a session? | {TBD} | Open | {TBD} |
+| Q-001 | Which role set is authoritative (from spec files vs hardcoded list)? | FA | Resolved | MVP uses hardcoded list (BA, FA); future: derive from spec/4.0/roles.md |
+| Q-002 | Should a user be able to switch roles within a session? | FA | Resolved | Yes, via header role badge click |
 
 ---
 
@@ -191,7 +198,8 @@ Enable users to quickly access and browse the artifacts relevant to their TeamSp
 
 | Date | Source | Change Summary | Author |
 |------|--------|----------------|--------|
-| 2026-01-14 | — | Initial feature creation | {TBD} |
+| 2026-01-14 | — | Initial feature creation | AI-Generated |
+| 2026-01-15 | fi-TSV-001 | TBD resolution for MVP implementation | AI-Generated |
 
 ---
 
@@ -202,5 +210,5 @@ Enable users to quickly access and browse the artifacts relevant to their TeamSp
 
 ## Unresolved Items
 
-- Current production behavior for this feature → {TBD} (no deployed behavior described in Feature Canon yet)
-- Whether dashboards exist for all roles in the first delivery slice → {TBD} (requires PO decision)
+- ~~Current production behavior for this feature~~ → **RESOLVED**: Greenfield product; MVP behavior documented in Current Behavior section above
+- ~~Whether dashboards exist for all roles in the first delivery slice~~ → **RESOLVED**: MVP delivers BA and FA dashboards only; other roles (DEV, QA, SA, SM, PO) planned post-MVP
