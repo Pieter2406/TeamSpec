@@ -1,15 +1,20 @@
 import { Chip, Box, IconButton, Tooltip } from '@mui/material';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
+import BusinessIcon from '@mui/icons-material/Business';
+import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import { useRole } from '../contexts/RoleContext';
 
-const ROLE_COLORS: Record<string, 'primary' | 'secondary'> = {
-    BA: 'primary',
-    FA: 'secondary',
-};
-
-const ROLE_LABELS: Record<string, string> = {
-    BA: 'Business Analyst',
-    FA: 'Functional Analyst',
+const ROLE_CONFIG: Record<string, { label: string; icon: typeof BusinessIcon; bgColor: string }> = {
+    BA: {
+        label: 'Business Analyst',
+        icon: BusinessIcon,
+        bgColor: 'rgba(255,255,255,0.2)',
+    },
+    FA: {
+        label: 'Functional Analyst',
+        icon: AccountTreeIcon,
+        bgColor: 'rgba(255,255,255,0.2)',
+    },
 };
 
 export function RoleBadge() {
@@ -17,16 +22,41 @@ export function RoleBadge() {
 
     if (!role) return null;
 
+    const config = ROLE_CONFIG[role];
+    const IconComponent = config.icon;
+
     return (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Chip
-                label={`${role} - ${ROLE_LABELS[role]}`}
-                color={ROLE_COLORS[role]}
-                variant="filled"
-                size="medium"
+                icon={<IconComponent sx={{ color: 'white !important' }} />}
+                label={config.label}
+                sx={{
+                    bgcolor: config.bgColor,
+                    color: 'white',
+                    fontWeight: 600,
+                    fontSize: '0.875rem',
+                    py: 2.5,
+                    px: 1,
+                    '& .MuiChip-icon': {
+                        color: 'white',
+                    },
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(255,255,255,0.3)',
+                }}
             />
             <Tooltip title="Switch Role">
-                <IconButton size="small" onClick={clearRole} aria-label="switch role">
+                <IconButton
+                    size="small"
+                    onClick={clearRole}
+                    aria-label="switch role"
+                    sx={{
+                        color: 'white',
+                        bgcolor: 'rgba(255,255,255,0.1)',
+                        '&:hover': {
+                            bgcolor: 'rgba(255,255,255,0.2)',
+                        },
+                    }}
+                >
                     <SwapHorizIcon />
                 </IconButton>
             </Tooltip>

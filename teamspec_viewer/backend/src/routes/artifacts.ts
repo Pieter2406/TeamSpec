@@ -51,7 +51,7 @@ async function extractTitle(filePath: string): Promise<string> {
 
         // Split by any line ending (CRLF or LF)
         const lines = content.split(/\r?\n/);
-        
+
         // Find and skip YAML frontmatter
         let startIndex = 0;
         if (lines[0]?.trim() === '---') {

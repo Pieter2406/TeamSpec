@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Box, Typography, Paper } from '@mui/material';
+import { Box, Typography, Container, Grid, Alert, Breadcrumbs, Link } from '@mui/material';
+import HomeIcon from '@mui/icons-material/Home';
 import {
     getFeatures,
     getFeatureIncrements,
@@ -45,52 +46,93 @@ export function FADashboard() {
     }, []);
 
     return (
-        <Box sx={{ p: 3 }}>
-            <Typography variant="h4" gutterBottom>
-                FA Dashboard
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                Product: {PRODUCT_ID} | Project: {PROJECT_ID}
-            </Typography>
+        <Box sx={{ bgcolor: '#f8fafc', minHeight: 'calc(100vh - 64px)' }}>
+            <Container maxWidth="xl" sx={{ py: 4 }}>
+                {/* Breadcrumbs */}
+                <Breadcrumbs sx={{ mb: 3 }}>
+                    <Link
+                        color="inherit"
+                        href="#"
+                        sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
+                    >
+                        <HomeIcon sx={{ fontSize: 18 }} />
+                        Home
+                    </Link>
+                    <Typography color="text.primary" fontWeight={600}>
+                        FA Dashboard
+                    </Typography>
+                </Breadcrumbs>
 
-            {error && (
-                <Paper sx={{ p: 2, mb: 2, bgcolor: 'error.light' }}>
-                    <Typography color="error.contrastText">{error}</Typography>
-                </Paper>
-            )}
+                {/* Page Header */}
+                <Box sx={{ mb: 4 }}>
+                    <Typography
+                        variant="h4"
+                        sx={{
+                            fontWeight: 800,
+                            color: '#1e293b',
+                            mb: 1,
+                        }}
+                    >
+                        Functional Analysis Dashboard
+                    </Typography>
+                    <Typography variant="body1" sx={{ color: '#64748b' }}>
+                        Product: <strong>{PRODUCT_ID}</strong> &bull; Project: <strong>{PROJECT_ID}</strong>
+                    </Typography>
+                </Box>
 
-            <ArtifactList
-                title="Features"
-                artifacts={features}
-                loading={loading}
-                onSelect={setSelectedArtifact}
-            />
+                {/* Error Alert */}
+                {error && (
+                    <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+                        {error}
+                    </Alert>
+                )}
 
-            <ArtifactList
-                title="Feature Increments"
-                artifacts={featureIncrements}
-                loading={loading}
-                onSelect={setSelectedArtifact}
-            />
+                {/* Artifact Grid */}
+                <Grid container spacing={3}>
+                    <Grid size={{ xs: 12, md: 6 }}>
+                        <ArtifactList
+                            title="Features"
+                            artifacts={features}
+                            loading={loading}
+                            onSelect={setSelectedArtifact}
+                            icon="folder"
+                        />
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 6 }}>
+                        <ArtifactList
+                            title="Feature Increments"
+                            artifacts={featureIncrements}
+                            loading={loading}
+                            onSelect={setSelectedArtifact}
+                            icon="document"
+                        />
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 6 }}>
+                        <ArtifactList
+                            title="Epics"
+                            artifacts={epics}
+                            loading={loading}
+                            onSelect={setSelectedArtifact}
+                            icon="folder"
+                        />
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 6 }}>
+                        <ArtifactList
+                            title="Stories"
+                            artifacts={stories}
+                            loading={loading}
+                            onSelect={setSelectedArtifact}
+                            icon="document"
+                        />
+                    </Grid>
+                </Grid>
 
-            <ArtifactList
-                title="Epics"
-                artifacts={epics}
-                loading={loading}
-                onSelect={setSelectedArtifact}
-            />
-
-            <ArtifactList
-                title="Stories"
-                artifacts={stories}
-                loading={loading}
-                onSelect={setSelectedArtifact}
-            />
-
-            <ArtifactReader
-                artifact={selectedArtifact}
-                onClose={() => setSelectedArtifact(null)}
-            />
+                {/* Artifact Reader Drawer */}
+                <ArtifactReader
+                    artifact={selectedArtifact}
+                    onClose={() => setSelectedArtifact(null)}
+                />
+            </Container>
         </Box>
     );
 }

@@ -87,34 +87,56 @@ export function TbdHighlighter({ content, children }: TbdHighlighterProps) {
                     sx={{
                         position: 'sticky',
                         top: 0,
-                        bgcolor: 'background.paper',
+                        background: 'linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%)',
                         zIndex: 10,
-                        py: 1,
-                        px: 2,
-                        mb: 2,
-                        borderBottom: 1,
-                        borderColor: 'divider',
+                        py: 1.5,
+                        px: 3,
+                        mb: 0,
+                        borderBottom: '2px solid #ffc107',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: 1,
+                        gap: 2,
+                        boxShadow: '0 4px 12px rgba(255, 193, 7, 0.2)',
                     }}
                 >
                     <Chip
-                        label={`${tbdCount} TBD${tbdCount > 1 ? 's' : ''}`}
-                        color="warning"
-                        size="small"
+                        label={`⚠️ ${tbdCount} TBD${tbdCount > 1 ? 's' : ''} to resolve`}
+                        sx={{
+                            bgcolor: '#ffc107',
+                            color: '#7c4d00',
+                            fontWeight: 700,
+                            fontSize: '0.85rem',
+                        }}
+                        size="medium"
                     />
-                    <Typography variant="body2" color="text.secondary">
-                        {currentTbdIndex} of {tbdCount}
+                    <Typography
+                        variant="body2"
+                        sx={{ color: '#856404', fontWeight: 500 }}
+                    >
+                        Viewing {currentTbdIndex} of {tbdCount}
                     </Typography>
-                    <Box sx={{ ml: 'auto', display: 'flex', gap: 0.5 }}>
-                        <Tooltip title="Previous TBD">
-                            <IconButton size="small" onClick={goToPrevTbd}>
+                    <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
+                        <Tooltip title="Previous TBD (Ctrl+↑)">
+                            <IconButton
+                                size="small"
+                                onClick={goToPrevTbd}
+                                sx={{
+                                    bgcolor: 'rgba(0,0,0,0.08)',
+                                    '&:hover': { bgcolor: 'rgba(0,0,0,0.15)' },
+                                }}
+                            >
                                 <NavigateBeforeIcon />
                             </IconButton>
                         </Tooltip>
-                        <Tooltip title="Next TBD">
-                            <IconButton size="small" onClick={goToNextTbd}>
+                        <Tooltip title="Next TBD (Ctrl+↓)">
+                            <IconButton
+                                size="small"
+                                onClick={goToNextTbd}
+                                sx={{
+                                    bgcolor: 'rgba(0,0,0,0.08)',
+                                    '&:hover': { bgcolor: 'rgba(0,0,0,0.15)' },
+                                }}
+                            >
                                 <NavigateNextIcon />
                             </IconButton>
                         </Tooltip>
