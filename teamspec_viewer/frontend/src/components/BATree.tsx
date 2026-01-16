@@ -11,13 +11,12 @@ import { useState, useEffect, useCallback } from 'react';
 import { Box, Typography, Skeleton, CircularProgress } from '@mui/material';
 import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView';
 import { TreeItem } from '@mui/x-tree-view/TreeItem';
-import ArticleIcon from '@mui/icons-material/Article';
-import DescriptionIcon from '@mui/icons-material/Description';
 import {
     BARelationshipsResponse,
     BAIInfo,
     getBARelationships,
 } from '../api/artifacts';
+import { getArtifactIcon } from '../utils/artifactIcons';
 
 // ============================================================================
 // Types
@@ -142,6 +141,12 @@ export function BATree({
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [expandedItems, setExpandedItems] = useState<string[]>([]);
+    
+    // Get icon configurations
+    const baIconConfig = getArtifactIcon('business-analysis');
+    const BAIcon = baIconConfig.icon;
+    const baiIconConfig = getArtifactIcon('ba-increment');
+    const BAIIcon = baiIconConfig.icon;
 
     // Fetch relationship tree
     useEffect(() => {
@@ -254,7 +259,7 @@ export function BATree({
                 label={
                     <ClickableLabel nodeData={nodeData}>
                         <NodeLabel
-                            icon={<DescriptionIcon sx={{ fontSize: 16 }} />}
+                            icon={<BAIIcon sx={{ fontSize: 16, color: baiIconConfig.color }} />}
                             title={bai.title}
                             status={bai.status}
                             badge={bai.project}
@@ -290,7 +295,7 @@ export function BATree({
                     label={
                         <ClickableLabel nodeData={baNodeData}>
                             <NodeLabel
-                                icon={<ArticleIcon sx={{ fontSize: 18, color: '#10b981' }} />}
+                                icon={<BAIcon sx={{ fontSize: 18, color: baIconConfig.color }} />}
                                 title={ba.title}
                                 status={ba.status}
                                 badge={`${baIncrements.length} BAIs`}

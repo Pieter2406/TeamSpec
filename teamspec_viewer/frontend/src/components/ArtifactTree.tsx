@@ -12,10 +12,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { Box, Typography, Skeleton, CircularProgress } from '@mui/material';
 import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView';
 import { TreeItem } from '@mui/x-tree-view/TreeItem';
-import FolderIcon from '@mui/icons-material/Folder';
-import DescriptionIcon from '@mui/icons-material/Description';
-import AccountTreeIcon from '@mui/icons-material/AccountTree';
-import AssignmentIcon from '@mui/icons-material/Assignment';
 import {
     FeatureRelationshipsResponse,
     FIInfo,
@@ -23,6 +19,7 @@ import {
     StoryInfo,
     getFeatureRelationships,
 } from '../api/artifacts';
+import { getArtifactIcon } from '../utils/artifactIcons';
 
 // ============================================================================
 // Types
@@ -257,6 +254,8 @@ export function ArtifactTree({
     // Render Story TreeItem
     const renderStory = (story: StoryInfo, fiProject: string) => {
         const nodeData = buildNodeData('story', story.id, story.title, story.path, story.status, fiProject);
+        const iconConfig = getArtifactIcon('story');
+        const IconComponent = iconConfig.icon;
         return (
             <TreeItem
                 key={`story-${story.id}`}
@@ -264,7 +263,7 @@ export function ArtifactTree({
                 label={
                     <ClickableLabel nodeData={nodeData}>
                         <NodeLabel
-                            icon={<AssignmentIcon sx={{ fontSize: 16 }} />}
+                            icon={<IconComponent sx={{ fontSize: 16, color: iconConfig.color }} />}
                             title={story.title}
                             status={story.status}
                         />
@@ -277,6 +276,8 @@ export function ArtifactTree({
     // Render Epic TreeItem
     const renderEpic = (epic: EpicInfo, fiProject: string) => {
         const nodeData = buildNodeData('epic', epic.id, epic.title, epic.path, epic.status, fiProject);
+        const iconConfig = getArtifactIcon('epic');
+        const IconComponent = iconConfig.icon;
         return (
             <TreeItem
                 key={`epic-${epic.id}`}
@@ -284,7 +285,7 @@ export function ArtifactTree({
                 label={
                     <ClickableLabel nodeData={nodeData}>
                         <NodeLabel
-                            icon={<AccountTreeIcon sx={{ fontSize: 16 }} />}
+                            icon={<IconComponent sx={{ fontSize: 16, color: iconConfig.color }} />}
                             title={epic.title}
                             status={epic.status}
                             badge={`${epic.stories.length} stories`}
@@ -300,6 +301,8 @@ export function ArtifactTree({
     // Render FI TreeItem
     const renderFI = (fi: FIInfo) => {
         const nodeData = buildNodeData('feature-increment', fi.id, fi.title, fi.path, fi.status, fi.project);
+        const iconConfig = getArtifactIcon('feature-increment');
+        const IconComponent = iconConfig.icon;
         return (
             <TreeItem
                 key={`fi-${fi.id}`}
@@ -307,7 +310,7 @@ export function ArtifactTree({
                 label={
                     <ClickableLabel nodeData={nodeData}>
                         <NodeLabel
-                            icon={<DescriptionIcon sx={{ fontSize: 16 }} />}
+                            icon={<IconComponent sx={{ fontSize: 16, color: iconConfig.color }} />}
                             title={fi.title}
                             status={fi.status}
                             badge={fi.project}
@@ -321,6 +324,8 @@ export function ArtifactTree({
     };
 
     const featureNodeData = buildNodeData('feature', feature.id, feature.title, feature.path, feature.status);
+    const featureIconConfig = getArtifactIcon('feature');
+    const FeatureIcon = featureIconConfig.icon;
 
     return (
         <Box sx={{ p: 1 }}>
@@ -345,7 +350,7 @@ export function ArtifactTree({
                     label={
                         <ClickableLabel nodeData={featureNodeData}>
                             <NodeLabel
-                                icon={<FolderIcon sx={{ fontSize: 18, color: '#3b82f6' }} />}
+                                icon={<FeatureIcon sx={{ fontSize: 18, color: featureIconConfig.color }} />}
                                 title={feature.title}
                                 status={feature.status}
                                 badge={`${featureIncrements.length} FIs`}

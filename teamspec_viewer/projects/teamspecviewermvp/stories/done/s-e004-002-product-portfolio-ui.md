@@ -3,6 +3,7 @@
 artifact_kind: story
 spec_version: "4.0"
 template_version: "4.0.1"
+title: "Product Portfolio UI Display"
 
 # === Ownership ===
 role_owner: FA
@@ -50,7 +51,7 @@ anti_keywords:
 |-------|-------|
 | **Story ID** | s-e004-002 |
 | **Epic** | epic-TSV-004 |
-| **Status** | Backlog |
+| **Status** | Done |
 | **Estimate** | 5 SP |
 | **Author** | AI-Generated |
 | **Sprint** | — |
@@ -154,6 +155,13 @@ anti_keywords:
 - Layout: CSS Grid or Flexbox for responsive card layout.
 - State: Selected product stored in React context or URL state.
 - MUI: Use `Card`, `CardContent`, `Chip` for badges.
+
+---
+
+## Links
+
+- See Linked Epic section above
+- See Linked Feature-Increment section above
 
 ---
 

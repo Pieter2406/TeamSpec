@@ -56,6 +56,36 @@ When creating or editing TeamSpec artifacts:
 7. **Delta-only for stories** — Stories describe changes, NEVER full behavior
 8. **PRX is immutable** — Never change a product's prefix after creation
 9. **Source-lock all claims** — Every statement needs file path + section OR `{TBD}`
+10. **Always include title** — Every artifact MUST have a `title` field in frontmatter (20-40 characters)
+
+#### Title Generation Guidelines
+
+All artifacts require a human-readable `title` field (20-40 characters) for display in teamspec_viewer:
+
+**Requirements:**
+- Length: Exactly 20-40 characters
+- Style: Clear, descriptive noun phrases
+- Format: Title case or sentence case
+- Content: Captures the artifact's essence without technical jargon
+
+**Good Examples:**
+- "Role-Specific Dashboards" (27 chars)
+- "OAuth Login Implementation" (27 chars)
+- "User Authentication Flow" (25 chars)
+- "Payment Gateway Integration" (28 chars)
+- "Quarterly Performance Review" (29 chars)
+
+**Bad Examples:**
+- "Login" (5 chars — too short)
+- "Implementation of a comprehensive user authentication and authorization system" (78 chars — too long)
+- "f-ACME-001-user-auth" (20 chars — uses technical ID)
+- "TODO: Add title here" (20 chars — placeholder)
+
+**Pattern Tips:**
+- Features: "{Capability} {Area}" (e.g., "Advanced Search Filters")
+- Stories: "{Action} {Object}" (e.g., "Add Google OAuth Button")
+- Epics: "{Initiative} {Scope}" (e.g., "Checkout Flow Redesign")
+- Technical: "{Component} {Purpose}" (e.g., "API Rate Limiting Logic")
 
 ### 0.3 Artifact Quick-Lookup
 
@@ -77,6 +107,7 @@ Templates and artifacts contain YAML frontmatter with LLM-relevant metadata:
 ```yaml
 ---
 artifact_kind: feature | story | epic | fi | ...
+title: "Short human-readable title (20-40 chars)"
 keywords: [searchable terms]
 anti_keywords: [terms that indicate wrong artifact]
 links_required: [mandatory relationships]
@@ -108,7 +139,7 @@ When reading or generating artifacts, recognize these standard markers:
 
 | Marker Type | Examples | Purpose |
 |-------------|----------|---------|
-| **Frontmatter** | `artifact_kind`, `role_owner`, `keywords` | Machine-readable metadata |
+| **Frontmatter** | `artifact_kind`, `title`, `role_owner`, `keywords` | Machine-readable metadata |
 | **Section** | `## Purpose`, `## Scope`, `## Current Behavior` | Content boundaries |
 | **Contract** | `> **Contract:**`, `> **Not this:**` | Section rules |
 | **Inline** | `{TBD}`, `BR-XXX-NNN:`, `→ artifact-id` | Specific callouts |

@@ -3,6 +3,7 @@
 artifact_kind: story
 spec_version: "4.0"
 template_version: "4.0.1"
+title: "Search Filter Controls"
 
 # === Ownership ===
 role_owner: FA
@@ -51,7 +52,7 @@ anti_keywords:
 |-------|-------|
 | **Story ID** | s-e003-003 |
 | **Epic** | epic-TSV-003 |
-| **Status** | Backlog |
+| **Status** | Done |
 | **Estimate** | 3 SP |
 | **Author** | AI-Generated |
 | **Sprint** | — |
@@ -153,6 +154,13 @@ anti_keywords:
 - Frontend: Filter chips or dropdown selectors next to search input.
 - Role detection: Parse `role_owner` from artifact front matter.
 - Artifact type detection: Parse `artifact_kind` from front matter or filename pattern.
+
+---
+
+## Links
+
+- See Linked Epic section above
+- See Linked Feature-Increment section above
 
 ---
 

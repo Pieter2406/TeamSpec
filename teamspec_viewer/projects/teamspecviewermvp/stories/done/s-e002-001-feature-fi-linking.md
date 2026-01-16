@@ -3,6 +3,7 @@
 artifact_kind: story
 spec_version: "4.0"
 template_version: "4.0.1"
+title: "Feature to FI Link Display"
 
 # === Ownership ===
 role_owner: FA
@@ -50,7 +51,7 @@ anti_keywords:
 |-------|-------|
 | **Story ID** | s-e002-001 |
 | **Epic** | epic-TSV-002 |
-| **Status** | Backlog |
+| **Status** | Done |
 | **Estimate** | 3 SP |
 | **Author** | AI-Generated |
 | **Sprint** | — |
@@ -135,6 +136,13 @@ anti_keywords:
 
 - Backend: New endpoint `/api/features/:featureId/increments` to query FIs by target feature.
 - Frontend: Feature list component and FI linking panel in feature detail view.
+
+---
+
+## Links
+
+- See Linked Epic section above
+- See Linked Feature-Increment section above
 
 ---
 

@@ -3,6 +3,7 @@
 artifact_kind: story
 spec_version: "4.0"
 template_version: "4.0.1"
+title: "User Role Selection Screen"
 
 # === Ownership ===
 role_owner: FA
@@ -49,7 +50,7 @@ anti_keywords:
 |-------|-------|
 | **Story ID** | s-e001-002 |
 | **Epic** | epic-TSV-001 |
-| **Status** | Backlog |
+| **Status** | Done |
 | **Estimate** | 2 SP |
 | **Author** | AI-Generated |
 | **Sprint** | — |

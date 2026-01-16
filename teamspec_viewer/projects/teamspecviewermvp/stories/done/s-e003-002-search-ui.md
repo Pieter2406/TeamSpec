@@ -3,6 +3,7 @@
 artifact_kind: story
 spec_version: "4.0"
 template_version: "4.0.1"
+title: "Search Interface Component"
 
 # === Ownership ===
 role_owner: FA
@@ -50,7 +51,7 @@ anti_keywords:
 |-------|-------|
 | **Story ID** | s-e003-002 |
 | **Epic** | epic-TSV-003 |
-| **Status** | Backlog |
+| **Status** | Done |
 | **Estimate** | 3 SP |
 | **Author** | AI-Generated |
 | **Sprint** | — |
@@ -151,6 +152,13 @@ anti_keywords:
 - MUI components: `TextField` with `InputAdornment` (search icon), `List`, `ListItem`.
 - State management: Debounce search input (300ms) before API call.
 - Consider: Keyboard navigation in results list.
+
+---
+
+## Links
+
+- See Linked Epic section above
+- See Linked Feature-Increment section above
 
 ---
 

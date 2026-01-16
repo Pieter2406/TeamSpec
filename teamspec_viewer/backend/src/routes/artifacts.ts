@@ -53,7 +53,7 @@ async function extractTitle(filePath: string): Promise<string> {
         // Split by any line ending (CRLF or LF)
         const lines = content.split(/\r?\n/);
 
-        // Find and skip YAML frontmatter
+        // Check for YAML frontmatter title first
         let startIndex = 0;
         if (lines[0]?.trim() === '---') {
             for (let i = 1; i < lines.length; i++) {
@@ -61,10 +61,15 @@ async function extractTitle(filePath: string): Promise<string> {
                     startIndex = i + 1;
                     break;
                 }
+                // Check for title field in frontmatter
+                const titleMatch = lines[i].match(/^title:\s*["']?([^"'\n]+)["']?\s*$/);
+                if (titleMatch) {
+                    return titleMatch[1].trim();
+                }
             }
         }
 
-        // Find the first # heading after frontmatter
+        // Fallback: Find the first # heading after frontmatter
         for (let i = startIndex; i < lines.length; i++) {
             const match = lines[i].match(/^#\s+(.+)$/);
             if (match) {

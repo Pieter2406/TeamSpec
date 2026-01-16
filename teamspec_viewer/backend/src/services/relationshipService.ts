@@ -64,19 +64,32 @@ export interface FeatureRelationshipsResponse {
 // ============================================================================
 
 /**
- * Extract title from markdown file (first # heading after frontmatter)
+ * Extract title from markdown file (frontmatter title field, then first # heading)
  */
 function extractTitle(content: string): string {
     const lines = content.split(/\r?\n/);
     let inFrontmatter = false;
+    let frontmatterTitle: string | undefined;
 
     for (const line of lines) {
         if (line.trim() === '---') {
+            // Exiting frontmatter - check if we found a title
+            if (inFrontmatter && frontmatterTitle) {
+                return frontmatterTitle;
+            }
             inFrontmatter = !inFrontmatter;
             continue;
         }
-        if (inFrontmatter) continue;
+        if (inFrontmatter) {
+            // Check for title field in frontmatter
+            const titleMatch = line.match(/^title:\s*["']?([^"'\n]+)["']?\s*$/);
+            if (titleMatch) {
+                frontmatterTitle = titleMatch[1].trim();
+            }
+            continue;
+        }
 
+        // Fallback: first # heading after frontmatter
         const match = line.match(/^#\s+(.+)$/);
         if (match) {
             // Remove backticks and formatting
@@ -299,6 +312,7 @@ async function getEpicInfo(project: string, epicId: string): Promise<Omit<EpicIn
 
 /**
  * Get stories for an epic by matching s-eXXX-* pattern
+ * Deduplicates by story ID, keeping the most advanced status version
  */
 async function getStoriesForEpic(project: string, epicId: string): Promise<StoryInfo[]> {
     // Extract epic number (e.g., epic-TSV-005 -> 005)
@@ -308,8 +322,18 @@ async function getStoriesForEpic(project: string, epicId: string): Promise<Story
     const epicNum = epicNumMatch[1];
     const storiesPattern = new RegExp(`^s-e${epicNum}-\\d+.*\\.md$`);
 
-    const stories: StoryInfo[] = [];
+    // Use a Map to deduplicate by story ID, keeping most advanced status
+    const storiesMap = new Map<string, StoryInfo>();
     const storiesBase = join(WORKSPACE_ROOT, 'projects', project, 'stories');
+
+    // Status priority: higher number = more advanced (prefer these)
+    const statusPriority: Record<string, number> = {
+        'Backlog': 1,
+        'Refining': 2,
+        'Ready': 3,
+        'In Progress': 4,
+        'Done': 5,
+    };
 
     // Scan all story folders
     const folders = ['backlog', 'ready-to-refine', 'ready-to-develop', 'in-progress', 'done'];
@@ -332,12 +356,18 @@ async function getStoriesForEpic(project: string, epicId: string): Promise<Story
                                     folder === 'ready-to-refine' ? 'Refining' :
                                         'Backlog';
 
-                    stories.push({
-                        id: file.replace('.md', ''),
-                        title: extractTitle(content),
-                        status: folderStatus,
-                        path: relative(WORKSPACE_ROOT, filePath).replace(/\\/g, '/'),
-                    });
+                    const storyId = file.replace('.md', '');
+                    const existing = storiesMap.get(storyId);
+
+                    // Keep story with higher priority status (or add if new)
+                    if (!existing || (statusPriority[folderStatus] || 0) > (statusPriority[existing.status || 'Backlog'] || 0)) {
+                        storiesMap.set(storyId, {
+                            id: storyId,
+                            title: extractTitle(content),
+                            status: folderStatus,
+                            path: relative(WORKSPACE_ROOT, filePath).replace(/\\/g, '/'),
+                        });
+                    }
                 }
             }
         } catch {
@@ -345,7 +375,8 @@ async function getStoriesForEpic(project: string, epicId: string): Promise<Story
         }
     }
 
-    // Sort stories by ID
+    // Convert map to array and sort by ID
+    const stories = Array.from(storiesMap.values());
     stories.sort((a, b) => a.id.localeCompare(b.id));
 
     return stories;

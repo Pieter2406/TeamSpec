@@ -3,6 +3,7 @@
 artifact_kind: bai
 spec_version: "4.0"
 template_version: "4.0.1"
+title: "{Short BAI title (20-40 chars)}"
 
 # === Ownership ===
 role_owner: BA

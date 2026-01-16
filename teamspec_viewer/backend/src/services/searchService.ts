@@ -51,7 +51,7 @@ async function findMarkdownFilesRecursive(dir: string): Promise<string[]> {
 function extractTitle(content: string, filePath: string): string {
     const lines = content.split(/\r?\n/);
 
-    // Skip YAML frontmatter
+    // Check for YAML frontmatter title first
     let startIndex = 0;
     if (lines[0]?.trim() === '---') {
         for (let i = 1; i < lines.length; i++) {
@@ -59,10 +59,15 @@ function extractTitle(content: string, filePath: string): string {
                 startIndex = i + 1;
                 break;
             }
+            // Check for title field in frontmatter
+            const titleMatch = lines[i].match(/^title:\s*["']?([^"'\n]+)["']?\s*$/);
+            if (titleMatch) {
+                return titleMatch[1].trim();
+            }
         }
     }
 
-    // Find first heading
+    // Fallback: Find first heading after frontmatter
     for (let i = startIndex; i < lines.length; i++) {
         const match = lines[i].match(/^#\s+(.+)$/);
         if (match) {

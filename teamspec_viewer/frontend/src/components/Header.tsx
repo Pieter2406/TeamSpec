@@ -1,7 +1,10 @@
-import { AppBar, Toolbar, Typography, Box, Container, IconButton } from '@mui/material';
+import { useState } from 'react';
+import { AppBar, Toolbar, Typography, Box, Container, IconButton, Tooltip } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import { RoleBadge } from './RoleBadge';
 import { SearchBar } from './SearchBar';
+import { IconLegend } from './IconLegend';
 
 interface HeaderProps {
     onSearch?: (query: string) => void;
@@ -9,6 +12,8 @@ interface HeaderProps {
 }
 
 export function Header({ onSearch, onHomeClick }: HeaderProps) {
+    const [legendOpen, setLegendOpen] = useState(false);
+
     return (
         <AppBar
             position="sticky"
@@ -67,9 +72,22 @@ export function Header({ onSearch, onHomeClick }: HeaderProps) {
                     <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'center' }}>
                         {onSearch && <SearchBar onSearch={onSearch} />}
                     </Box>
+                    <Tooltip title="Artifact Types">
+                        <IconButton
+                            onClick={() => setLegendOpen(true)}
+                            sx={{
+                                color: 'white',
+                                bgcolor: 'rgba(255,255,255,0.1)',
+                                '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' },
+                            }}
+                        >
+                            <HelpOutlineIcon />
+                        </IconButton>
+                    </Tooltip>
                     <RoleBadge />
                 </Toolbar>
             </Container>
+            <IconLegend open={legendOpen} onClose={() => setLegendOpen(false)} />
         </AppBar>
     );
 }

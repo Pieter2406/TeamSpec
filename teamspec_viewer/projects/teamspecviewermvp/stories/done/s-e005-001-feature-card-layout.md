@@ -3,6 +3,7 @@
 artifact_kind: story
 spec_version: "4.0"
 template_version: "4.0.1"
+title: "Feature Card Layout Design"
 
 # === Ownership ===
 role_owner: FA
@@ -48,7 +49,7 @@ anti_keywords:
 |-------|-------|
 | **Story ID** | s-e005-001 |
 | **Epic** | epic-TSV-005 |
-| **Status** | Backlog |
+| **Status** | Done |
 | **Estimate** | 3 SP |
 | **Author** | AI-Generated |
 | **Sprint** | — |

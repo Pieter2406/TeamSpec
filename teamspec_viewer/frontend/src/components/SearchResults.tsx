@@ -16,20 +16,12 @@ import SearchIcon from '@mui/icons-material/Search';
 import { searchArtifacts, SearchResult, Artifact } from '../api/artifacts';
 import { SearchFilters } from './SearchFilters';
 import { ArtifactReader } from './ArtifactReader';
+import { getArtifactIcon, ArtifactType } from '../utils/artifactIcons';
 
 interface SearchResultsProps {
     query: string;
     onClose: () => void;
 }
-
-const TYPE_COLORS: Record<string, { bg: string; color: string }> = {
-    'feature': { bg: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)', color: 'white' },
-    'feature-increment': { bg: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' },
-    'epic': { bg: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', color: 'white' },
-    'story': { bg: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', color: 'white' },
-    'business-analysis': { bg: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)', color: '#333' },
-    'dev-plan': { bg: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)', color: '#333' },
-};
 
 export function SearchResults({ query, onClose: _onClose }: SearchResultsProps) {
     const [results, setResults] = useState<SearchResult[]>([]);
@@ -131,78 +123,98 @@ export function SearchResults({ query, onClose: _onClose }: SearchResultsProps) 
                 {!loading && !error && results.length > 0 && (
                     <Paper elevation={0} sx={{ borderRadius: 3, overflow: 'hidden' }}>
                         <List sx={{ py: 0 }}>
-                            {results.map((result, index) => (
-                                <ListItem
-                                    key={result.id}
-                                    disablePadding
-                                    sx={{
-                                        borderBottom: index < results.length - 1 ? '1px solid #f1f5f9' : 'none',
-                                    }}
-                                >
-                                    <ListItemButton
-                                        onClick={() => handleResultClick(result)}
-                                        sx={{ py: 2.5, px: 3 }}
+                            {results.map((result, index) => {
+                                const artifactType = result.type as ArtifactType;
+                                const iconConfig = getArtifactIcon(artifactType);
+                                const IconComponent = iconConfig.icon;
+                                return (
+                                    <ListItem
+                                        key={result.id}
+                                        disablePadding
+                                        sx={{
+                                            borderBottom: index < results.length - 1 ? '1px solid #f1f5f9' : 'none',
+                                        }}
                                     >
-                                        <ListItemText
-                                            primary={
-                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.5 }}>
-                                                    <Typography sx={{ fontWeight: 600, color: '#1e293b' }}>
-                                                        {result.title}
-                                                    </Typography>
-                                                    <Chip
-                                                        label={result.type}
-                                                        size="small"
-                                                        sx={{
-                                                            background: TYPE_COLORS[result.type]?.bg || '#e2e8f0',
-                                                            color: TYPE_COLORS[result.type]?.color || '#475569',
-                                                            fontWeight: 600,
-                                                            fontSize: '0.7rem',
-                                                        }}
-                                                    />
-                                                    {result.role && result.role !== 'unknown' && (
+                                        <ListItemButton
+                                            onClick={() => handleResultClick(result)}
+                                            sx={{ py: 2.5, px: 3 }}
+                                        >
+                                            <Box
+                                                sx={{
+                                                    width: 40,
+                                                    height: 40,
+                                                    borderRadius: 1.5,
+                                                    bgcolor: `${iconConfig.color}15`,
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    flexShrink: 0,
+                                                    mr: 2,
+                                                }}
+                                            >
+                                                <IconComponent sx={{ fontSize: 20, color: iconConfig.color }} />
+                                            </Box>
+                                            <ListItemText
+                                                primary={
+                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.5 }}>
+                                                        <Typography sx={{ fontWeight: 600, color: '#1e293b' }}>
+                                                            {result.title}
+                                                        </Typography>
                                                         <Chip
-                                                            label={result.role}
+                                                            label={result.type}
                                                             size="small"
-                                                            variant="outlined"
                                                             sx={{
+                                                                bgcolor: `${iconConfig.color}20`,
+                                                                color: iconConfig.color,
+                                                                fontWeight: 600,
                                                                 fontSize: '0.7rem',
-                                                                fontWeight: 500,
                                                             }}
                                                         />
-                                                    )}
-                                                </Box>
-                                            }
-                                            secondary={
-                                                <Box>
-                                                    <Typography
-                                                        variant="body2"
-                                                        sx={{
-                                                            color: '#64748b',
-                                                            fontFamily: 'monospace',
-                                                            fontSize: '0.75rem',
-                                                            mb: 0.5,
-                                                        }}
-                                                    >
-                                                        {result.path}
-                                                    </Typography>
-                                                    {result.snippet && (
+                                                        {result.role && result.role !== 'unknown' && (
+                                                            <Chip
+                                                                label={result.role}
+                                                                size="small"
+                                                                variant="outlined"
+                                                                sx={{
+                                                                    fontSize: '0.7rem',
+                                                                    fontWeight: 500,
+                                                                }}
+                                                            />
+                                                        )}
+                                                    </Box>
+                                                }
+                                                secondary={
+                                                    <Box>
                                                         <Typography
                                                             variant="body2"
                                                             sx={{
-                                                                color: '#475569',
-                                                                fontSize: '0.85rem',
-                                                                lineHeight: 1.5,
+                                                                color: '#64748b',
+                                                                fontFamily: 'monospace',
+                                                                fontSize: '0.75rem',
+                                                                mb: 0.5,
                                                             }}
                                                         >
-                                                            {result.snippet}
+                                                            {result.path}
                                                         </Typography>
-                                                    )}
-                                                </Box>
-                                            }
-                                        />
-                                    </ListItemButton>
-                                </ListItem>
-                            ))}
+                                                        {result.snippet && (
+                                                            <Typography
+                                                                variant="body2"
+                                                                sx={{
+                                                                    color: '#475569',
+                                                                    fontSize: '0.85rem',
+                                                                    lineHeight: 1.5,
+                                                                }}
+                                                            >
+                                                                {result.snippet}
+                                                            </Typography>
+                                                        )}
+                                                    </Box>
+                                                }
+                                            />
+                                        </ListItemButton>
+                                    </ListItem>
+                                );
+                            })}
                         </List>
                     </Paper>
                 )}

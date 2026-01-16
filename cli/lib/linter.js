@@ -79,17 +79,39 @@ class LintResult {
 
 function parseYamlSimple(content) {
     const result = {};
-    const lines = content.split('\n');
+    const lines = content.split(/\r?\n/); // Handle both Unix (\n) and Windows (\r\n)
+    let currentArrayKey = null;
 
-    for (const line of lines) {
-        if (!line.trim() || line.trim().startsWith('#')) continue;
+    for (const rawLine of lines) {
+        const line = rawLine;
+        const trimmed = line.trim();
 
-        const match = line.match(/^\s*(\w+[\w.-]*):\s*(.*)$/);
-        if (match) {
-            let [, key, value] = match;
+        // Blank lines end any array capture
+        if (!trimmed) {
+            currentArrayKey = null;
+            continue;
+        }
+
+        // Ignore comments
+        if (trimmed.startsWith('#')) continue;
+
+        // Key: value lines
+        const kvMatch = line.match(/^\s*(\w+[\w.-]*):\s*(.*)$/);
+        if (kvMatch) {
+            let [, key, value] = kvMatch;
             value = value.trim().replace(/^["']|["']$/g, '');
 
-            // Handle nested keys
+            // Array start: "key:" then list items follow with "- item"
+            if (!value) {
+                currentArrayKey = key;
+                if (!result[key]) result[key] = [];
+                continue;
+            }
+
+            // Non-empty value resets array capture
+            currentArrayKey = null;
+
+            // Handle nested keys (e.g., a.b: x)
             if (key.includes('.')) {
                 const parts = key.split('.');
                 let obj = result;
@@ -101,7 +123,19 @@ function parseYamlSimple(content) {
             } else {
                 result[key] = value;
             }
+
+            continue;
         }
+
+        // Array item: "- value"
+        const listMatch = line.match(/^\s*-\s+(.*)$/);
+        if (listMatch && currentArrayKey) {
+            const item = listMatch[1].trim().replace(/^["']|["']$/g, '');
+            result[currentArrayKey].push(item);
+            continue;
+        }
+
+        // If the line doesn't match known patterns, skip
     }
 
     return result;
@@ -111,7 +145,8 @@ function parseYamlSimple(content) {
  * Parse YAML frontmatter from markdown files
  */
 function parseFrontmatter(content) {
-    const match = content.match(/^---\n([\s\S]*?)\n---/);
+    // Handle both Unix (\n) and Windows (\r\n) line endings
+    const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
     if (!match) return {};
     return parseYamlSimple(match[1]);
 }
@@ -302,6 +337,24 @@ function checkSpecVersion(filePath, frontmatter, result) {
 }
 
 /**
+ * MV-005: title present and valid length (20-40 characters)
+ */
+function checkTitle(filePath, frontmatter, result) {
+    if (!frontmatter.title) {
+        result.add('MV-005', `Missing required frontmatter field: title`, filePath, SEVERITY.ERROR);
+        return;
+    }
+
+    const title = frontmatter.title.toString().trim();
+    const length = title.length;
+    if (length < 20) {
+        result.add('MV-005', `Title "${title}" is too short (${length} chars). Must be 20-40 characters.`, filePath, SEVERITY.ERROR);
+    } else if (length > 40) {
+        result.add('MV-005', `Title "${title.substring(0, 37)}..." is too long (${length} chars). Must be 20-40 characters.`, filePath, SEVERITY.ERROR);
+    }
+}
+
+/**
  * MV-003: role_owner present and valid
  */
 function checkRoleOwner(filePath, frontmatter, result) {
@@ -325,14 +378,21 @@ function checkKeywords(filePath, frontmatter, result) {
 }
 
 /**
- * MV-010: ## Purpose section exists
+ * MV-010: ## Purpose section exists (or equivalent like Overview, User Story)
  */
 function checkPurposeSection(filePath, content, result) {
     // Skip templates (they don't have filled purpose)
     if (filePath.includes('-template.md')) return;
 
-    if (!content.includes('## Purpose') && !content.includes('## 1. Purpose')) {
-        result.add('MV-010', `Missing required section: ## Purpose`, filePath, SEVERITY.ERROR);
+    // Accept ## Purpose, ## 1. Purpose, ## Overview, ## 1. Overview, ## User Story as equivalent
+    const hasPurposeSection = content.includes('## Purpose') ||
+        content.includes('## 1. Purpose') ||
+        content.includes('## Overview') ||
+        content.includes('## 1. Overview') ||
+        content.includes('## User Story');
+
+    if (!hasPurposeSection) {
+        result.add('MV-010', `Missing required section: ## Purpose (or ## Overview)`, filePath, SEVERITY.ERROR);
     }
 }
 
@@ -343,7 +403,8 @@ function checkLinksSection(filePath, content, result) {
     // Skip templates
     if (filePath.includes('-template.md')) return;
 
-    if (!content.includes('## Links') && !content.includes('## Related')) {
+    const hasLinks = content.includes('## Links') || content.includes('## Related') || content.includes('## Sources Consulted');
+    if (!hasLinks) {
         result.add('MV-011', `Missing recommended section: ## Links`, filePath, SEVERITY.WARNING);
     }
 }
@@ -367,7 +428,7 @@ function checkMarkerVocabulary(filePath, result, options = {}) {
         // Skip files without frontmatter (not TeamSpec artifacts)
         if (Object.keys(frontmatter).length === 0) return;
 
-        // MV-001 to MV-004: Frontmatter checks
+        // MV-001 to MV-005: Frontmatter checks
         if (!options.rule || options.rule === 'MV-001') {
             checkArtifactKind(filePath, frontmatter, result);
         }
@@ -379,6 +440,9 @@ function checkMarkerVocabulary(filePath, result, options = {}) {
         }
         if (!options.rule || options.rule === 'MV-004') {
             checkKeywords(filePath, frontmatter, result);
+        }
+        if (!options.rule || options.rule === 'MV-005') {
+            checkTitle(filePath, frontmatter, result);
         }
 
         // MV-010, MV-011: Section checks
@@ -820,35 +884,37 @@ function lintProduct(workspaceDir, productId, result, options) {
 
     // TS-PROD-002: product.yml validation
     if (!options.rule || options.rule === 'TS-PROD-002') {
-        const productConfig = checkProductYml(productDir, productId, result);
+        checkProductYml(productDir, productId, result);
+    }
 
-        if (productConfig) {
-            // Lint features naming
-            const featuresDir = path.join(productDir, 'features');
-            if (fs.existsSync(featuresDir)) {
-                const features = fs.readdirSync(featuresDir)
-                    .filter(f => f.endsWith('.md') && !f.toLowerCase().startsWith('readme') && f !== 'features-index.md' && f !== 'story-ledger.md');
+    // Lint features (naming + marker vocabulary)
+    const featuresDir = path.join(productDir, 'features');
+    if (fs.existsSync(featuresDir)) {
+        const features = fs.readdirSync(featuresDir)
+            .filter(f => f.endsWith('.md') && !f.toLowerCase().startsWith('readme') && f !== 'features-index.md' && f !== 'story-ledger.md');
 
-                for (const feature of features) {
-                    checkArtifactNaming(path.join(featuresDir, feature), 'feature', result, workspaceDir);
-                    // MV-*: Marker vocabulary checks
-                    if (!options.rule || options.rule.startsWith('MV-')) {
-                        checkMarkerVocabulary(path.join(featuresDir, feature), result, options);
-                    }
-                }
+        for (const feature of features) {
+            if (!options.rule || options.rule === 'TS-NAMING-001') {
+                checkArtifactNaming(path.join(featuresDir, feature), 'feature', result, workspaceDir);
             }
+            // MV-*: Marker vocabulary checks
+            if (!options.rule || options.rule.startsWith('MV-')) {
+                checkMarkerVocabulary(path.join(featuresDir, feature), result, options);
+            }
+        }
+    }
 
-            // Lint regression tests naming
-            const rtDir = path.join(productDir, 'qa', 'regression-tests');
-            if (fs.existsSync(rtDir)) {
-                const rtFiles = fs.readdirSync(rtDir).filter(f => f.endsWith('.md') && !f.toLowerCase().startsWith('readme'));
-                for (const rt of rtFiles) {
-                    checkArtifactNaming(path.join(rtDir, rt), 'product-regression-test', result, workspaceDir);
-                    // MV-*: Marker vocabulary checks
-                    if (!options.rule || options.rule.startsWith('MV-')) {
-                        checkMarkerVocabulary(path.join(rtDir, rt), result, options);
-                    }
-                }
+    // Lint regression tests (naming + marker vocabulary)
+    const rtDir = path.join(productDir, 'qa', 'regression-tests');
+    if (fs.existsSync(rtDir)) {
+        const rtFiles = fs.readdirSync(rtDir).filter(f => f.endsWith('.md') && !f.toLowerCase().startsWith('readme'));
+        for (const rt of rtFiles) {
+            if (!options.rule || options.rule === 'TS-NAMING-001') {
+                checkArtifactNaming(path.join(rtDir, rt), 'product-regression-test', result, workspaceDir);
+            }
+            // MV-*: Marker vocabulary checks
+            if (!options.rule || options.rule.startsWith('MV-')) {
+                checkMarkerVocabulary(path.join(rtDir, rt), result, options);
             }
         }
     }

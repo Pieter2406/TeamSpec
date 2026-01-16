@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Box, Typography, Container, Grid, Alert, Breadcrumbs, Link, Paper } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
-import ArticleIcon from '@mui/icons-material/Article';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import {
     getBusinessAnalysis,
     Artifact,
 } from '../api/artifacts';
+import { getArtifactIcon } from '../utils/artifactIcons';
 import { BACardList } from './BACard';
 import { BATree, BATreeNodeData } from './BATree';
 import { ArtifactReader } from './ArtifactReader';
@@ -15,6 +15,9 @@ import { ArtifactReader } from './ArtifactReader';
 const PRODUCT_ID = 'teamspec-viewer';
 
 export function BADashboard() {
+    // Get icon configurations
+    const baIconConfig = getArtifactIcon('business-analysis');
+    const BAIcon = baIconConfig.icon;
     const [baArtifacts, setBaArtifacts] = useState<Artifact[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -132,7 +135,7 @@ export function BADashboard() {
                                     gap: 1,
                                 }}
                             >
-                                <ArticleIcon sx={{ color: '#10b981' }} />
+                                <BAIcon sx={{ color: baIconConfig.color }} />
                                 Business Analysis
                             </Typography>
                             <BACardList
@@ -168,7 +171,7 @@ export function BADashboard() {
                                     gap: 1,
                                 }}
                             >
-                                <AccountTreeIcon sx={{ color: '#10b981' }} />
+                                <AccountTreeIcon sx={{ color: baIconConfig.color }} />
                                 Artifact Relationships
                             </Typography>
 

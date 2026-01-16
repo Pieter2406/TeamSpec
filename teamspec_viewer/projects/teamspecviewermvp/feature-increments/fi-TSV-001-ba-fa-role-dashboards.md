@@ -3,6 +3,7 @@
 artifact_kind: fi
 spec_version: "4.0"
 template_version: "4.0.1"
+title: "BA and FA Role Dashboards"
 
 # === Ownership ===
 role_owner: FA

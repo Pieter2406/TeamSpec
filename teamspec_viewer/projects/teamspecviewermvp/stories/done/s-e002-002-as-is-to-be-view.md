@@ -3,6 +3,7 @@
 artifact_kind: story
 spec_version: "4.0"
 template_version: "4.0.1"
+title: "AS-IS TO-BE Section View"
 
 # === Ownership ===
 role_owner: FA
@@ -50,7 +51,7 @@ anti_keywords:
 |-------|-------|
 | **Story ID** | s-e002-002 |
 | **Epic** | epic-TSV-002 |
-| **Status** | Backlog |
+| **Status** | Done |
 | **Estimate** | 5 SP |
 | **Author** | AI-Generated |
 | **Sprint** | — |
@@ -144,6 +145,13 @@ anti_keywords:
 - Backend: Parse FI markdown to extract AS-IS (Section 2) and TO-BE (Section 3) content.
 - Frontend: `FiDetailView` component with `Tabs` (MUI) for AS-IS/TO-BE switching.
 - Consider: Section extraction via markdown heading detection (`## 2. AS-IS`, `## 3. TO-BE`).
+
+---
+
+## Links
+
+- See Linked Epic section above
+- See Linked Feature-Increment section above
 
 ---
 

@@ -19,11 +19,10 @@ import {
     Chip,
     Skeleton,
 } from '@mui/material';
-import ArticleIcon from '@mui/icons-material/Article';
-import DescriptionIcon from '@mui/icons-material/Description';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { Artifact, getBABAICounts } from '../api/artifacts';
+import { getArtifactIcon } from '../utils/artifactIcons';
 
 // Status → Color mapping
 const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
@@ -56,14 +55,20 @@ export function BACard({
     onClick,
 }: BACardProps) {
     const statusColor = getStatusColor(ba.status);
+    
+    // Get icon configurations
+    const baIconConfig = getArtifactIcon('business-analysis');
+    const BAIcon = baIconConfig.icon;
+    const baiIconConfig = getArtifactIcon('ba-increment');
+    const BAIIcon = baiIconConfig.icon;
 
     return (
         <Card
             sx={{
                 borderRadius: 2,
-                border: isSelected ? '2px solid #10b981' : '1px solid #e2e8f0',
+                border: isSelected ? `2px solid ${baIconConfig.color}` : '1px solid #e2e8f0',
                 boxShadow: isSelected
-                    ? '0 4px 12px rgba(16, 185, 129, 0.25)'
+                    ? `0 4px 12px ${baIconConfig.color}40`
                     : '0 1px 3px rgba(0, 0, 0, 0.1)',
                 transition: 'all 0.2s ease',
                 '&:hover': {
@@ -90,14 +95,14 @@ export function BACard({
                                 width: 36,
                                 height: 36,
                                 borderRadius: 1.5,
-                                bgcolor: '#f1f5f9',
+                                bgcolor: `${baIconConfig.color}15`,
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 flexShrink: 0,
                             }}
                         >
-                            <ArticleIcon sx={{ color: '#10b981', fontSize: 20 }} />
+                            <BAIcon sx={{ color: baIconConfig.color, fontSize: 20 }} />
                         </Box>
 
                         {/* Content */}
@@ -155,10 +160,10 @@ export function BACard({
                                             display: 'flex',
                                             alignItems: 'center',
                                             gap: 0.5,
-                                            color: '#64748b',
+                                            color: baiIconConfig.color,
                                         }}
                                     >
-                                        <DescriptionIcon sx={{ fontSize: 14 }} />
+                                        <BAIIcon sx={{ fontSize: 14 }} />
                                         <Typography variant="caption" sx={{ fontSize: '0.7rem' }}>
                                             {baiCount} BAI{baiCount !== 1 ? 's' : ''}
                                         </Typography>

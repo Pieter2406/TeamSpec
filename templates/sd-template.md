@@ -3,6 +3,7 @@
 artifact_kind: sd
 spec_version: "4.0"
 template_version: "4.0.1"
+title: "{Short SD title (20-40 chars)}"
 
 # === Ownership ===
 role_owner: SA

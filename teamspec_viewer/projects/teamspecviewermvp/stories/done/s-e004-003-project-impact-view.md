@@ -3,6 +3,7 @@
 artifact_kind: story
 spec_version: "4.0"
 template_version: "4.0.1"
+title: "Project Impact Analysis View"
 
 # === Ownership ===
 role_owner: FA
@@ -50,7 +51,7 @@ anti_keywords:
 |-------|-------|
 | **Story ID** | s-e004-003 |
 | **Epic** | epic-TSV-004 |
-| **Status** | Backlog |
+| **Status** | Done |
 | **Estimate** | 3 SP |
 | **Author** | AI-Generated |
 | **Sprint** | — |
@@ -154,6 +155,13 @@ anti_keywords:
 - Parse `projects/*/project.yml` for `target_products` matching selected product.
 - Context state: Store `selectedProduct` and `selectedProject` in React context.
 - Breadcrumb: MUI `Breadcrumbs` component in header.
+
+---
+
+## Links
+
+- See Linked Epic section above
+- See Linked Feature-Increment section above
 
 ---
 

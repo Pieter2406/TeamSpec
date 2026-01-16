@@ -57,7 +57,7 @@ anti_keywords:
 | **Product** | teamspec-viewer (TSV) |
 | **Author** | AI-Generated |
 | **Created** | 2026-01-16 |
-| **Status** | Draft |
+| **Status** | Implemented |
 
 ---
 

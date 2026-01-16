@@ -3,6 +3,7 @@
 artifact_kind: feature
 spec_version: "4.0"
 template_version: "4.0.1"
+title: "Product Portfolio Overview"
 
 # === Ownership ===
 role_owner: FA

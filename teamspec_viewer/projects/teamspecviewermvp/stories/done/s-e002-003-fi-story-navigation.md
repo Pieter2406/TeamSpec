@@ -3,6 +3,7 @@
 artifact_kind: story
 spec_version: "4.0"
 template_version: "4.0.1"
+title: "FI to Story Navigation Link"
 
 # === Ownership ===
 role_owner: FA
@@ -50,7 +51,7 @@ anti_keywords:
 |-------|-------|
 | **Story ID** | s-e002-003 |
 | **Epic** | epic-TSV-002 |
-| **Status** | Backlog |
+| **Status** | Done |
 | **Estimate** | 2 SP |
 | **Author** | AI-Generated |
 | **Sprint** | — |
@@ -143,6 +144,13 @@ anti_keywords:
 - Backend: Query endpoint `/api/feature-increments/:fiId/stories` to find stories by FI reference.
 - Story linking: Check story front matter `links_required` or body for `fi-TSV-XXX` patterns.
 - Frontend: "Linked Stories" card in FI detail view.
+
+---
+
+## Links
+
+- See Linked Epic section above
+- See Linked Feature-Increment section above
 
 ---
 

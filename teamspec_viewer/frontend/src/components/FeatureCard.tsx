@@ -20,11 +20,10 @@ import {
     Chip,
     Skeleton,
 } from '@mui/material';
-import FolderIcon from '@mui/icons-material/Folder';
-import DescriptionIcon from '@mui/icons-material/Description';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { Artifact, getFeatureFICounts } from '../api/artifacts';
+import { getArtifactIcon } from '../utils/artifactIcons';
 
 // Status → Color mapping
 const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
@@ -57,6 +56,12 @@ export function FeatureCard({
     onClick,
 }: FeatureCardProps) {
     const statusColor = getStatusColor(feature.status);
+    
+    // Get icon configurations
+    const featureIconConfig = getArtifactIcon('feature');
+    const FeatureIcon = featureIconConfig.icon;
+    const fiIconConfig = getArtifactIcon('feature-increment');
+    const FIIcon = fiIconConfig.icon;
 
     return (
         <Card
@@ -91,14 +96,14 @@ export function FeatureCard({
                                 width: 36,
                                 height: 36,
                                 borderRadius: 1.5,
-                                bgcolor: '#f1f5f9',
+                                bgcolor: `${featureIconConfig.color}15`,
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 flexShrink: 0,
                             }}
                         >
-                            <FolderIcon sx={{ color: '#3b82f6', fontSize: 20 }} />
+                            <FeatureIcon sx={{ color: featureIconConfig.color, fontSize: 20 }} />
                         </Box>
 
                         {/* Content */}
@@ -156,10 +161,10 @@ export function FeatureCard({
                                             display: 'flex',
                                             alignItems: 'center',
                                             gap: 0.5,
-                                            color: '#64748b',
+                                            color: fiIconConfig.color,
                                         }}
                                     >
-                                        <DescriptionIcon sx={{ fontSize: 14 }} />
+                                        <FIIcon sx={{ fontSize: 14 }} />
                                         <Typography variant="caption" sx={{ fontSize: '0.7rem' }}>
                                             {fiCount} FI{fiCount !== 1 ? 's' : ''}
                                         </Typography>

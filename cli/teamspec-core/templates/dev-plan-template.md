@@ -3,6 +3,7 @@
 artifact_kind: devplan
 spec_version: "4.0"
 template_version: "4.0.1"
+title: "{Short dev plan title (20-40 chars)}"
 
 # === Ownership ===
 role_owner: DEV

@@ -410,6 +410,26 @@ Missing recommended frontmatter field: keywords (aids LLM retrieval)
 
 ---
 
+### MV-005: title present and valid length
+
+**Intent:** Artifacts must have a human-readable title for display in teamspec_viewer.
+
+**Checks:**
+- Frontmatter contains `title` field (string)
+- Title length is between 20 and 40 characters
+
+**Failure Message:**
+```
+Missing required frontmatter field: title
+Title "X" is too short (N chars). Must be 20-40 characters.
+Title "X..." is too long (N chars). Must be 20-40 characters.
+```
+
+**Severity:** Error  
+**Owner:** All roles
+
+---
+
 ### MV-010: ## Purpose section exists
 
 **Intent:** Every artifact should explain its purpose.
