@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Box } from '@mui/material';
 import { RoleProvider, useRole } from './contexts/RoleContext';
+import { ToastProvider } from './contexts/ToastContext';
 import { RoleSelector } from './components/RoleSelector';
 import { Header } from './components/Header';
 import { BADashboard } from './components/BADashboard';
@@ -66,9 +67,11 @@ function AppContent() {
 
 function App() {
     return (
-        <RoleProvider>
-            <AppContent />
-        </RoleProvider>
+        <ToastProvider>
+            <RoleProvider>
+                <AppContent />
+            </RoleProvider>
+        </ToastProvider>
     );
 }
 

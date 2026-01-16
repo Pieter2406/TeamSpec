@@ -1,11 +1,12 @@
 /**
  * ArtifactTree Component
- * 
+ *
  * Displays hierarchical artifact relationships using MUI TreeView:
  * Feature → FIs → Epics → Stories
- * 
+ *
  * Story: s-e005-002 (Artifact Tree Component)
- * Dev Plan: dp-e005-s002
+ * Updated: s-e006-004 (ArtifactTree Status Integration)
+ * Feature: f-TSV-008 (Inline Status Editing)
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -18,8 +19,11 @@ import {
     EpicInfo,
     StoryInfo,
     getFeatureRelationships,
+    updateArtifactStatus,
 } from '../api/artifacts';
 import { getArtifactIcon } from '../utils/artifactIcons';
+import { StatusDropdown } from './StatusDropdown';
+import { useToast } from '../contexts/ToastContext';
 
 // ============================================================================
 // Types
@@ -39,26 +43,11 @@ interface ArtifactTreeProps {
     onNodeSelect?: (node: TreeNodeData) => void;
 }
 
-// ============================================================================
-// Status Colors
-// ============================================================================
-
-const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
-    active: { bg: '#dcfce7', text: '#166534' },
-    draft: { bg: '#fef9c3', text: '#854d0e' },
-    planned: { bg: '#e0e7ff', text: '#3730a3' },
-    deprecated: { bg: '#fee2e2', text: '#991b1b' },
-    done: { bg: '#d1fae5', text: '#065f46' },
-    'in progress': { bg: '#dbeafe', text: '#1e40af' },
-    ready: { bg: '#cffafe', text: '#0e7490' },
-    refining: { bg: '#fef3c7', text: '#92400e' },
-    backlog: { bg: '#f1f5f9', text: '#475569' },
-    default: { bg: '#f1f5f9', text: '#475569' },
-};
-
-function getStatusColor(status?: string) {
-    const normalizedStatus = status?.toLowerCase() || 'default';
-    return STATUS_COLORS[normalizedStatus] || STATUS_COLORS.default;
+interface NodeStatusState {
+    [path: string]: {
+        status: string;
+        loading: boolean;
+    };
 }
 
 // ============================================================================
@@ -68,13 +57,11 @@ function getStatusColor(status?: string) {
 interface NodeLabelProps {
     icon: React.ReactNode;
     title: string;
-    status?: string;
     badge?: string;
+    statusElement?: React.ReactNode;
 }
 
-function NodeLabel({ icon, title, status, badge }: NodeLabelProps) {
-    const statusColor = getStatusColor(status);
-
+function NodeLabel({ icon, title, badge, statusElement }: NodeLabelProps) {
     return (
         <Box
             sx={{
@@ -116,22 +103,7 @@ function NodeLabel({ icon, title, status, badge }: NodeLabelProps) {
                     {badge}
                 </Typography>
             )}
-            {status && (
-                <Typography
-                    variant="caption"
-                    sx={{
-                        px: 0.75,
-                        py: 0.25,
-                        borderRadius: 0.5,
-                        fontSize: '0.65rem',
-                        fontWeight: 600,
-                        bgcolor: statusColor.bg,
-                        color: statusColor.text,
-                    }}
-                >
-                    {status}
-                </Typography>
-            )}
+            {statusElement}
         </Box>
     );
 }
@@ -148,6 +120,8 @@ export function ArtifactTree({
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [expandedItems, setExpandedItems] = useState<string[]>([]);
+    const [statusStates, setStatusStates] = useState<NodeStatusState>({});
+    const { showError } = useToast();
 
     // Fetch relationship tree
     useEffect(() => {
@@ -195,6 +169,55 @@ export function ArtifactTree({
             onNodeSelect(nodeData);
         }
     }, [onNodeSelect]);
+
+    // Handle status change
+    const handleStatusChange = useCallback(async (
+        path: string,
+        _artifactType: string,
+        currentStatus: string,
+        newStatus: string
+    ) => {
+        // Optimistic update
+        setStatusStates(prev => ({
+            ...prev,
+            [path]: { status: newStatus, loading: true },
+        }));
+
+        try {
+            const result = await updateArtifactStatus(path, newStatus);
+
+            if (result.success) {
+                setStatusStates(prev => ({
+                    ...prev,
+                    [path]: { status: newStatus, loading: false },
+                }));
+            } else {
+                // Rollback on error
+                setStatusStates(prev => ({
+                    ...prev,
+                    [path]: { status: currentStatus, loading: false },
+                }));
+                showError(result.error || 'Failed to update status');
+            }
+        } catch (err) {
+            // Rollback on network error
+            setStatusStates(prev => ({
+                ...prev,
+                [path]: { status: currentStatus, loading: false },
+            }));
+            showError('Network error: Failed to update status');
+        }
+    }, [showError]);
+
+    // Get effective status (from local state or original)
+    const getEffectiveStatus = useCallback((path: string, originalStatus?: string) => {
+        return statusStates[path]?.status || originalStatus || '';
+    }, [statusStates]);
+
+    // Check if loading
+    const isStatusLoading = useCallback((path: string) => {
+        return statusStates[path]?.loading || false;
+    }, [statusStates]);
 
     // Loading state
     if (loading) {
@@ -256,6 +279,8 @@ export function ArtifactTree({
         const nodeData = buildNodeData('story', story.id, story.title, story.path, story.status, fiProject);
         const iconConfig = getArtifactIcon('story');
         const IconComponent = iconConfig.icon;
+        const effectiveStatus = getEffectiveStatus(story.path, story.status);
+
         return (
             <TreeItem
                 key={`story-${story.id}`}
@@ -265,7 +290,22 @@ export function ArtifactTree({
                         <NodeLabel
                             icon={<IconComponent sx={{ fontSize: 16, color: iconConfig.color }} />}
                             title={story.title}
-                            status={story.status}
+                            statusElement={
+                                effectiveStatus && (
+                                    <StatusDropdown
+                                        artifactType="story"
+                                        currentStatus={effectiveStatus}
+                                        onStatusChange={(newStatus) => handleStatusChange(
+                                            story.path,
+                                            'story',
+                                            effectiveStatus,
+                                            newStatus
+                                        )}
+                                        loading={isStatusLoading(story.path)}
+                                        size="small"
+                                    />
+                                )
+                            }
                         />
                     </ClickableLabel>
                 }
@@ -278,6 +318,8 @@ export function ArtifactTree({
         const nodeData = buildNodeData('epic', epic.id, epic.title, epic.path, epic.status, fiProject);
         const iconConfig = getArtifactIcon('epic');
         const IconComponent = iconConfig.icon;
+        const effectiveStatus = getEffectiveStatus(epic.path, epic.status);
+
         return (
             <TreeItem
                 key={`epic-${epic.id}`}
@@ -287,8 +329,23 @@ export function ArtifactTree({
                         <NodeLabel
                             icon={<IconComponent sx={{ fontSize: 16, color: iconConfig.color }} />}
                             title={epic.title}
-                            status={epic.status}
                             badge={`${epic.stories.length} stories`}
+                            statusElement={
+                                effectiveStatus && (
+                                    <StatusDropdown
+                                        artifactType="epic"
+                                        currentStatus={effectiveStatus}
+                                        onStatusChange={(newStatus) => handleStatusChange(
+                                            epic.path,
+                                            'epic',
+                                            effectiveStatus,
+                                            newStatus
+                                        )}
+                                        loading={isStatusLoading(epic.path)}
+                                        size="small"
+                                    />
+                                )
+                            }
                         />
                     </ClickableLabel>
                 }
@@ -303,6 +360,8 @@ export function ArtifactTree({
         const nodeData = buildNodeData('feature-increment', fi.id, fi.title, fi.path, fi.status, fi.project);
         const iconConfig = getArtifactIcon('feature-increment');
         const IconComponent = iconConfig.icon;
+        const effectiveStatus = getEffectiveStatus(fi.path, fi.status);
+
         return (
             <TreeItem
                 key={`fi-${fi.id}`}
@@ -312,8 +371,23 @@ export function ArtifactTree({
                         <NodeLabel
                             icon={<IconComponent sx={{ fontSize: 16, color: iconConfig.color }} />}
                             title={fi.title}
-                            status={fi.status}
                             badge={fi.project}
+                            statusElement={
+                                effectiveStatus && (
+                                    <StatusDropdown
+                                        artifactType="feature-increment"
+                                        currentStatus={effectiveStatus}
+                                        onStatusChange={(newStatus) => handleStatusChange(
+                                            fi.path,
+                                            'feature-increment',
+                                            effectiveStatus,
+                                            newStatus
+                                        )}
+                                        loading={isStatusLoading(fi.path)}
+                                        size="small"
+                                    />
+                                )
+                            }
                         />
                     </ClickableLabel>
                 }
@@ -326,6 +400,7 @@ export function ArtifactTree({
     const featureNodeData = buildNodeData('feature', feature.id, feature.title, feature.path, feature.status);
     const featureIconConfig = getArtifactIcon('feature');
     const FeatureIcon = featureIconConfig.icon;
+    const featureEffectiveStatus = getEffectiveStatus(feature.path, feature.status);
 
     return (
         <Box sx={{ p: 1 }}>
@@ -352,8 +427,23 @@ export function ArtifactTree({
                             <NodeLabel
                                 icon={<FeatureIcon sx={{ fontSize: 18, color: featureIconConfig.color }} />}
                                 title={feature.title}
-                                status={feature.status}
                                 badge={`${featureIncrements.length} FIs`}
+                                statusElement={
+                                    featureEffectiveStatus && (
+                                        <StatusDropdown
+                                            artifactType="feature"
+                                            currentStatus={featureEffectiveStatus}
+                                            onStatusChange={(newStatus) => handleStatusChange(
+                                                feature.path,
+                                                'feature',
+                                                featureEffectiveStatus,
+                                                newStatus
+                                            )}
+                                            loading={isStatusLoading(feature.path)}
+                                            size="small"
+                                        />
+                                    )
+                                }
                             />
                         </ClickableLabel>
                     }

@@ -292,3 +292,29 @@ export async function getBABAICounts(baIds: string[]): Promise<BAICountsResponse
     if (!response.ok) throw new Error('Failed to fetch BAI counts');
     return response.json();
 }
+
+// ============================================================================
+// Status Update API (Story s-e006-003)
+// ============================================================================
+
+export interface StatusUpdateResponse {
+    success: boolean;
+    previousStatus?: string;
+    newStatus?: string;
+    error?: string;
+}
+
+/**
+ * Update the status of an artifact
+ */
+export async function updateArtifactStatus(
+    path: string,
+    status: string
+): Promise<StatusUpdateResponse> {
+    const response = await fetch(`${API_BASE}/artifacts/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path, status }),
+    });
+    return response.json();
+}

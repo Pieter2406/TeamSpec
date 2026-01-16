@@ -11,7 +11,7 @@ const app = new Hono()
 // Enable CORS for frontend
 app.use('/*', cors({
     origin: 'http://localhost:5173',
-    allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowHeaders: ['Content-Type'],
 }))
 

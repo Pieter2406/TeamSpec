@@ -1,30 +1,21 @@
 ---
-# === LLM Retrieval Metadata ===
 artifact_kind: epic
-spec_version: "4.0"
-template_version: "4.0.1"
-
-# === Ownership ===
+spec_version: '4.0'
+template_version: 4.0.1
 role_owner: FA
 artifact_type: Project Execution
 canonicality: project-execution
 lifecycle: project-bound
-
-# === Naming ===
-id_pattern: "epic-TSV-005"
-filename_pattern: "epic-TSV-005-usecase-centric-dashboard.md"
-
-# === Required Relationships ===
+id_pattern: epic-TSV-005
+filename_pattern: epic-TSV-005-usecase-centric-dashboard.md
 links_required:
   - type: product
-    pattern: "product.yml"
+    pattern: product.yml
     optional: false
   - type: feature-increment
-    pattern: "fi-TSV-005"
+    pattern: fi-TSV-005
     optional: false
-    note: "Use-case centric dashboard FI"
-
-# === Search Optimization ===
+    note: Use-case centric dashboard FI
 keywords:
   - epic
   - use-case centric
@@ -39,6 +30,7 @@ anti_keywords:
   - implementation detail
   - code
   - test case
+status: Done
 ---
 
 # Epic: `epic-TSV-005-usecase-centric-dashboard`
@@ -53,7 +45,7 @@ anti_keywords:
 | Field | Value |
 |-------|-------|
 | **Epic ID** | epic-TSV-005 |
-| **Status** | Proposed |
+| **Status** | Done|
 | **Product** | teamspec-viewer (TSV) |
 | **Owner** | FA (Functional Analyst) |
 | **Created** | 2026-01-16 |

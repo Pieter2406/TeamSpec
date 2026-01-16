@@ -3,6 +3,7 @@ import { readdir, readFile, stat } from 'fs/promises';
 import { join, relative, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { getFeatureRelationships, getFeatureFICounts, getBARelationships, getBABAICounts } from '../services/relationshipService.js';
+import { updateArtifactStatus } from '../services/statusService.js';
 
 const artifacts = new Hono();
 
@@ -481,6 +482,42 @@ artifacts.post('/ba/bai-counts', async (c) => {
         return c.json({ counts });
     } catch (error) {
         return c.json({ error: 'Failed to get BAI counts' }, 500);
+    }
+});
+
+// ============================================================================
+// Status Update API (Story s-e006-003)
+// ============================================================================
+
+/**
+ * PATCH /artifacts/status
+ * Update the status of an artifact in its markdown file
+ */
+artifacts.patch('/artifacts/status', async (c) => {
+    try {
+        const body = await c.req.json();
+        const { path, status } = body;
+
+        if (!path || !status) {
+            return c.json({
+                success: false,
+                error: 'Missing required fields: path and status',
+            }, 400);
+        }
+
+        const result = await updateArtifactStatus(WORKSPACE_ROOT, path, status);
+
+        if (result.success) {
+            return c.json(result);
+        } else {
+            return c.json(result, 400);
+        }
+
+    } catch (error: any) {
+        return c.json({
+            success: false,
+            error: `Server error: ${error.message}`,
+        }, 500);
     }
 });
 

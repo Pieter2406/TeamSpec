@@ -56,7 +56,7 @@ export function FeatureCard({
     onClick,
 }: FeatureCardProps) {
     const statusColor = getStatusColor(feature.status);
-    
+
     // Get icon configurations
     const featureIconConfig = getArtifactIcon('feature');
     const FeatureIcon = featureIconConfig.icon;

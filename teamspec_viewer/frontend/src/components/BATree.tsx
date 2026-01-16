@@ -1,10 +1,13 @@
 /**
  * BATree Component
- * 
+ *
  * Displays hierarchical BA artifact relationships using MUI TreeView:
  * BA → BAIs (Business Analysis Increments)
- * 
+ *
  * Simpler than ArtifactTree since BA hierarchy is only 2 levels deep.
+ *
+ * Updated: s-e006-005 (BATree Status Integration)
+ * Feature: f-TSV-008 (Inline Status Editing)
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -15,8 +18,11 @@ import {
     BARelationshipsResponse,
     BAIInfo,
     getBARelationships,
+    updateArtifactStatus,
 } from '../api/artifacts';
 import { getArtifactIcon } from '../utils/artifactIcons';
+import { StatusDropdown } from './StatusDropdown';
+import { useToast } from '../contexts/ToastContext';
 
 // ============================================================================
 // Types
@@ -36,22 +42,11 @@ interface BATreeProps {
     onNodeSelect?: (node: BATreeNodeData) => void;
 }
 
-// ============================================================================
-// Status Colors
-// ============================================================================
-
-const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
-    active: { bg: '#dcfce7', text: '#166534' },
-    draft: { bg: '#fef9c3', text: '#854d0e' },
-    planned: { bg: '#e0e7ff', text: '#3730a3' },
-    deprecated: { bg: '#fee2e2', text: '#991b1b' },
-    done: { bg: '#d1fae5', text: '#065f46' },
-    default: { bg: '#f1f5f9', text: '#475569' },
-};
-
-function getStatusColor(status?: string) {
-    const normalizedStatus = status?.toLowerCase() || 'default';
-    return STATUS_COLORS[normalizedStatus] || STATUS_COLORS.default;
+interface NodeStatusState {
+    [path: string]: {
+        status: string;
+        loading: boolean;
+    };
 }
 
 // ============================================================================
@@ -61,13 +56,11 @@ function getStatusColor(status?: string) {
 interface NodeLabelProps {
     icon: React.ReactNode;
     title: string;
-    status?: string;
     badge?: string;
+    statusElement?: React.ReactNode;
 }
 
-function NodeLabel({ icon, title, status, badge }: NodeLabelProps) {
-    const statusColor = getStatusColor(status);
-
+function NodeLabel({ icon, title, badge, statusElement }: NodeLabelProps) {
     return (
         <Box
             sx={{
@@ -109,22 +102,7 @@ function NodeLabel({ icon, title, status, badge }: NodeLabelProps) {
                     {badge}
                 </Typography>
             )}
-            {status && (
-                <Typography
-                    variant="caption"
-                    sx={{
-                        px: 0.75,
-                        py: 0.25,
-                        borderRadius: 0.5,
-                        fontSize: '0.65rem',
-                        fontWeight: 600,
-                        bgcolor: statusColor.bg,
-                        color: statusColor.text,
-                    }}
-                >
-                    {status}
-                </Typography>
-            )}
+            {statusElement}
         </Box>
     );
 }
@@ -141,7 +119,9 @@ export function BATree({
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [expandedItems, setExpandedItems] = useState<string[]>([]);
-    
+    const [statusStates, setStatusStates] = useState<NodeStatusState>({});
+    const { showError } = useToast();
+
     // Get icon configurations
     const baIconConfig = getArtifactIcon('business-analysis');
     const BAIcon = baIconConfig.icon;
@@ -194,6 +174,55 @@ export function BATree({
             onNodeSelect(nodeData);
         }
     }, [onNodeSelect]);
+
+    // Handle status change
+    const handleStatusChange = useCallback(async (
+        path: string,
+        _artifactType: string,
+        currentStatus: string,
+        newStatus: string
+    ) => {
+        // Optimistic update
+        setStatusStates(prev => ({
+            ...prev,
+            [path]: { status: newStatus, loading: true },
+        }));
+
+        try {
+            const result = await updateArtifactStatus(path, newStatus);
+
+            if (result.success) {
+                setStatusStates(prev => ({
+                    ...prev,
+                    [path]: { status: newStatus, loading: false },
+                }));
+            } else {
+                // Rollback on error
+                setStatusStates(prev => ({
+                    ...prev,
+                    [path]: { status: currentStatus, loading: false },
+                }));
+                showError(result.error || 'Failed to update status');
+            }
+        } catch (err) {
+            // Rollback on network error
+            setStatusStates(prev => ({
+                ...prev,
+                [path]: { status: currentStatus, loading: false },
+            }));
+            showError('Network error: Failed to update status');
+        }
+    }, [showError]);
+
+    // Get effective status (from local state or original)
+    const getEffectiveStatus = useCallback((path: string, originalStatus?: string) => {
+        return statusStates[path]?.status || originalStatus || '';
+    }, [statusStates]);
+
+    // Check if loading
+    const isStatusLoading = useCallback((path: string) => {
+        return statusStates[path]?.loading || false;
+    }, [statusStates]);
 
     // Loading state
     if (loading) {
@@ -252,6 +281,8 @@ export function BATree({
     // Render BAI TreeItem
     const renderBAI = (bai: BAIInfo) => {
         const nodeData = buildNodeData('bai', bai.id, bai.title, bai.path, bai.status, bai.project);
+        const effectiveStatus = getEffectiveStatus(bai.path, bai.status);
+
         return (
             <TreeItem
                 key={`bai-${bai.id}`}
@@ -261,8 +292,23 @@ export function BATree({
                         <NodeLabel
                             icon={<BAIIcon sx={{ fontSize: 16, color: baiIconConfig.color }} />}
                             title={bai.title}
-                            status={bai.status}
                             badge={bai.project}
+                            statusElement={
+                                effectiveStatus && (
+                                    <StatusDropdown
+                                        artifactType="ba-increment"
+                                        currentStatus={effectiveStatus}
+                                        onStatusChange={(newStatus) => handleStatusChange(
+                                            bai.path,
+                                            'ba-increment',
+                                            effectiveStatus,
+                                            newStatus
+                                        )}
+                                        loading={isStatusLoading(bai.path)}
+                                        size="small"
+                                    />
+                                )
+                            }
                         />
                     </ClickableLabel>
                 }
@@ -271,6 +317,7 @@ export function BATree({
     };
 
     const baNodeData = buildNodeData('ba', ba.id, ba.title, ba.path, ba.status);
+    const baEffectiveStatus = getEffectiveStatus(ba.path, ba.status);
 
     return (
         <Box sx={{ p: 1 }}>
@@ -297,8 +344,23 @@ export function BATree({
                             <NodeLabel
                                 icon={<BAIcon sx={{ fontSize: 18, color: baIconConfig.color }} />}
                                 title={ba.title}
-                                status={ba.status}
                                 badge={`${baIncrements.length} BAIs`}
+                                statusElement={
+                                    baEffectiveStatus && (
+                                        <StatusDropdown
+                                            artifactType="business-analysis"
+                                            currentStatus={baEffectiveStatus}
+                                            onStatusChange={(newStatus) => handleStatusChange(
+                                                ba.path,
+                                                'business-analysis',
+                                                baEffectiveStatus,
+                                                newStatus
+                                            )}
+                                            loading={isStatusLoading(ba.path)}
+                                            size="small"
+                                        />
+                                    )
+                                }
                             />
                         </ClickableLabel>
                     }

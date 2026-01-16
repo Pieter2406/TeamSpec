@@ -1,30 +1,21 @@
 ---
-# === LLM Retrieval Metadata ===
 artifact_kind: feature
-spec_version: "4.0"
-template_version: "4.0.1"
-title: "Role-Specific Dashboards"
-
-# === Ownership ===
+spec_version: '4.0'
+template_version: 4.0.1
+title: Role-Specific Dashboards
 role_owner: FA
 artifact_type: Product Canon
 canonicality: canon
 lifecycle: permanent
-
-# === Naming ===
-id_pattern: "f-TSV-002"
-filename_pattern: "f-TSV-002-role-specific-dashboards.md"
-
-# === Required Relationships ===
+id_pattern: f-TSV-002
+filename_pattern: f-TSV-002-role-specific-dashboards.md
 links_required:
   - type: product
-    pattern: "product.yml"
+    pattern: product.yml
     optional: false
   - type: decision
-    pattern: "dec-TSV-*"
+    pattern: dec-TSV-*
     optional: true
-
-# === Search Optimization ===
 keywords:
   - role dashboard
   - role-based navigation
@@ -38,6 +29,7 @@ anti_keywords:
   - story
   - delta
   - proposed change
+status: Active
 ---
 
 # Feature: `f-TSV-002-role-specific-dashboards`
@@ -59,7 +51,7 @@ anti_keywords:
 |-------|-------|
 | **Feature ID** | f-TSV-002 |
 | **Product** | teamspec-viewer (TSV) |
-| **Status** | Planned |
+| **Status** | Active|
 | **Owner** | FA (Functional Analyst) |
 | **Created** | 2026-01-14 |
 | **Last Updated** | 2026-01-14 |

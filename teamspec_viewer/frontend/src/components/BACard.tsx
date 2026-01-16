@@ -55,7 +55,7 @@ export function BACard({
     onClick,
 }: BACardProps) {
     const statusColor = getStatusColor(ba.status);
-    
+
     // Get icon configurations
     const baIconConfig = getArtifactIcon('business-analysis');
     const BAIcon = baIconConfig.icon;
