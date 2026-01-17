@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Box, Typography, Container, Grid, Alert, Breadcrumbs, Link, Paper } from '@mui/material';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Box, Typography, Container, Grid, Alert, Breadcrumbs, Link, Paper, FormControlLabel, Checkbox, Tooltip } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import {
@@ -10,6 +10,8 @@ import { getArtifactIcon } from '../utils/artifactIcons';
 import { BACardList } from './BACard';
 import { BATree, BATreeNodeData } from './BATree';
 import { ArtifactReader } from './ArtifactReader';
+import { useArtifactFilter } from '../hooks/useArtifactFilter';
+import { filterAndSortArtifacts } from '../utils/artifactSorting';
 
 // MVP hardcoded context
 const PRODUCT_ID = 'teamspec-viewer';
@@ -28,6 +30,15 @@ export function BADashboard() {
 
     // Full reader state
     const [readerArtifact, setReaderArtifact] = useState<Artifact | null>(null);
+
+    // Filter state with localStorage persistence
+    const { showCompleted, setShowCompleted } = useArtifactFilter({ role: 'BA' });
+
+    // Apply filtering and sorting to BA artifacts
+    const processedBArtifacts = useMemo(
+        () => filterAndSortArtifacts(baArtifacts, showCompleted),
+        [baArtifacts, showCompleted]
+    );
 
     // Load BA documents
     useEffect(() => {
@@ -138,8 +149,49 @@ export function BADashboard() {
                                 <BAIcon sx={{ color: baIconConfig.color }} />
                                 Business Analysis
                             </Typography>
+
+                            {/* Filter Toggle */}
+                            <Box sx={{ mb: 2 }}>
+                                <Tooltip
+                                    title={
+                                        <Box>
+                                            <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                                                Show Completed Artifacts
+                                            </Typography>
+                                            <Typography variant="body2">
+                                                Toggle to show or hide artifacts with completed states:
+                                            </Typography>
+                                            <Box component="ul" sx={{ m: 0, pl: 2, mt: 0.5, fontSize: '0.85rem' }}>
+                                                <li>Done — Completed and closed</li>
+                                                <li>Retired — No longer in use</li>
+                                                <li>Deferred — Moved to later release</li>
+                                                <li>Out-of-Scope — Explicitly excluded</li>
+                                                <li>Archived — Historical reference</li>
+                                            </Box>
+                                        </Box>
+                                    }
+                                    placement="right"
+                                    arrow
+                                >
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox
+                                                checked={showCompleted}
+                                                onChange={(e) => setShowCompleted(e.target.checked)}
+                                                size="small"
+                                            />
+                                        }
+                                        label={
+                                            <Typography variant="body2" sx={{ color: '#64748b' }}>
+                                                Show Completed ({baArtifacts.length - processedBArtifacts.length} hidden)
+                                            </Typography>
+                                        }
+                                    />
+                                </Tooltip>
+                            </Box>
+
                             <BACardList
-                                baArtifacts={baArtifacts}
+                                baArtifacts={processedBArtifacts}
                                 loading={loading}
                                 selectedBAId={selectedBAId || undefined}
                                 expandedBAId={expandedBAId || undefined}
@@ -179,6 +231,7 @@ export function BADashboard() {
                                 <BATree
                                     baId={expandedBAId}
                                     onNodeSelect={handleNodeSelect}
+                                    showCompleted={showCompleted}
                                 />
                             ) : (
                                 <Box

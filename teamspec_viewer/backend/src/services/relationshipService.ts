@@ -28,6 +28,7 @@ export interface FeatureInfo {
     title: string;
     status?: string;
     path: string;
+    hasTBD?: boolean;
 }
 
 export interface StoryInfo {
@@ -35,6 +36,7 @@ export interface StoryInfo {
     title: string;
     status?: string;
     path: string;
+    hasTBD?: boolean;
 }
 
 export interface EpicInfo {
@@ -43,6 +45,7 @@ export interface EpicInfo {
     status?: string;
     path: string;
     stories: StoryInfo[];
+    hasTBD?: boolean;
 }
 
 export interface FIInfo {
@@ -52,6 +55,7 @@ export interface FIInfo {
     project: string;
     path: string;
     epic?: EpicInfo;
+    hasTBD?: boolean;
 }
 
 export interface FeatureRelationshipsResponse {
@@ -101,11 +105,35 @@ function extractTitle(content: string): string {
 
 /**
  * Extract status from markdown content
+ * Supports multiple formats:
+ * - Table: | **Status** | value |
+ * - Blockquote: > **Status:** value
+ * - YAML frontmatter: status: value
  */
 function extractStatus(content: string): string | undefined {
-    const match = content.match(/\*\*Status\*\*\s*\|\s*(\w+[-\w]*)/i) ||
-        content.match(/status:\s*["']?(\w+[-\w]*)/i);
+    const match =
+        // Table format: | **Status** | value |
+        content.match(/\*\*Status\*\*\s*\|\s*(\w+[-\w]*)/i) ||
+        // Blockquote format: > **Status:** value
+        content.match(/\*\*Status:\*\*\s*(\w+[-\w]*)/i) ||
+        // YAML frontmatter: status: value
+        content.match(/^status:\s*["']?(\w+[-\w]*)/im);
     return match?.[1];
+}
+
+/**
+ * Check if content contains literal {TBD} markers.
+ * Uses strict matching: uppercase T-B-D with curly braces.
+ *
+ * Story: s-e008-002
+ * Epic: TSV-008
+ *
+ * @param content - Raw markdown content to scan
+ * @returns true if content contains at least one {TBD} marker
+ */
+function checkHasTBD(content: string): boolean {
+    if (!content) return false;
+    return /\{TBD\}/.test(content);
 }
 
 /**
@@ -210,6 +238,7 @@ async function getFeatureInfo(featureId: string): Promise<FeatureInfo | null> {
                         title: extractTitle(content),
                         status: extractStatus(content),
                         path: relative(WORKSPACE_ROOT, filePath).replace(/\\/g, '/'),
+                        hasTBD: checkHasTBD(content),
                     };
                 }
             } catch {
@@ -233,6 +262,7 @@ async function findFIsForFeature(featureId: string): Promise<Array<{
     project: string;
     path: string;
     epicId?: string;
+    hasTBD?: boolean;
 }>> {
     const fiList: Array<{
         id: string;
@@ -241,6 +271,7 @@ async function findFIsForFeature(featureId: string): Promise<Array<{
         project: string;
         path: string;
         epicId?: string;
+        hasTBD?: boolean;
     }> = [];
 
     const projectsDir = join(WORKSPACE_ROOT, 'projects');
@@ -268,6 +299,7 @@ async function findFIsForFeature(featureId: string): Promise<Array<{
                             project,
                             path: relative(WORKSPACE_ROOT, filePath).replace(/\\/g, '/'),
                             epicId: extractEpicLink(content),
+                            hasTBD: checkHasTBD(content),
                         });
                     }
                 }
@@ -301,6 +333,7 @@ async function getEpicInfo(project: string, epicId: string): Promise<Omit<EpicIn
                 title: extractTitle(content),
                 status: extractStatus(content),
                 path: relative(WORKSPACE_ROOT, filePath).replace(/\\/g, '/'),
+                hasTBD: checkHasTBD(content),
             };
         }
     } catch {
@@ -366,6 +399,7 @@ async function getStoriesForEpic(project: string, epicId: string): Promise<Story
                             title: extractTitle(content),
                             status: folderStatus,
                             path: relative(WORKSPACE_ROOT, filePath).replace(/\\/g, '/'),
+                            hasTBD: checkHasTBD(content),
                         });
                     }
                 }
@@ -419,6 +453,7 @@ export async function getFeatureRelationships(featureId: string): Promise<Featur
                 project: fi.project,
                 path: fi.path,
                 epic,
+                hasTBD: fi.hasTBD,
             };
         })
     );
@@ -458,6 +493,7 @@ export interface BAInfo {
     title: string;
     status?: string;
     path: string;
+    hasTBD?: boolean;
 }
 
 export interface BAIInfo {
@@ -466,6 +502,7 @@ export interface BAIInfo {
     status?: string;
     project: string;
     path: string;
+    hasTBD?: boolean;
 }
 
 export interface BARelationshipsResponse {
@@ -502,6 +539,7 @@ async function getBAInfo(baId: string): Promise<BAInfo | null> {
                         title: extractTitle(content),
                         status: extractStatus(content),
                         path: relative(WORKSPACE_ROOT, filePath).replace(/\\/g, '/'),
+                        hasTBD: checkHasTBD(content),
                     };
                 }
             } catch {
@@ -549,6 +587,7 @@ async function findBAIsForBA(baId: string): Promise<Array<{
     status?: string;
     project: string;
     path: string;
+    hasTBD?: boolean;
 }>> {
     const baiList: Array<{
         id: string;
@@ -556,6 +595,7 @@ async function findBAIsForBA(baId: string): Promise<Array<{
         status?: string;
         project: string;
         path: string;
+        hasTBD?: boolean;
     }> = [];
 
     const projectsDir = join(WORKSPACE_ROOT, 'projects');
@@ -582,6 +622,7 @@ async function findBAIsForBA(baId: string): Promise<Array<{
                             status: extractStatus(content),
                             project,
                             path: relative(WORKSPACE_ROOT, filePath).replace(/\\/g, '/'),
+                            hasTBD: checkHasTBD(content),
                         });
                     }
                 }
@@ -615,6 +656,7 @@ export async function getBARelationships(baId: string): Promise<BARelationshipsR
         status: bai.status,
         project: bai.project,
         path: bai.path,
+        hasTBD: bai.hasTBD,
     }));
 
     return { ba, baIncrements };

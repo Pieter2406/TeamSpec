@@ -10,7 +10,7 @@
  * Feature: f-TSV-008 (Inline Status Editing)
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Box, Typography, Skeleton, CircularProgress } from '@mui/material';
 import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView';
 import { TreeItem } from '@mui/x-tree-view/TreeItem';
@@ -22,7 +22,9 @@ import {
 } from '../api/artifacts';
 import { getArtifactIcon } from '../utils/artifactIcons';
 import { StatusDropdown } from './StatusDropdown';
+import { TBDIndicator } from './TBDIndicator';
 import { useToast } from '../contexts/ToastContext';
+import { isTerminalState, getStatePriority } from '../constants/stateOrdering';
 
 // ============================================================================
 // Types
@@ -40,6 +42,8 @@ export interface BATreeNodeData {
 interface BATreeProps {
     baId: string;
     onNodeSelect?: (node: BATreeNodeData) => void;
+    /** Show completed/terminal artifacts. Defaults to true. */
+    showCompleted?: boolean;
 }
 
 interface NodeStatusState {
@@ -58,9 +62,10 @@ interface NodeLabelProps {
     title: string;
     badge?: string;
     statusElement?: React.ReactNode;
+    hasTBD?: boolean;
 }
 
-function NodeLabel({ icon, title, badge, statusElement }: NodeLabelProps) {
+function NodeLabel({ icon, title, badge, statusElement, hasTBD }: NodeLabelProps) {
     return (
         <Box
             sx={{
@@ -86,6 +91,7 @@ function NodeLabel({ icon, title, badge, statusElement }: NodeLabelProps) {
             >
                 {title}
             </Typography>
+            <TBDIndicator show={hasTBD ?? false} size="small" />
             {badge && (
                 <Typography
                     variant="caption"
@@ -114,6 +120,7 @@ function NodeLabel({ icon, title, badge, statusElement }: NodeLabelProps) {
 export function BATree({
     baId,
     onNodeSelect,
+    showCompleted = true,
 }: BATreeProps) {
     const [relationships, setRelationships] = useState<BARelationshipsResponse | null>(null);
     const [loading, setLoading] = useState(true);
@@ -121,6 +128,21 @@ export function BATree({
     const [expandedItems, setExpandedItems] = useState<string[]>([]);
     const [statusStates, setStatusStates] = useState<NodeStatusState>({});
     const { showError } = useToast();
+
+    // Filter and sort helper
+    const filterAndSort = useCallback(<T extends { status?: string; title: string }>(
+        items: T[]
+    ): T[] => {
+        const filtered = showCompleted
+            ? items
+            : items.filter(item => !isTerminalState(item.status || ''));
+        return [...filtered].sort((a, b) => {
+            const priorityA = getStatePriority(a.status || '');
+            const priorityB = getStatePriority(b.status || '');
+            if (priorityA !== priorityB) return priorityA - priorityB;
+            return a.title.localeCompare(b.title);
+        });
+    }, [showCompleted]);
 
     // Get icon configurations
     const baIconConfig = getArtifactIcon('business-analysis');
@@ -224,6 +246,12 @@ export function BATree({
         return statusStates[path]?.loading || false;
     }, [statusStates]);
 
+    // Filter and sort BAIs (must be before early returns to satisfy Rules of Hooks)
+    const visibleBAIs = useMemo(() => {
+        if (!relationships) return [];
+        return filterAndSort(relationships.baIncrements);
+    }, [relationships, filterAndSort]);
+
     // Loading state
     if (loading) {
         return (
@@ -263,7 +291,7 @@ export function BATree({
         );
     }
 
-    const { ba, baIncrements } = relationships;
+    const { ba } = relationships;
 
     // Clickable label wrapper
     const ClickableLabel = ({ nodeData, children }: { nodeData: BATreeNodeData; children: React.ReactNode }) => (
@@ -293,6 +321,7 @@ export function BATree({
                             icon={<BAIIcon sx={{ fontSize: 16, color: baiIconConfig.color }} />}
                             title={bai.title}
                             badge={bai.project}
+                            hasTBD={bai.hasTBD}
                             statusElement={
                                 effectiveStatus && (
                                     <StatusDropdown
@@ -344,7 +373,8 @@ export function BATree({
                             <NodeLabel
                                 icon={<BAIcon sx={{ fontSize: 18, color: baIconConfig.color }} />}
                                 title={ba.title}
-                                badge={`${baIncrements.length} BAIs`}
+                                badge={`${visibleBAIs.length} BAIs`}
+                                hasTBD={ba.hasTBD}
                                 statusElement={
                                     baEffectiveStatus && (
                                         <StatusDropdown
@@ -365,7 +395,18 @@ export function BATree({
                         </ClickableLabel>
                     }
                 >
-                    {baIncrements.map(renderBAI)}
+                    {visibleBAIs.length > 0 ? (
+                        visibleBAIs.map(renderBAI)
+                    ) : (
+                        <TreeItem
+                            itemId={`${ba.id}-empty-bais`}
+                            label={
+                                <Typography variant="body2" color="text.secondary" fontStyle="italic" sx={{ py: 0.5 }}>
+                                    {showCompleted ? 'No increments' : 'No active increments'}
+                                </Typography>
+                            }
+                        />
+                    )}
                 </TreeItem>
             </SimpleTreeView>
         </Box>

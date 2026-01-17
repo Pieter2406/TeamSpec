@@ -1,31 +1,22 @@
 ---
-# === LLM Retrieval Metadata ===
 artifact_kind: epic
-spec_version: "4.0"
-template_version: "4.0.1"
-title: "Inline Status Editing"
-
-# === Ownership ===
+spec_version: '4.0'
+template_version: 4.0.1
+title: Inline Status Editing
 role_owner: FA
 artifact_type: Project Execution
 canonicality: project-execution
 lifecycle: project-bound
-
-# === Naming ===
-id_pattern: "epic-TSV-006"
-filename_pattern: "epic-TSV-006-inline-status-editing.md"
-
-# === Required Relationships ===
+id_pattern: epic-TSV-006
+filename_pattern: epic-TSV-006-inline-status-editing.md
 links_required:
   - type: product
-    pattern: "product.yml"
+    pattern: product.yml
     optional: false
   - type: feature-increment
-    pattern: "fi-TSV-006"
+    pattern: fi-TSV-006
     optional: false
-    note: "Inline status editing MVP FI"
-
-# === Search Optimization ===
+    note: Inline status editing MVP FI
 keywords:
   - epic
   - inline status editing
@@ -40,6 +31,7 @@ anti_keywords:
   - implementation detail
   - code
   - test case
+status: Active
 ---
 
 # Epic: `epic-TSV-006-inline-status-editing`
@@ -54,7 +46,7 @@ anti_keywords:
 | Field | Value |
 |-------|-------|
 | **Epic ID** | epic-TSV-006 |
-| **Status** | Proposed |
+| **Status** | Active|
 | **Product** | teamspec-viewer (TSV) |
 | **Owner** | FA (Functional Analyst) |
 | **Created** | 2026-01-16 |

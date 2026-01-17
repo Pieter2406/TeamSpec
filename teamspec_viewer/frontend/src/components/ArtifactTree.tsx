@@ -9,7 +9,7 @@
  * Feature: f-TSV-008 (Inline Status Editing)
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Box, Typography, Skeleton, CircularProgress } from '@mui/material';
 import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView';
 import { TreeItem } from '@mui/x-tree-view/TreeItem';
@@ -23,7 +23,9 @@ import {
 } from '../api/artifacts';
 import { getArtifactIcon } from '../utils/artifactIcons';
 import { StatusDropdown } from './StatusDropdown';
+import { TBDIndicator } from './TBDIndicator';
 import { useToast } from '../contexts/ToastContext';
+import { isTerminalState, getStatePriority } from '../constants/stateOrdering';
 
 // ============================================================================
 // Types
@@ -41,6 +43,8 @@ export interface TreeNodeData {
 interface ArtifactTreeProps {
     featureId: string;
     onNodeSelect?: (node: TreeNodeData) => void;
+    /** Show completed/terminal artifacts. Defaults to true. */
+    showCompleted?: boolean;
 }
 
 interface NodeStatusState {
@@ -59,9 +63,10 @@ interface NodeLabelProps {
     title: string;
     badge?: string;
     statusElement?: React.ReactNode;
+    hasTBD?: boolean;
 }
 
-function NodeLabel({ icon, title, badge, statusElement }: NodeLabelProps) {
+function NodeLabel({ icon, title, badge, statusElement, hasTBD }: NodeLabelProps) {
     return (
         <Box
             sx={{
@@ -87,6 +92,7 @@ function NodeLabel({ icon, title, badge, statusElement }: NodeLabelProps) {
             >
                 {title}
             </Typography>
+            <TBDIndicator show={hasTBD ?? false} size="small" />
             {badge && (
                 <Typography
                     variant="caption"
@@ -115,6 +121,7 @@ function NodeLabel({ icon, title, badge, statusElement }: NodeLabelProps) {
 export function ArtifactTree({
     featureId,
     onNodeSelect,
+    showCompleted = true,
 }: ArtifactTreeProps) {
     const [relationships, setRelationships] = useState<FeatureRelationshipsResponse | null>(null);
     const [loading, setLoading] = useState(true);
@@ -122,6 +129,21 @@ export function ArtifactTree({
     const [expandedItems, setExpandedItems] = useState<string[]>([]);
     const [statusStates, setStatusStates] = useState<NodeStatusState>({});
     const { showError } = useToast();
+
+    // Filter and sort helper
+    const filterAndSort = useCallback(<T extends { status?: string; title: string }>(
+        items: T[]
+    ): T[] => {
+        const filtered = showCompleted
+            ? items
+            : items.filter(item => !isTerminalState(item.status || ''));
+        return [...filtered].sort((a, b) => {
+            const priorityA = getStatePriority(a.status || '');
+            const priorityB = getStatePriority(b.status || '');
+            if (priorityA !== priorityB) return priorityA - priorityB;
+            return a.title.localeCompare(b.title);
+        });
+    }, [showCompleted]);
 
     // Fetch relationship tree
     useEffect(() => {
@@ -219,6 +241,12 @@ export function ArtifactTree({
         return statusStates[path]?.loading || false;
     }, [statusStates]);
 
+    // Filter and sort FIs (must be before early returns to satisfy Rules of Hooks)
+    const visibleFIs = useMemo(() => {
+        if (!relationships) return [];
+        return filterAndSort(relationships.featureIncrements);
+    }, [relationships, filterAndSort]);
+
     // Loading state
     if (loading) {
         return (
@@ -259,7 +287,7 @@ export function ArtifactTree({
         );
     }
 
-    const { feature, featureIncrements } = relationships;
+    const { feature } = relationships;
 
     // Clickable label wrapper
     const ClickableLabel = ({ nodeData, children }: { nodeData: TreeNodeData; children: React.ReactNode }) => (
@@ -290,6 +318,7 @@ export function ArtifactTree({
                         <NodeLabel
                             icon={<IconComponent sx={{ fontSize: 16, color: iconConfig.color }} />}
                             title={story.title}
+                            hasTBD={story.hasTBD}
                             statusElement={
                                 effectiveStatus && (
                                     <StatusDropdown
@@ -319,6 +348,7 @@ export function ArtifactTree({
         const iconConfig = getArtifactIcon('epic');
         const IconComponent = iconConfig.icon;
         const effectiveStatus = getEffectiveStatus(epic.path, epic.status);
+        const visibleStories = filterAndSort(epic.stories);
 
         return (
             <TreeItem
@@ -329,7 +359,8 @@ export function ArtifactTree({
                         <NodeLabel
                             icon={<IconComponent sx={{ fontSize: 16, color: iconConfig.color }} />}
                             title={epic.title}
-                            badge={`${epic.stories.length} stories`}
+                            badge={`${visibleStories.length} stories`}
+                            hasTBD={epic.hasTBD}
                             statusElement={
                                 effectiveStatus && (
                                     <StatusDropdown
@@ -350,7 +381,18 @@ export function ArtifactTree({
                     </ClickableLabel>
                 }
             >
-                {epic.stories.map(story => renderStory(story, fiProject))}
+                {visibleStories.length > 0 ? (
+                    visibleStories.map(story => renderStory(story, fiProject))
+                ) : (
+                    <TreeItem
+                        itemId={`${epic.id}-empty-stories`}
+                        label={
+                            <Typography variant="body2" color="text.secondary" fontStyle="italic" sx={{ py: 0.5 }}>
+                                {showCompleted ? 'No stories' : 'No active stories'}
+                            </Typography>
+                        }
+                    />
+                )}
             </TreeItem>
         );
     };
@@ -372,6 +414,7 @@ export function ArtifactTree({
                             icon={<IconComponent sx={{ fontSize: 16, color: iconConfig.color }} />}
                             title={fi.title}
                             badge={fi.project}
+                            hasTBD={fi.hasTBD}
                             statusElement={
                                 effectiveStatus && (
                                     <StatusDropdown
@@ -427,7 +470,8 @@ export function ArtifactTree({
                             <NodeLabel
                                 icon={<FeatureIcon sx={{ fontSize: 18, color: featureIconConfig.color }} />}
                                 title={feature.title}
-                                badge={`${featureIncrements.length} FIs`}
+                                badge={`${visibleFIs.length} FIs`}
+                                hasTBD={feature.hasTBD}
                                 statusElement={
                                     featureEffectiveStatus && (
                                         <StatusDropdown
@@ -448,7 +492,18 @@ export function ArtifactTree({
                         </ClickableLabel>
                     }
                 >
-                    {featureIncrements.map(renderFI)}
+                    {visibleFIs.length > 0 ? (
+                        visibleFIs.map(renderFI)
+                    ) : (
+                        <TreeItem
+                            itemId={`${feature.id}-empty-fis`}
+                            label={
+                                <Typography variant="body2" color="text.secondary" fontStyle="italic" sx={{ py: 0.5 }}>
+                                    {showCompleted ? 'No feature-increments' : 'No active feature-increments'}
+                                </Typography>
+                            }
+                        />
+                    )}
                 </TreeItem>
             </SimpleTreeView>
         </Box>

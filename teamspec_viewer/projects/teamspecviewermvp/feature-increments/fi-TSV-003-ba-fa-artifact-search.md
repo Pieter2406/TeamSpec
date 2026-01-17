@@ -1,34 +1,25 @@
 ---
-# === LLM Retrieval Metadata ===
 artifact_kind: fi
-spec_version: "4.0"
-template_version: "4.0.1"
-title: "Artifact Search Capability"
-
-# === Ownership ===
+spec_version: '4.0'
+template_version: 4.0.1
+title: Artifact Search Capability
 role_owner: FA
 artifact_type: Project Execution
 canonicality: project-execution
 lifecycle: project-bound
-
-# === Naming ===
-id_pattern: "fi-TSV-003"
-filename_pattern: "fi-TSV-003-ba-fa-artifact-search.md"
-
-# === Required Relationships ===
+id_pattern: fi-TSV-003
+filename_pattern: fi-TSV-003-ba-fa-artifact-search.md
 links_required:
   - type: feature
-    pattern: "f-TSV-007"
+    pattern: f-TSV-007
     optional: false
-    note: "Target feature that this FI modifies"
+    note: Target feature that this FI modifies
   - type: epic
-    pattern: "epic-TSV-*"
+    pattern: epic-TSV-*
     optional: true
   - type: product
-    pattern: "product.yml"
+    pattern: product.yml
     optional: false
-
-# === Search Optimization ===
 keywords:
   - feature increment
   - search
@@ -40,6 +31,7 @@ aliases:
 anti_keywords:
   - production truth
   - implementation details
+status: Done
 ---
 
 # Feature Increment: `fi-TSV-003-ba-fa-artifact-search`

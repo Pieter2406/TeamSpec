@@ -1,29 +1,20 @@
 ---
-# === LLM Retrieval Metadata ===
 artifact_kind: epic
-spec_version: "4.0"
-template_version: "4.0.1"
-
-# === Ownership ===
+spec_version: '4.0'
+template_version: 4.0.1
 role_owner: FA
 artifact_type: Project Execution
 canonicality: project-execution
 lifecycle: project-bound
-
-# === Naming ===
-id_pattern: "epic-TSV-002"
-filename_pattern: "epic-TSV-002-fi-navigation.md"
-
-# === Required Relationships ===
+id_pattern: epic-TSV-002
+filename_pattern: epic-TSV-002-fi-navigation.md
 links_required:
   - type: product
-    pattern: "product.yml"
+    pattern: product.yml
     optional: false
   - type: feature-increment
-    pattern: "fi-TSV-002"
+    pattern: fi-TSV-002
     optional: false
-
-# === Search Optimization ===
 keywords:
   - epic
   - feature increment
@@ -35,6 +26,7 @@ anti_keywords:
   - implementation detail
   - code
   - test case
+status: Done
 ---
 
 # Epic: `epic-TSV-002-fi-navigation`
@@ -49,7 +41,7 @@ anti_keywords:
 | Field | Value |
 |-------|-------|
 | **Epic ID** | epic-TSV-002 |
-| **Status** | Proposed |
+| **Status** | Done|
 | **Product** | teamspec-viewer (TSV) |
 | **Owner** | FA (Functional Analyst) |
 | **Created** | 2026-01-15 |

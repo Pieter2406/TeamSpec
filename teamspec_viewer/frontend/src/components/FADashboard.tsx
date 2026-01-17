@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Box, Typography, Container, Grid, Alert, Breadcrumbs, Link, Paper } from '@mui/material';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Box, Typography, Container, Grid, Alert, Breadcrumbs, Link, Paper, FormControlLabel, Checkbox, Tooltip } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import {
@@ -10,6 +10,8 @@ import { FeatureCardList } from './FeatureCard';
 import { ArtifactTree, TreeNodeData } from './ArtifactTree';
 import { ArtifactReader } from './ArtifactReader';
 import { FIDetailView } from './FIDetailView';
+import { useArtifactFilter } from '../hooks/useArtifactFilter';
+import { filterAndSortArtifacts } from '../utils/artifactSorting';
 
 // MVP hardcoded context
 const PRODUCT_ID = 'teamspec-viewer';
@@ -26,6 +28,15 @@ export function FADashboard() {
     // Full reader state
     const [readerArtifact, setReaderArtifact] = useState<Artifact | null>(null);
     const [fiDetailArtifact, setFiDetailArtifact] = useState<Artifact | null>(null);
+
+    // Filter state with localStorage persistence
+    const { showCompleted, setShowCompleted } = useArtifactFilter({ role: 'FA' });
+
+    // Apply filtering and sorting to features
+    const processedFeatures = useMemo(
+        () => filterAndSortArtifacts(features, showCompleted),
+        [features, showCompleted]
+    );
 
     // Load features
     useEffect(() => {
@@ -148,8 +159,49 @@ export function FADashboard() {
                                 <AccountTreeIcon sx={{ color: '#3b82f6' }} />
                                 Features
                             </Typography>
+
+                            {/* Filter Toggle */}
+                            <Box sx={{ mb: 2 }}>
+                                <Tooltip
+                                    title={
+                                        <Box>
+                                            <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                                                Show Completed Artifacts
+                                            </Typography>
+                                            <Typography variant="body2">
+                                                Toggle to show or hide artifacts with completed states:
+                                            </Typography>
+                                            <Box component="ul" sx={{ m: 0, pl: 2, mt: 0.5, fontSize: '0.85rem' }}>
+                                                <li>Done — Completed and closed</li>
+                                                <li>Retired — No longer in use</li>
+                                                <li>Deferred — Moved to later release</li>
+                                                <li>Out-of-Scope — Explicitly excluded</li>
+                                                <li>Archived — Historical reference</li>
+                                            </Box>
+                                        </Box>
+                                    }
+                                    placement="right"
+                                    arrow
+                                >
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox
+                                                checked={showCompleted}
+                                                onChange={(e) => setShowCompleted(e.target.checked)}
+                                                size="small"
+                                            />
+                                        }
+                                        label={
+                                            <Typography variant="body2" sx={{ color: '#64748b' }}>
+                                                Show Completed ({features.length - processedFeatures.length} hidden)
+                                            </Typography>
+                                        }
+                                    />
+                                </Tooltip>
+                            </Box>
+
                             <FeatureCardList
-                                features={features}
+                                features={processedFeatures}
                                 loading={loading}
                                 selectedFeatureId={selectedFeatureId || undefined}
                                 expandedFeatureId={expandedFeatureId || undefined}
@@ -189,6 +241,7 @@ export function FADashboard() {
                                 <ArtifactTree
                                     featureId={expandedFeatureId}
                                     onNodeSelect={handleNodeSelect}
+                                    showCompleted={showCompleted}
                                 />
                             ) : (
                                 <Box

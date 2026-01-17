@@ -30,17 +30,23 @@ export interface StatusUpdateResult {
 const STATUS_OPTIONS: Record<string, string[]> = {
     'feature': ['Planned', 'Active', 'Deprecated', 'Retired'],
     'feature-increment': ['Proposed', 'Approved', 'In-Progress', 'Done', 'Rejected'],
+    'fi': ['Proposed', 'Approved', 'In-Progress', 'Done', 'Rejected'],  // Alias for feature-increment
     'epic': ['Planned', 'Active', 'Done', 'Cancelled'],
     'story': ['Backlog', 'Refining', 'Ready', 'In-Progress', 'Done', 'Deferred', 'Out-of-Scope'],
     'business-analysis': ['Draft', 'Active', 'Deprecated'],
     'ba-increment': ['Proposed', 'Approved', 'Done', 'Rejected'],
+    'bai': ['Proposed', 'Approved', 'Done', 'Rejected'],  // Alias for ba-increment
     'devplan': ['Draft', 'In-Progress', 'Implemented', 'Blocked'],
     'solution-design': ['Draft', 'Active', 'Deprecated'],
     'sd-increment': ['Proposed', 'Approved', 'Done', 'Rejected'],
+    'sdi': ['Proposed', 'Approved', 'Done', 'Rejected'],  // Alias for sd-increment
     'technical-architecture': ['Draft', 'Active', 'Deprecated'],
     'ta-increment': ['Proposed', 'Approved', 'Done', 'Rejected'],
+    'tai': ['Proposed', 'Approved', 'Done', 'Rejected'],  // Alias for ta-increment
     'test-case': ['Draft', 'Active', 'Deprecated'],
+    'tc': ['Draft', 'Active', 'Deprecated'],  // Alias for test-case
     'regression-test': ['Draft', 'Active', 'Deprecated'],
+    'rt': ['Draft', 'Active', 'Deprecated'],  // Alias for regression-test
 };
 
 // ============================================================================

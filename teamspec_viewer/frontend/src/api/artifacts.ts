@@ -186,6 +186,7 @@ export interface StoryInfo {
     title: string;
     status?: string;
     path: string;
+    hasTBD?: boolean;
 }
 
 export interface EpicInfo {
@@ -194,6 +195,7 @@ export interface EpicInfo {
     status?: string;
     path: string;
     stories: StoryInfo[];
+    hasTBD?: boolean;
 }
 
 export interface FIInfo {
@@ -203,6 +205,7 @@ export interface FIInfo {
     project: string;
     path: string;
     epic?: EpicInfo;
+    hasTBD?: boolean;
 }
 
 export interface FeatureInfo {
@@ -210,6 +213,7 @@ export interface FeatureInfo {
     title: string;
     status?: string;
     path: string;
+    hasTBD?: boolean;
 }
 
 export interface FeatureRelationshipsResponse {
@@ -252,6 +256,7 @@ export interface BAInfo {
     title: string;
     status?: string;
     path: string;
+    hasTBD?: boolean;
 }
 
 export interface BAIInfo {
@@ -260,6 +265,7 @@ export interface BAIInfo {
     status?: string;
     project: string;
     path: string;
+    hasTBD?: boolean;
 }
 
 export interface BARelationshipsResponse {
