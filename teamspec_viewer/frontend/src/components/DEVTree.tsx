@@ -427,151 +427,151 @@ export function DEVTree({
                     },
                 }}
             >
-            {/* Epic Node */}
-            <TreeItem
-                itemId={`epic-${epicArtifact.id}`}
-                label={
-                    <ClickableLabel nodeData={epicNodeData}>
-                        <NodeLabel
-                            icon={<EpicIcon sx={{ fontSize: 18, color: epicIconConfig.color }} />}
-                            title={epicArtifact.title}
-                            badge={`${visibleStories.length} stories, ${totalDevPlans} dev plans`}
-                            statusElement={
-                                epicArtifact.status && (
-                                    <StatusDropdown
-                                        currentStatus={getEffectiveStatus(epicArtifact.path, epicArtifact.status)}
-                                        artifactType="epic"
-                                        onStatusChange={(newStatus) => handleStatusChange(
-                                            epicArtifact.path,
-                                            'epic',
-                                            getEffectiveStatus(epicArtifact.path, epicArtifact.status),
-                                            newStatus
-                                        )}
-                                        loading={isStatusLoading(epicArtifact.path)}
-                                        size="small"
+                {/* Epic Node */}
+                <TreeItem
+                    itemId={`epic-${epicArtifact.id}`}
+                    label={
+                        <ClickableLabel nodeData={epicNodeData}>
+                            <NodeLabel
+                                icon={<EpicIcon sx={{ fontSize: 18, color: epicIconConfig.color }} />}
+                                title={epicArtifact.title}
+                                badge={`${visibleStories.length} stories, ${totalDevPlans} dev plans`}
+                                statusElement={
+                                    epicArtifact.status && (
+                                        <StatusDropdown
+                                            currentStatus={getEffectiveStatus(epicArtifact.path, epicArtifact.status)}
+                                            artifactType="epic"
+                                            onStatusChange={(newStatus) => handleStatusChange(
+                                                epicArtifact.path,
+                                                'epic',
+                                                getEffectiveStatus(epicArtifact.path, epicArtifact.status),
+                                                newStatus
+                                            )}
+                                            loading={isStatusLoading(epicArtifact.path)}
+                                            size="small"
+                                        />
+                                    )
+                                }
+                            />
+                        </ClickableLabel>
+                    }
+                >
+                    {/* Story Nodes */}
+                    {visibleStories.map((story) => {
+                        const storyNodeData = buildNodeData(
+                            'story',
+                            story.id,
+                            story.title,
+                            story.path,
+                            story.status,
+                            projectId
+                        );
+
+                        const visibleDevPlans = filterAndSort(story.devPlans);
+
+                        return (
+                            <TreeItem
+                                key={story.id}
+                                itemId={`story-${story.id}`}
+                                label={
+                                    <ClickableLabel nodeData={storyNodeData}>
+                                        <NodeLabel
+                                            icon={<StoryIcon sx={{ fontSize: 18, color: storyIconConfig.color }} />}
+                                            title={story.title}
+                                            badge={visibleDevPlans.length > 0 ? `${visibleDevPlans.length} dev plan${visibleDevPlans.length !== 1 ? 's' : ''}` : undefined}
+                                            hasTBD={story.hasTBD}
+                                            statusElement={
+                                                story.status && (
+                                                    <StatusDropdown
+                                                        currentStatus={getEffectiveStatus(story.path, story.status)}
+                                                        artifactType="story"
+                                                        onStatusChange={(newStatus) => handleStatusChange(
+                                                            story.path,
+                                                            'story',
+                                                            getEffectiveStatus(story.path, story.status),
+                                                            newStatus
+                                                        )}
+                                                        loading={isStatusLoading(story.path)}
+                                                        size="small"
+                                                    />
+                                                )
+                                            }
+                                        />
+                                    </ClickableLabel>
+                                }
+                            >
+                                {/* Dev Plan Nodes */}
+                                {visibleDevPlans.map((dp) => {
+                                    const dpNodeData = buildNodeData(
+                                        'dev-plan',
+                                        dp.id,
+                                        dp.title,
+                                        dp.path,
+                                        dp.status,
+                                        projectId
+                                    );
+
+                                    return (
+                                        <TreeItem
+                                            key={dp.id}
+                                            itemId={`dp-${dp.id}`}
+                                            label={
+                                                <ClickableLabel nodeData={dpNodeData}>
+                                                    <NodeLabel
+                                                        icon={<DevPlanIcon sx={{ fontSize: 18, color: devPlanIconConfig.color }} />}
+                                                        title={dp.title}
+                                                        hasTBD={dp.hasTBD}
+                                                        statusElement={
+                                                            dp.status && (
+                                                                <StatusDropdown
+                                                                    currentStatus={getEffectiveStatus(dp.path, dp.status)}
+                                                                    artifactType="dev-plan"
+                                                                    onStatusChange={(newStatus) => handleStatusChange(
+                                                                        dp.path,
+                                                                        'dev-plan',
+                                                                        getEffectiveStatus(dp.path, dp.status),
+                                                                        newStatus
+                                                                    )}
+                                                                    loading={isStatusLoading(dp.path)}
+                                                                    size="small"
+                                                                />
+                                                            )
+                                                        }
+                                                    />
+                                                </ClickableLabel>
+                                            }
+                                        />
+                                    );
+                                })}
+
+                                {/* Empty state for dev plans */}
+                                {visibleDevPlans.length === 0 && (
+                                    <TreeItem
+                                        itemId={`${story.id}-empty-dp`}
+                                        label={
+                                            <Typography variant="body2" sx={{ color: '#94a3b8', fontStyle: 'italic', py: 1 }}>
+                                                No dev plans for this story
+                                            </Typography>
+                                        }
                                     />
-                                )
+                                )}
+                            </TreeItem>
+                        );
+                    })}
+
+                    {/* Empty state for stories */}
+                    {visibleStories.length === 0 && (
+                        <TreeItem
+                            itemId="empty-stories"
+                            label={
+                                <Typography variant="body2" sx={{ color: '#94a3b8', fontStyle: 'italic', py: 1 }}>
+                                    {showCompleted ? 'No stories found for this epic' : 'No active stories for this epic'}
+                                </Typography>
                             }
                         />
-                    </ClickableLabel>
-                }
-            >
-                {/* Story Nodes */}
-                {visibleStories.map((story) => {
-                    const storyNodeData = buildNodeData(
-                        'story',
-                        story.id,
-                        story.title,
-                        story.path,
-                        story.status,
-                        projectId
-                    );
-
-                    const visibleDevPlans = filterAndSort(story.devPlans);
-
-                    return (
-                        <TreeItem
-                            key={story.id}
-                            itemId={`story-${story.id}`}
-                            label={
-                                <ClickableLabel nodeData={storyNodeData}>
-                                    <NodeLabel
-                                        icon={<StoryIcon sx={{ fontSize: 18, color: storyIconConfig.color }} />}
-                                        title={story.title}
-                                        badge={visibleDevPlans.length > 0 ? `${visibleDevPlans.length} dev plan${visibleDevPlans.length !== 1 ? 's' : ''}` : undefined}
-                                        hasTBD={story.hasTBD}
-                                        statusElement={
-                                            story.status && (
-                                                <StatusDropdown
-                                                    currentStatus={getEffectiveStatus(story.path, story.status)}
-                                                    artifactType="story"
-                                                    onStatusChange={(newStatus) => handleStatusChange(
-                                                        story.path,
-                                                        'story',
-                                                        getEffectiveStatus(story.path, story.status),
-                                                        newStatus
-                                                    )}
-                                                    loading={isStatusLoading(story.path)}
-                                                    size="small"
-                                                />
-                                            )
-                                        }
-                                    />
-                                </ClickableLabel>
-                            }
-                        >
-                            {/* Dev Plan Nodes */}
-                            {visibleDevPlans.map((dp) => {
-                                const dpNodeData = buildNodeData(
-                                    'dev-plan',
-                                    dp.id,
-                                    dp.title,
-                                    dp.path,
-                                    dp.status,
-                                    projectId
-                                );
-
-                                return (
-                                    <TreeItem
-                                        key={dp.id}
-                                        itemId={`dp-${dp.id}`}
-                                        label={
-                                            <ClickableLabel nodeData={dpNodeData}>
-                                                <NodeLabel
-                                                    icon={<DevPlanIcon sx={{ fontSize: 18, color: devPlanIconConfig.color }} />}
-                                                    title={dp.title}
-                                                    hasTBD={dp.hasTBD}
-                                                    statusElement={
-                                                        dp.status && (
-                                                            <StatusDropdown
-                                                                currentStatus={getEffectiveStatus(dp.path, dp.status)}
-                                                                artifactType="dev-plan"
-                                                                onStatusChange={(newStatus) => handleStatusChange(
-                                                                    dp.path,
-                                                                    'dev-plan',
-                                                                    getEffectiveStatus(dp.path, dp.status),
-                                                                    newStatus
-                                                                )}
-                                                                loading={isStatusLoading(dp.path)}
-                                                                size="small"
-                                                            />
-                                                        )
-                                                    }
-                                                />
-                                            </ClickableLabel>
-                                        }
-                                    />
-                                );
-                            })}
-
-                            {/* Empty state for dev plans */}
-                            {visibleDevPlans.length === 0 && (
-                                <TreeItem
-                                    itemId={`${story.id}-empty-dp`}
-                                    label={
-                                        <Typography variant="body2" sx={{ color: '#94a3b8', fontStyle: 'italic', py: 1 }}>
-                                            No dev plans for this story
-                                        </Typography>
-                                    }
-                                />
-                            )}
-                        </TreeItem>
-                    );
-                })}
-
-                {/* Empty state for stories */}
-                {visibleStories.length === 0 && (
-                    <TreeItem
-                        itemId="empty-stories"
-                        label={
-                            <Typography variant="body2" sx={{ color: '#94a3b8', fontStyle: 'italic', py: 1 }}>
-                                {showCompleted ? 'No stories found for this epic' : 'No active stories for this epic'}
-                            </Typography>
-                        }
-                    />
-                )}
-            </TreeItem>
-        </SimpleTreeView>
+                    )}
+                </TreeItem>
+            </SimpleTreeView>
         </Box>
     );
 }

@@ -350,92 +350,92 @@ export function SATree({
                     },
                 }}
             >
-            {/* Parent Node (SD or TA) */}
-            <TreeItem
-                itemId={`parent-${parentArtifact.id}`}
-                label={
-                    <ClickableLabel nodeData={parentNodeData}>
-                        <NodeLabel
-                            icon={<ParentIcon sx={{ fontSize: 18, color: parentIconConfig.color }} />}
-                            title={parentArtifact.title}
-                            badge={`${visibleIncrements.length} increment${visibleIncrements.length !== 1 ? 's' : ''}`}
-                            statusElement={
-                                parentArtifact.status && (
-                                    <StatusDropdown
-                                        currentStatus={getEffectiveStatus(parentArtifact.path, parentArtifact.status)}
-                                        artifactType={treeType}
-                                        onStatusChange={(newStatus) => handleStatusChange(
-                                            parentArtifact.path,
-                                            treeType,
-                                            getEffectiveStatus(parentArtifact.path, parentArtifact.status),
-                                            newStatus
-                                        )}
-                                        loading={isStatusLoading(parentArtifact.path)}
-                                        size="small"
-                                    />
-                                )
-                            }
-                        />
-                    </ClickableLabel>
-                }
-            >
-                {/* Increment Nodes */}
-                {visibleIncrements.map((inc) => {
-                    const incNodeData = buildNodeData(
-                        treeType === 'sd' ? 'sdi' : 'tai',
-                        inc.id,
-                        inc.title,
-                        inc.path,
-                        inc.status,
-                        projectId
-                    );
+                {/* Parent Node (SD or TA) */}
+                <TreeItem
+                    itemId={`parent-${parentArtifact.id}`}
+                    label={
+                        <ClickableLabel nodeData={parentNodeData}>
+                            <NodeLabel
+                                icon={<ParentIcon sx={{ fontSize: 18, color: parentIconConfig.color }} />}
+                                title={parentArtifact.title}
+                                badge={`${visibleIncrements.length} increment${visibleIncrements.length !== 1 ? 's' : ''}`}
+                                statusElement={
+                                    parentArtifact.status && (
+                                        <StatusDropdown
+                                            currentStatus={getEffectiveStatus(parentArtifact.path, parentArtifact.status)}
+                                            artifactType={treeType}
+                                            onStatusChange={(newStatus) => handleStatusChange(
+                                                parentArtifact.path,
+                                                treeType,
+                                                getEffectiveStatus(parentArtifact.path, parentArtifact.status),
+                                                newStatus
+                                            )}
+                                            loading={isStatusLoading(parentArtifact.path)}
+                                            size="small"
+                                        />
+                                    )
+                                }
+                            />
+                        </ClickableLabel>
+                    }
+                >
+                    {/* Increment Nodes */}
+                    {visibleIncrements.map((inc) => {
+                        const incNodeData = buildNodeData(
+                            treeType === 'sd' ? 'sdi' : 'tai',
+                            inc.id,
+                            inc.title,
+                            inc.path,
+                            inc.status,
+                            projectId
+                        );
 
-                    return (
+                        return (
+                            <TreeItem
+                                key={inc.id}
+                                itemId={`inc-${inc.id}`}
+                                label={
+                                    <ClickableLabel nodeData={incNodeData}>
+                                        <NodeLabel
+                                            icon={<IncrementIcon sx={{ fontSize: 18, color: incrementIconConfig.color }} />}
+                                            title={inc.title}
+                                            badge={projectId}
+                                            statusElement={
+                                                inc.status && (
+                                                    <StatusDropdown
+                                                        currentStatus={getEffectiveStatus(inc.path, inc.status)}
+                                                        artifactType={treeType === 'sd' ? 'sdi' : 'tai'}
+                                                        onStatusChange={(newStatus) => handleStatusChange(
+                                                            inc.path,
+                                                            treeType === 'sd' ? 'sdi' : 'tai',
+                                                            getEffectiveStatus(inc.path, inc.status),
+                                                            newStatus
+                                                        )}
+                                                        loading={isStatusLoading(inc.path)}
+                                                        size="small"
+                                                    />
+                                                )
+                                            }
+                                        />
+                                    </ClickableLabel>
+                                }
+                            />
+                        );
+                    })}
+
+                    {/* Empty state for increments */}
+                    {visibleIncrements.length === 0 && (
                         <TreeItem
-                            key={inc.id}
-                            itemId={`inc-${inc.id}`}
+                            itemId="empty"
                             label={
-                                <ClickableLabel nodeData={incNodeData}>
-                                    <NodeLabel
-                                        icon={<IncrementIcon sx={{ fontSize: 18, color: incrementIconConfig.color }} />}
-                                        title={inc.title}
-                                        badge={projectId}
-                                        statusElement={
-                                            inc.status && (
-                                                <StatusDropdown
-                                                    currentStatus={getEffectiveStatus(inc.path, inc.status)}
-                                                    artifactType={treeType === 'sd' ? 'sdi' : 'tai'}
-                                                    onStatusChange={(newStatus) => handleStatusChange(
-                                                        inc.path,
-                                                        treeType === 'sd' ? 'sdi' : 'tai',
-                                                        getEffectiveStatus(inc.path, inc.status),
-                                                        newStatus
-                                                    )}
-                                                    loading={isStatusLoading(inc.path)}
-                                                    size="small"
-                                                />
-                                            )
-                                        }
-                                    />
-                                </ClickableLabel>
+                                <Typography variant="body2" sx={{ color: '#94a3b8', fontStyle: 'italic', py: 1 }}>
+                                    No increments found
+                                </Typography>
                             }
                         />
-                    );
-                })}
-
-                {/* Empty state for increments */}
-                {visibleIncrements.length === 0 && (
-                    <TreeItem
-                        itemId="empty"
-                        label={
-                            <Typography variant="body2" sx={{ color: '#94a3b8', fontStyle: 'italic', py: 1 }}>
-                                No increments found
-                            </Typography>
-                        }
-                    />
-                )}
-            </TreeItem>
-        </SimpleTreeView>
+                    )}
+                </TreeItem>
+            </SimpleTreeView>
         </Box>
     );
 }

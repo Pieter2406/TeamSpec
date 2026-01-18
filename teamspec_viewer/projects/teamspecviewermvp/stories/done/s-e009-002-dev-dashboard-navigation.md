@@ -1,30 +1,21 @@
 ---
-# === LLM Retrieval Metadata ===
 artifact_kind: story
-spec_version: "4.0"
-template_version: "4.0.1"
-title: "DEV Dashboard Navigation"
-
-# === Ownership ===
+spec_version: '4.0'
+template_version: 4.0.1
+title: DEV Dashboard Navigation
 role_owner: FA
 artifact_type: Project Execution
 canonicality: project-execution
 lifecycle: sprint-bound
-
-# === Naming ===
-id_pattern: "s-e009-002"
-filename_pattern: "s-e009-002-dev-dashboard-navigation.md"
-
-# === Required Relationships ===
+id_pattern: s-e009-002
+filename_pattern: s-e009-002-dev-dashboard-navigation.md
 links_required:
   - type: epic
-    pattern: "epic-TSV-009"
+    pattern: epic-TSV-009
     optional: false
   - type: feature-increment
-    pattern: "fi-TSV-009"
+    pattern: fi-TSV-009
     optional: true
-
-# === Search Optimization ===
 keywords:
   - DEV dashboard
   - developer dashboard
@@ -35,7 +26,7 @@ aliases:
   - developer view
 anti_keywords:
   - implementation detail
-status: Backlog
+status: Done
 ---
 
 # Story: `s-e009-002-dev-dashboard-navigation`
@@ -51,7 +42,7 @@ status: Backlog
 |-------|-------|
 | **Story ID** | s-e009-002 |
 | **Epic** | epic-TSV-009 |
-| **Status** | Backlog |
+| **Status** | Done|
 | **Estimate** | 5 SP |
 | **Author** | FA |
 | **Sprint** | — |

@@ -53,7 +53,7 @@ anti_keywords:
 | Field | Value |
 |-------|-------|
 | **Dev Plan ID** | dp-e009-s001 |
-| **Story** | [s-e009-001](../stories/backlog/s-e009-001-extend-role-selector.md) |
+| **Story** | [s-e009-001](../stories/done/s-e009-001-extend-role-selector.md) |
 | **Epic** | epic-TSV-009 |
 | **Product** | teamspec-viewer (TSV) |
 | **Author** | DEV Agent |
@@ -66,7 +66,7 @@ anti_keywords:
 
 | Story ID | Title | Feature-Increment |
 |----------|-------|-------------------|
-| [s-e009-001](../stories/backlog/s-e009-001-extend-role-selector.md) | Extend RoleSelector Component | [fi-TSV-009](../feature-increments/fi-TSV-009-dev-sa-qa-role-dashboards.md) |
+| [s-e009-001](../stories/done/s-e009-001-extend-role-selector.md) | Extend RoleSelector Component | [fi-TSV-009](../feature-increments/fi-TSV-009-dev-sa-qa-role-dashboards.md) |
 
 ---
 

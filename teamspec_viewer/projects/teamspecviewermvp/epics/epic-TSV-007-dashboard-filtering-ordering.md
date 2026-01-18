@@ -1,31 +1,22 @@
 ---
-# === LLM Retrieval Metadata ===
 artifact_kind: epic
-spec_version: "4.0"
-template_version: "4.0.1"
-title: "Dashboard artifact filtering and smart state ordering"
-
-# === Ownership ===
+spec_version: '4.0'
+template_version: 4.0.1
+title: Dashboard artifact filtering and smart state ordering
 role_owner: FA
 artifact_type: Project Execution
 canonicality: project-execution
 lifecycle: project-bound
-
-# === Naming ===
-id_pattern: "epic-TSV-007"
-filename_pattern: "epic-TSV-007-dashboard-filtering-ordering.md"
-
-# === Required Relationships ===
+id_pattern: epic-TSV-007
+filename_pattern: epic-TSV-007-dashboard-filtering-ordering.md
 links_required:
   - type: product
-    pattern: "product.yml"
+    pattern: product.yml
     optional: false
   - type: feature-increment
-    pattern: "fi-TSV-007"
+    pattern: fi-TSV-007
     optional: false
-    note: "Dashboard filtering and ordering feature-increment"
-
-# === Search Optimization ===
+    note: Dashboard filtering and ordering feature-increment
 keywords:
   - epic
   - dashboard
@@ -42,19 +33,17 @@ anti_keywords:
   - implementation detail
   - code
   - technical design
-
-# === Generation Contract ===
 completion_rules:
-  placeholders: "Fill {braces} only; leave {TBD} if unknown"
-  id_generation: "Use product PRX (TSV); NNN is sequential (007)"
-  story_naming: "Stories use s-e007-YYY pattern (e.g., s-e007-001)"
+  placeholders: 'Fill {braces} only; leave {TBD} if unknown'
+  id_generation: Use product PRX (TSV); NNN is sequential (007)
+  story_naming: 'Stories use s-e007-YYY pattern (e.g., s-e007-001)'
   required_sections:
     - Epic Summary
     - Linked Product
     - Feature-Increments
     - TO-BE / Business Value
     - Success Metrics
-
+status: Done
 ---
 
 # Epic: `epic-TSV-007-dashboard-filtering-ordering`
@@ -69,7 +58,7 @@ completion_rules:
 | Field | Value |
 |-------|-------|
 | **Epic ID** | epic-TSV-007 |
-| **Status** | Proposed |
+| **Status** | Done|
 | **Product** | teamspec-viewer (TSV) |
 | **Owner** | FA (Functional Analyst) |
 | **Created** | 2026-01-17 |

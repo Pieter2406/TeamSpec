@@ -370,91 +370,91 @@ export function QATree({
                     },
                 }}
             >
-            {/* Parent Node (FI or Feature) */}
-            <TreeItem
-                itemId={`parent-${parentArtifact.id}`}
-                label={
-                    <ClickableLabel nodeData={parentNodeData}>
-                        <NodeLabel
-                            icon={<ParentIcon sx={{ fontSize: 18, color: parentIconConfig.color }} />}
-                            title={parentArtifact.title}
-                            badge={`${visibleChildren.length} ${childTypeName}${visibleChildren.length !== 1 ? 's' : ''}`}
-                            statusElement={
-                                parentArtifact.status && (
-                                    <StatusDropdown
-                                        currentStatus={getEffectiveStatus(parentArtifact.path, parentArtifact.status)}
-                                        artifactType={treeType === 'fi' ? 'feature-increment' : 'feature'}
-                                        onStatusChange={(newStatus) => handleStatusChange(
-                                            parentArtifact.path,
-                                            treeType === 'fi' ? 'feature-increment' : 'feature',
-                                            getEffectiveStatus(parentArtifact.path, parentArtifact.status),
-                                            newStatus
-                                        )}
-                                        loading={isStatusLoading(parentArtifact.path)}
-                                        size="small"
-                                    />
-                                )
-                            }
-                        />
-                    </ClickableLabel>
-                }
-            >
-                {/* Child Nodes (Test Cases or Regression Tests) */}
-                {visibleChildren.map((child) => {
-                    const childNodeData = buildNodeData(
-                        treeType === 'fi' ? 'test-case' : 'regression-test',
-                        child.id,
-                        child.title,
-                        child.path,
-                        child.status,
-                        scopeId
-                    );
+                {/* Parent Node (FI or Feature) */}
+                <TreeItem
+                    itemId={`parent-${parentArtifact.id}`}
+                    label={
+                        <ClickableLabel nodeData={parentNodeData}>
+                            <NodeLabel
+                                icon={<ParentIcon sx={{ fontSize: 18, color: parentIconConfig.color }} />}
+                                title={parentArtifact.title}
+                                badge={`${visibleChildren.length} ${childTypeName}${visibleChildren.length !== 1 ? 's' : ''}`}
+                                statusElement={
+                                    parentArtifact.status && (
+                                        <StatusDropdown
+                                            currentStatus={getEffectiveStatus(parentArtifact.path, parentArtifact.status)}
+                                            artifactType={treeType === 'fi' ? 'feature-increment' : 'feature'}
+                                            onStatusChange={(newStatus) => handleStatusChange(
+                                                parentArtifact.path,
+                                                treeType === 'fi' ? 'feature-increment' : 'feature',
+                                                getEffectiveStatus(parentArtifact.path, parentArtifact.status),
+                                                newStatus
+                                            )}
+                                            loading={isStatusLoading(parentArtifact.path)}
+                                            size="small"
+                                        />
+                                    )
+                                }
+                            />
+                        </ClickableLabel>
+                    }
+                >
+                    {/* Child Nodes (Test Cases or Regression Tests) */}
+                    {visibleChildren.map((child) => {
+                        const childNodeData = buildNodeData(
+                            treeType === 'fi' ? 'test-case' : 'regression-test',
+                            child.id,
+                            child.title,
+                            child.path,
+                            child.status,
+                            scopeId
+                        );
 
-                    return (
+                        return (
+                            <TreeItem
+                                key={child.id}
+                                itemId={`child-${child.id}`}
+                                label={
+                                    <ClickableLabel nodeData={childNodeData}>
+                                        <NodeLabel
+                                            icon={<ChildIcon sx={{ fontSize: 18, color: childIconConfig.color }} />}
+                                            title={child.title}
+                                            statusElement={
+                                                child.status && (
+                                                    <StatusDropdown
+                                                        currentStatus={getEffectiveStatus(child.path, child.status)}
+                                                        artifactType={treeType === 'fi' ? 'test-case' : 'regression-test'}
+                                                        onStatusChange={(newStatus) => handleStatusChange(
+                                                            child.path,
+                                                            treeType === 'fi' ? 'test-case' : 'regression-test',
+                                                            getEffectiveStatus(child.path, child.status),
+                                                            newStatus
+                                                        )}
+                                                        loading={isStatusLoading(child.path)}
+                                                        size="small"
+                                                    />
+                                                )
+                                            }
+                                        />
+                                    </ClickableLabel>
+                                }
+                            />
+                        );
+                    })}
+
+                    {/* Empty state for children */}
+                    {visibleChildren.length === 0 && (
                         <TreeItem
-                            key={child.id}
-                            itemId={`child-${child.id}`}
+                            itemId="empty"
                             label={
-                                <ClickableLabel nodeData={childNodeData}>
-                                    <NodeLabel
-                                        icon={<ChildIcon sx={{ fontSize: 18, color: childIconConfig.color }} />}
-                                        title={child.title}
-                                        statusElement={
-                                            child.status && (
-                                                <StatusDropdown
-                                                    currentStatus={getEffectiveStatus(child.path, child.status)}
-                                                    artifactType={treeType === 'fi' ? 'test-case' : 'regression-test'}
-                                                    onStatusChange={(newStatus) => handleStatusChange(
-                                                        child.path,
-                                                        treeType === 'fi' ? 'test-case' : 'regression-test',
-                                                        getEffectiveStatus(child.path, child.status),
-                                                        newStatus
-                                                    )}
-                                                    loading={isStatusLoading(child.path)}
-                                                    size="small"
-                                                />
-                                            )
-                                        }
-                                    />
-                                </ClickableLabel>
+                                <Typography variant="body2" sx={{ color: '#94a3b8', fontStyle: 'italic', py: 1 }}>
+                                    No {childTypeName}s found
+                                </Typography>
                             }
                         />
-                    );
-                })}
-
-                {/* Empty state for children */}
-                {visibleChildren.length === 0 && (
-                    <TreeItem
-                        itemId="empty"
-                        label={
-                            <Typography variant="body2" sx={{ color: '#94a3b8', fontStyle: 'italic', py: 1 }}>
-                                No {childTypeName}s found
-                            </Typography>
-                        }
-                    />
-                )}
-            </TreeItem>
-        </SimpleTreeView>
+                    )}
+                </TreeItem>
+            </SimpleTreeView>
         </Box>
     );
 }

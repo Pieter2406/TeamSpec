@@ -32,10 +32,15 @@ import {
     ListItemButton,
     ListItemText,
     CircularProgress,
+    Card,
+    CardContent,
+    CardActionArea,
 } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
 import BugReportIcon from '@mui/icons-material/BugReport';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import {
     getFeatureIncrements,
     getFeatures,
@@ -47,13 +52,34 @@ import { QATree, QATreeNodeData } from './QATree';
 import { ArtifactReader } from './ArtifactReader';
 import { useArtifactFilter } from '../hooks/useArtifactFilter';
 import { filterAndSortArtifacts } from '../utils/artifactSorting';
+import { TBDIndicator } from './TBDIndicator';
 
 // MVP hardcoded context
 const PRODUCT_ID = 'teamspec-viewer';
 const PROJECT_ID = 'teamspecviewermvp';
 
 // ============================================================================
-// Artifact Card Component
+// Card Status Colors (Bug-009 fix: match FeatureCard pattern)
+// ============================================================================
+
+const CARD_STATUS_COLORS: Record<string, { bg: string; text: string }> = {
+    active: { bg: '#dcfce7', text: '#166534' },
+    draft: { bg: '#fef9c3', text: '#854d0e' },
+    planned: { bg: '#e0e7ff', text: '#3730a3' },
+    approved: { bg: '#d1fae5', text: '#065f46' },
+    deprecated: { bg: '#fee2e2', text: '#991b1b' },
+    done: { bg: '#d1fae5', text: '#065f46' },
+    'in progress': { bg: '#dbeafe', text: '#1e40af' },
+    default: { bg: '#f1f5f9', text: '#475569' },
+};
+
+function getCardStatusColor(status?: string) {
+    const normalizedStatus = status?.toLowerCase() || 'default';
+    return CARD_STATUS_COLORS[normalizedStatus] || CARD_STATUS_COLORS.default;
+}
+
+// ============================================================================
+// Artifact Card Component (Bug-009 fix: match FeatureCard pattern)
 // ============================================================================
 
 interface ArtifactCardProps {
@@ -66,69 +92,104 @@ interface ArtifactCardProps {
 
 function ArtifactCard({ artifact, isSelected, isExpanded, onClick, iconConfig }: ArtifactCardProps) {
     const Icon = iconConfig.icon;
-    
+    const statusColor = getCardStatusColor(artifact.status);
+
     return (
-        <Paper
-            elevation={0}
-            onClick={onClick}
+        <Card
             sx={{
-                p: 2,
                 mb: 1,
-                cursor: 'pointer',
-                border: '1px solid',
-                borderColor: isExpanded ? '#f59e0b' : isSelected ? '#3b82f6' : '#e2e8f0',
                 borderRadius: 2,
-                bgcolor: isExpanded ? '#fffbeb' : isSelected ? '#eff6ff' : 'white',
-                transition: 'all 0.2s',
+                border: isExpanded ? '2px solid #f59e0b' : isSelected ? '2px solid #3b82f6' : '1px solid #e2e8f0',
+                boxShadow: isSelected
+                    ? '0 4px 12px rgba(59, 130, 246, 0.25)'
+                    : '0 1px 3px rgba(0, 0, 0, 0.1)',
+                bgcolor: isExpanded ? 'rgba(245, 158, 11, 0.04)' : isSelected ? 'rgba(59, 130, 246, 0.04)' : 'white',
+                transform: isSelected ? 'scale(1.02)' : 'scale(1)',
+                transition: 'all 0.2s ease',
                 '&:hover': {
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
                     borderColor: '#f59e0b',
-                    bgcolor: '#fefce8',
                 },
             }}
         >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Icon sx={{ color: iconConfig.color, fontSize: 24 }} />
-                <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Typography
-                        variant="body1"
-                        sx={{
-                            fontWeight: 600,
-                            color: '#1e293b',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                        }}
-                    >
-                        {artifact.title}
-                    </Typography>
-                    <Typography
-                        variant="caption"
-                        sx={{
-                            color: '#64748b',
-                            fontFamily: 'monospace',
-                            fontSize: '0.7rem',
-                        }}
-                    >
-                        {artifact.id}
-                    </Typography>
-                </Box>
-                {artifact.status && (
-                    <Typography
-                        variant="caption"
-                        sx={{
-                            px: 1,
-                            py: 0.25,
-                            borderRadius: 1,
-                            fontWeight: 600,
-                            bgcolor: artifact.status === 'Approved' ? '#dcfce7' : '#fef3c7',
-                            color: artifact.status === 'Approved' ? '#166534' : '#92400e',
-                        }}
-                    >
-                        {artifact.status}
-                    </Typography>
-                )}
-            </Box>
-        </Paper>
+            <CardActionArea onClick={onClick}>
+                <CardContent sx={{ p: 2 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
+                        {/* Expand/Collapse Icon */}
+                        <Box sx={{ color: '#64748b', mt: 0.25 }}>
+                            {isExpanded ? (
+                                <ExpandMoreIcon sx={{ fontSize: 20 }} />
+                            ) : (
+                                <ChevronRightIcon sx={{ fontSize: 20 }} />
+                            )}
+                        </Box>
+
+                        {/* Colored Icon Background */}
+                        <Box
+                            sx={{
+                                width: 36,
+                                height: 36,
+                                borderRadius: 1.5,
+                                bgcolor: `${iconConfig.color}15`,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                flexShrink: 0,
+                            }}
+                        >
+                            <Icon sx={{ color: iconConfig.color, fontSize: 20 }} />
+                        </Box>
+
+                        {/* Content */}
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                            {/* Title Row with Status and TBD */}
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                                <Typography
+                                    variant="subtitle1"
+                                    sx={{
+                                        fontWeight: 600,
+                                        color: '#1e293b',
+                                        lineHeight: 1.3,
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap',
+                                    }}
+                                >
+                                    {artifact.title}
+                                </Typography>
+                                <TBDIndicator show={artifact.hasTBD ?? false} size="small" />
+                                {artifact.status && (
+                                    <Chip
+                                        label={artifact.status}
+                                        size="small"
+                                        sx={{
+                                            height: 20,
+                                            fontSize: '0.7rem',
+                                            fontWeight: 600,
+                                            bgcolor: statusColor.bg,
+                                            color: statusColor.text,
+                                            borderRadius: 1,
+                                        }}
+                                    />
+                                )}
+                            </Box>
+
+                            {/* ID Row */}
+                            <Typography
+                                variant="caption"
+                                sx={{
+                                    color: '#94a3b8',
+                                    fontFamily: 'monospace',
+                                    fontSize: '0.75rem',
+                                }}
+                            >
+                                {artifact.id}
+                            </Typography>
+                        </Box>
+                    </Box>
+                </CardContent>
+            </CardActionArea>
+        </Card>
     );
 }
 
@@ -408,11 +469,11 @@ export function QADashboard() {
                         <BugReportIcon sx={{ color: '#f59e0b', fontSize: 32 }} />
                         QA Dashboard
                         {openBugsCount > 0 && (
-                            <Chip 
-                                label={`${openBugsCount} Open Bug${openBugsCount > 1 ? 's' : ''}`} 
-                                size="small" 
-                                color="error" 
-                                sx={{ ml: 2, fontWeight: 600 }} 
+                            <Chip
+                                label={`${openBugsCount} Open Bug${openBugsCount > 1 ? 's' : ''}`}
+                                size="small"
+                                color="error"
+                                sx={{ ml: 2, fontWeight: 600 }}
                             />
                         )}
                     </Typography>
@@ -496,11 +557,11 @@ export function QADashboard() {
                         >
                             <BugReportIcon sx={{ color: '#ef4444' }} />
                             Bug Reports
-                            <Chip 
-                                label="Project" 
-                                size="small" 
-                                color="secondary" 
-                                sx={{ fontWeight: 600, ml: 1 }} 
+                            <Chip
+                                label="Project"
+                                size="small"
+                                color="secondary"
+                                sx={{ fontWeight: 600, ml: 1 }}
                             />
                         </Typography>
                         <BugReportsPanel

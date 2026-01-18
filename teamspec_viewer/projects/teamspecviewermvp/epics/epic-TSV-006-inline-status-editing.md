@@ -31,7 +31,7 @@ anti_keywords:
   - implementation detail
   - code
   - test case
-status: Active
+status: Done
 ---
 
 # Epic: `epic-TSV-006-inline-status-editing`
@@ -46,7 +46,7 @@ status: Active
 | Field | Value |
 |-------|-------|
 | **Epic ID** | epic-TSV-006 |
-| **Status** | Active|
+| **Status** | Done|
 | **Product** | teamspec-viewer (TSV) |
 | **Owner** | FA (Functional Analyst) |
 | **Created** | 2026-01-16 |

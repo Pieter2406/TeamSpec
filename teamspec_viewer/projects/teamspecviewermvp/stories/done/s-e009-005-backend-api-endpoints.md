@@ -1,30 +1,21 @@
 ---
-# === LLM Retrieval Metadata ===
 artifact_kind: story
-spec_version: "4.0"
-template_version: "4.0.1"
-title: "Backend API Endpoints for DEV/SA/QA"
-
-# === Ownership ===
+spec_version: '4.0'
+template_version: 4.0.1
+title: Backend API Endpoints for DEV/SA/QA
 role_owner: FA
 artifact_type: Project Execution
 canonicality: project-execution
 lifecycle: sprint-bound
-
-# === Naming ===
-id_pattern: "s-e009-005"
-filename_pattern: "s-e009-005-backend-api-endpoints.md"
-
-# === Required Relationships ===
+id_pattern: s-e009-005
+filename_pattern: s-e009-005-backend-api-endpoints.md
 links_required:
   - type: epic
-    pattern: "epic-TSV-009"
+    pattern: epic-TSV-009
     optional: false
   - type: feature-increment
-    pattern: "fi-TSV-009"
+    pattern: fi-TSV-009
     optional: true
-
-# === Search Optimization ===
 keywords:
   - backend API
   - REST endpoints
@@ -36,7 +27,7 @@ aliases:
 anti_keywords:
   - frontend
   - UI component
-status: Backlog
+status: Done
 ---
 
 # Story: `s-e009-005-backend-api-endpoints`
@@ -52,7 +43,7 @@ status: Backlog
 |-------|-------|
 | **Story ID** | s-e009-005 |
 | **Epic** | epic-TSV-009 |
-| **Status** | Backlog |
+| **Status** | Done|
 | **Estimate** | 8 SP |
 | **Author** | FA |
 | **Sprint** | — |

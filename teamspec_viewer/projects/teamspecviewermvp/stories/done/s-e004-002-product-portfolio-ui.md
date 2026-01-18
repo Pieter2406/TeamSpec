@@ -1,30 +1,21 @@
 ---
-# === LLM Retrieval Metadata ===
 artifact_kind: story
-spec_version: "4.0"
-template_version: "4.0.1"
-title: "Product Portfolio UI Display"
-
-# === Ownership ===
+spec_version: '4.0'
+template_version: 4.0.1
+title: Product Portfolio UI Display
 role_owner: FA
 artifact_type: Project Execution
 canonicality: project-execution
 lifecycle: sprint-bound
-
-# === Naming ===
-id_pattern: "s-e004-002"
-filename_pattern: "s-e004-002-product-portfolio-ui.md"
-
-# === Required Relationships ===
+id_pattern: s-e004-002
+filename_pattern: s-e004-002-product-portfolio-ui.md
 links_required:
   - type: epic
-    pattern: "epic-TSV-004"
+    pattern: epic-TSV-004
     optional: false
   - type: feature-increment
-    pattern: "fi-TSV-004"
+    pattern: fi-TSV-004
     optional: false
-
-# === Search Optimization ===
 keywords:
   - product
   - portfolio
@@ -36,6 +27,7 @@ aliases:
 anti_keywords:
   - full behavior
   - production truth
+status: Ready
 ---
 
 # Story: `s-e004-002-product-portfolio-ui`
@@ -51,7 +43,7 @@ anti_keywords:
 |-------|-------|
 | **Story ID** | s-e004-002 |
 | **Epic** | epic-TSV-004 |
-| **Status** | Done |
+| **Status** | Ready|
 | **Estimate** | 5 SP |
 | **Author** | AI-Generated |
 | **Sprint** | — |

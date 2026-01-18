@@ -52,7 +52,7 @@ anti_keywords:
 | Field | Value |
 |-------|-------|
 | **Dev Plan ID** | dp-e009-s002 |
-| **Story** | [s-e009-002](../stories/backlog/s-e009-002-dev-dashboard-navigation.md) |
+| **Story** | [s-e009-002](../stories/done/s-e009-002-dev-dashboard-navigation.md) |
 | **Epic** | epic-TSV-009 |
 | **Product** | teamspec-viewer (TSV) |
 | **Author** | DEV Agent |
@@ -65,7 +65,7 @@ anti_keywords:
 
 | Story ID | Title | Feature-Increment |
 |----------|-------|-------------------|
-| [s-e009-002](../stories/backlog/s-e009-002-dev-dashboard-navigation.md) | DEV Dashboard Navigation | [fi-TSV-009](../feature-increments/fi-TSV-009-dev-sa-qa-role-dashboards.md) |
+| [s-e009-002](../stories/done/s-e009-002-dev-dashboard-navigation.md) | DEV Dashboard Navigation | [fi-TSV-009](../feature-increments/fi-TSV-009-dev-sa-qa-role-dashboards.md) |
 
 ---
 
