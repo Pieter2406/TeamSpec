@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { AppBar, Toolbar, Typography, Box, Container, IconButton, Tooltip } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
-import { RoleBadge } from '@/components/RoleBadge';
+import { RoleBadge } from './RoleBadge';
 import { SearchBar } from '@/features/search';
 import { IconLegend } from '@/shared/components';
 

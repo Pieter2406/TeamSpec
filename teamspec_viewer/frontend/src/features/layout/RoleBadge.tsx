@@ -5,7 +5,7 @@ import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import CodeIcon from '@mui/icons-material/Code';
 import ArchitectureIcon from '@mui/icons-material/Architecture';
 import BugReportIcon from '@mui/icons-material/BugReport';
-import { useRole } from '../contexts/RoleContext';
+import { useRole } from '@/shared/contexts';
 
 const ROLE_CONFIG: Record<string, { label: string; icon: typeof BusinessIcon; bgColor: string }> = {
     BA: {

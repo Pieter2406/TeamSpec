@@ -15,7 +15,7 @@ import {
 import SearchIcon from '@mui/icons-material/Search';
 import { searchArtifacts, SearchResult, Artifact } from '@/api';
 import { SearchFilters } from './SearchFilters';
-import { ArtifactReader } from '@/components/ArtifactReader';
+import { ArtifactReader } from '@/features/dashboards/components';
 import { getArtifactIcon, ArtifactType } from '@/shared/utils';
 
 interface SearchResultsProps {

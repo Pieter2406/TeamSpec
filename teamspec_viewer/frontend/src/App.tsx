@@ -1,16 +1,14 @@
 import { useState } from 'react';
 import { Box } from '@mui/material';
-import { RoleProvider, useRole } from './contexts/RoleContext';
-import { ToastProvider } from './contexts/ToastContext';
-import { RoleSelector } from './components/RoleSelector';
-import { Header } from './components/Header';
-import { BADashboard } from './components/BADashboard';
-import { FADashboard } from './components/FADashboard';
-import { DEVDashboard } from './components/DEVDashboard';
-import { SADashboard } from './components/SADashboard';
-import { QADashboard } from './components/QADashboard';
-import { SearchResults } from './components/SearchResults';
-import { ProductPortfolio } from './components/ProductPortfolio';
+import { RoleProvider, useRole, ToastProvider } from '@/shared/contexts';
+import { Header, RoleSelector } from '@/features/layout';
+import { BADashboard } from '@/features/dashboards/ba';
+import { FADashboard } from '@/features/dashboards/fa';
+import { DEVDashboard } from '@/features/dashboards/dev';
+import { SADashboard } from '@/features/dashboards/sa';
+import { QADashboard } from '@/features/dashboards/qa';
+import { SearchResults } from '@/features/search';
+import { ProductPortfolio } from '@/features/product-portfolio';
 
 type ViewType = 'dashboard' | 'search' | 'portfolio';
 

@@ -4,7 +4,7 @@ import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import CodeIcon from '@mui/icons-material/Code';
 import ArchitectureIcon from '@mui/icons-material/Architecture';
 import BugReportIcon from '@mui/icons-material/BugReport';
-import { useRole } from '../contexts/RoleContext';
+import { useRole } from '@/shared/contexts';
 
 type ActiveRole = 'BA' | 'FA' | 'DEV' | 'SA' | 'QA';
 
