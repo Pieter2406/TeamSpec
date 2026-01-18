@@ -18,12 +18,24 @@ import {
     Artifact,
     ArtifactsResponse,
     ScopedArtifactsResponse,
+    updateArtifactStatus,
 } from '../api/artifacts';
 import { getArtifactIcon } from '../utils/artifactIcons';
 import { StatusDropdown } from './StatusDropdown';
 import { TBDIndicator } from './TBDIndicator';
 import { useToast } from '../contexts/ToastContext';
 import { isTerminalState, getStatePriority } from '../constants/stateOrdering';
+
+// ============================================================================
+// Status State Types
+// ============================================================================
+
+interface NodeStatusState {
+    [path: string]: {
+        status: string;
+        loading: boolean;
+    };
+}
 
 // ============================================================================
 // Types
@@ -51,6 +63,8 @@ interface DEVTreeProps {
     showCompleted?: boolean;
     /** Project ID to search for stories and dev plans */
     projectId: string;
+    /** Callback after successful status update */
+    onStatusUpdate?: () => void;
 }
 
 // ============================================================================
@@ -73,6 +87,7 @@ function NodeLabel({ icon, title, badge, statusElement, hasTBD }: NodeLabelProps
                 alignItems: 'center',
                 gap: 1,
                 py: 0.5,
+                width: '100%', // Fill the label width for proper flex alignment
             }}
         >
             <Box sx={{ color: '#64748b', display: 'flex', alignItems: 'center' }}>
@@ -122,11 +137,13 @@ export function DEVTree({
     onNodeSelect,
     showCompleted = true,
     projectId,
+    onStatusUpdate,
 }: DEVTreeProps) {
     const [storiesWithDevPlans, setStoriesWithDevPlans] = useState<StoryWithDevPlans[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [expandedItems, setExpandedItems] = useState<string[]>([]);
+    const [statusStates, setStatusStates] = useState<NodeStatusState>({});
     const { showError } = useToast();
 
     // Get icon configurations
@@ -215,7 +232,7 @@ export function DEVTree({
                 const storiesWithPlans: StoryWithDevPlans[] = uniqueStories.map(story => {
                     const storyNums = getStoryNumbers(story.id);
                     let matchingDevPlans: Artifact[] = [];
-                    
+
                     if (storyNums) {
                         // Match dev plans with pattern dp-eXXX-sYYY
                         const dpPattern = new RegExp(`^dp-e${storyNums.epicNum}-s${storyNums.storyNum}`, 'i');
@@ -241,7 +258,7 @@ export function DEVTree({
             .finally(() => {
                 setLoading(false);
             });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [epicArtifact, projectId, getEpicNumber, getStoryEpicNumber, getStoryNumbers]);
 
     // Build node data for click handlers
@@ -268,6 +285,59 @@ export function DEVTree({
             onNodeSelect(nodeData);
         }
     }, [onNodeSelect]);
+
+    // Handle status change (s-e009-007)
+    const handleStatusChange = useCallback(async (
+        path: string,
+        _artifactType: string,
+        currentStatus: string,
+        newStatus: string
+    ) => {
+        // Optimistic update
+        setStatusStates(prev => ({
+            ...prev,
+            [path]: { status: newStatus, loading: true },
+        }));
+
+        try {
+            const result = await updateArtifactStatus(path, newStatus);
+
+            if (result.success) {
+                setStatusStates(prev => ({
+                    ...prev,
+                    [path]: { status: newStatus, loading: false },
+                }));
+                // Trigger parent refresh
+                if (onStatusUpdate) {
+                    onStatusUpdate();
+                }
+            } else {
+                // Rollback on error
+                setStatusStates(prev => ({
+                    ...prev,
+                    [path]: { status: currentStatus, loading: false },
+                }));
+                showError(result.error || 'Failed to update status');
+            }
+        } catch (err) {
+            // Rollback on network error
+            setStatusStates(prev => ({
+                ...prev,
+                [path]: { status: currentStatus, loading: false },
+            }));
+            showError('Network error: Failed to update status');
+        }
+    }, [showError, onStatusUpdate]);
+
+    // Get effective status (from local state or original)
+    const getEffectiveStatus = useCallback((path: string, originalStatus?: string) => {
+        return statusStates[path]?.status || originalStatus || '';
+    }, [statusStates]);
+
+    // Check if loading
+    const isStatusLoading = useCallback((path: string) => {
+        return statusStates[path]?.loading || false;
+    }, [statusStates]);
 
     // Filter and sort stories (keeping dev plans)
     const visibleStories = useMemo(() => {
@@ -341,21 +411,22 @@ export function DEVTree({
     );
 
     return (
-        <SimpleTreeView
-            expandedItems={expandedItems}
-            onExpandedItemsChange={(_, items) => setExpandedItems(items)}
-            sx={{
-                '& .MuiTreeItem-content': {
-                    py: 0.5,
-                    px: 1,
-                    borderRadius: 1,
-                    '&:hover': { bgcolor: '#f1f5f9' },
-                },
-                '& .MuiTreeItem-label': {
-                    fontSize: '0.875rem',
-                },
-            }}
-        >
+        <Box sx={{ p: 1 }}>
+            <SimpleTreeView
+                expandedItems={expandedItems}
+                onExpandedItemsChange={(_, items) => setExpandedItems(items)}
+                sx={{
+                    '& .MuiTreeItem-content': {
+                        borderRadius: 1,
+                        '&:hover': {
+                            bgcolor: '#f1f5f9',
+                        },
+                    },
+                    '& .MuiTreeItem-label': {
+                        fontSize: '0.875rem',
+                    },
+                }}
+            >
             {/* Epic Node */}
             <TreeItem
                 itemId={`epic-${epicArtifact.id}`}
@@ -368,10 +439,16 @@ export function DEVTree({
                             statusElement={
                                 epicArtifact.status && (
                                     <StatusDropdown
-                                        currentStatus={epicArtifact.status}
+                                        currentStatus={getEffectiveStatus(epicArtifact.path, epicArtifact.status)}
                                         artifactType="epic"
-                                        onStatusChange={() => {}}
-                                        disabled={true}
+                                        onStatusChange={(newStatus) => handleStatusChange(
+                                            epicArtifact.path,
+                                            'epic',
+                                            getEffectiveStatus(epicArtifact.path, epicArtifact.status),
+                                            newStatus
+                                        )}
+                                        loading={isStatusLoading(epicArtifact.path)}
+                                        size="small"
                                     />
                                 )
                             }
@@ -406,10 +483,16 @@ export function DEVTree({
                                         statusElement={
                                             story.status && (
                                                 <StatusDropdown
-                                                    currentStatus={story.status}
+                                                    currentStatus={getEffectiveStatus(story.path, story.status)}
                                                     artifactType="story"
-                                                    onStatusChange={() => {}}
-                                                    disabled={true}
+                                                    onStatusChange={(newStatus) => handleStatusChange(
+                                                        story.path,
+                                                        'story',
+                                                        getEffectiveStatus(story.path, story.status),
+                                                        newStatus
+                                                    )}
+                                                    loading={isStatusLoading(story.path)}
+                                                    size="small"
                                                 />
                                             )
                                         }
@@ -441,10 +524,16 @@ export function DEVTree({
                                                     statusElement={
                                                         dp.status && (
                                                             <StatusDropdown
-                                                                currentStatus={dp.status}
+                                                                currentStatus={getEffectiveStatus(dp.path, dp.status)}
                                                                 artifactType="dev-plan"
-                                                                onStatusChange={() => {}}
-                                                                disabled={true}
+                                                                onStatusChange={(newStatus) => handleStatusChange(
+                                                                    dp.path,
+                                                                    'dev-plan',
+                                                                    getEffectiveStatus(dp.path, dp.status),
+                                                                    newStatus
+                                                                )}
+                                                                loading={isStatusLoading(dp.path)}
+                                                                size="small"
                                                             />
                                                         )
                                                     }
@@ -483,5 +572,6 @@ export function DEVTree({
                 )}
             </TreeItem>
         </SimpleTreeView>
+        </Box>
     );
 }

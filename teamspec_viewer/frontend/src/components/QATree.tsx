@@ -10,7 +10,7 @@
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Box, Typography, Skeleton, CircularProgress, Chip } from '@mui/material';
+import { Box, Typography, Skeleton, CircularProgress } from '@mui/material';
 import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView';
 import { TreeItem } from '@mui/x-tree-view/TreeItem';
 import {
@@ -18,12 +18,24 @@ import {
     getRegressionTests,
     Artifact,
     ScopedArtifactsResponse,
+    updateArtifactStatus,
 } from '../api/artifacts';
 import { getArtifactIcon } from '../utils/artifactIcons';
 import { StatusDropdown } from './StatusDropdown';
 import { TBDIndicator } from './TBDIndicator';
 import { useToast } from '../contexts/ToastContext';
 import { isTerminalState, getStatePriority } from '../constants/stateOrdering';
+
+// ============================================================================
+// Status State Types
+// ============================================================================
+
+interface NodeStatusState {
+    [path: string]: {
+        status: string;
+        loading: boolean;
+    };
+}
 
 // ============================================================================
 // Types
@@ -49,6 +61,8 @@ interface QATreeProps {
     showCompleted?: boolean;
     /** Project ID for test cases, Product ID for regression tests */
     scopeId: string;
+    /** Callback after successful status update */
+    onStatusUpdate?: () => void;
 }
 
 // ============================================================================
@@ -121,11 +135,13 @@ export function QATree({
     onNodeSelect,
     showCompleted = true,
     scopeId,
+    onStatusUpdate,
 }: QATreeProps) {
     const [childArtifacts, setChildArtifacts] = useState<Artifact[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [expandedItems, setExpandedItems] = useState<string[]>([]);
+    const [statusStates, setStatusStates] = useState<NodeStatusState>({});
     const { showError } = useToast();
 
     // Get icon configurations based on tree type
@@ -155,11 +171,11 @@ export function QATree({
         setError(null);
 
         const fetchArtifacts = treeType === 'fi' ? getTestCases : getRegressionTests;
-        
+
         fetchArtifacts(scopeId)
             .then((response: ScopedArtifactsResponse) => {
                 const parentId = parentArtifact.id.replace(/\.md$/, '');
-                
+
                 let relevantArtifacts: Artifact[] = [];
                 if (treeType === 'fi') {
                     // Test cases pattern: tc-fi-TSV-001-xxx matches fi-TSV-001
@@ -184,7 +200,7 @@ export function QATree({
                         });
                     }
                 }
-                
+
                 setChildArtifacts(relevantArtifacts);
                 // Auto-expand parent node
                 setExpandedItems([`parent-${parentArtifact.id}`]);
@@ -222,6 +238,56 @@ export function QATree({
             onNodeSelect(nodeData);
         }
     }, [onNodeSelect]);
+
+    // Handle status change (s-e009-007)
+    const handleStatusChange = useCallback(async (
+        path: string,
+        _artifactType: string,
+        currentStatus: string,
+        newStatus: string
+    ) => {
+        // Optimistic update
+        setStatusStates(prev => ({
+            ...prev,
+            [path]: { status: newStatus, loading: true },
+        }));
+
+        try {
+            const result = await updateArtifactStatus(path, newStatus);
+
+            if (result.success) {
+                setStatusStates(prev => ({
+                    ...prev,
+                    [path]: { status: newStatus, loading: false },
+                }));
+                if (onStatusUpdate) {
+                    onStatusUpdate();
+                }
+            } else {
+                setStatusStates(prev => ({
+                    ...prev,
+                    [path]: { status: currentStatus, loading: false },
+                }));
+                showError(result.error || 'Failed to update status');
+            }
+        } catch (err) {
+            setStatusStates(prev => ({
+                ...prev,
+                [path]: { status: currentStatus, loading: false },
+            }));
+            showError('Network error: Failed to update status');
+        }
+    }, [showError, onStatusUpdate]);
+
+    // Get effective status (from local state or original)
+    const getEffectiveStatus = useCallback((path: string, originalStatus?: string) => {
+        return statusStates[path]?.status || originalStatus || '';
+    }, [statusStates]);
+
+    // Check if loading
+    const isStatusLoading = useCallback((path: string) => {
+        return statusStates[path]?.loading || false;
+    }, [statusStates]);
 
     // Filter and sort children
     const visibleChildren = useMemo(() => {
@@ -288,21 +354,22 @@ export function QATree({
     const childTypeName = treeType === 'fi' ? 'test case' : 'regression test';
 
     return (
-        <SimpleTreeView
-            expandedItems={expandedItems}
-            onExpandedItemsChange={(_, items) => setExpandedItems(items)}
-            sx={{
-                '& .MuiTreeItem-content': {
-                    py: 0.5,
-                    px: 1,
-                    borderRadius: 1,
-                    '&:hover': { bgcolor: '#f1f5f9' },
-                },
-                '& .MuiTreeItem-label': {
-                    fontSize: '0.875rem',
-                },
-            }}
-        >
+        <Box sx={{ p: 1 }}>
+            <SimpleTreeView
+                expandedItems={expandedItems}
+                onExpandedItemsChange={(_, items) => setExpandedItems(items)}
+                sx={{
+                    '& .MuiTreeItem-content': {
+                        borderRadius: 1,
+                        '&:hover': {
+                            bgcolor: '#f1f5f9',
+                        },
+                    },
+                    '& .MuiTreeItem-label': {
+                        fontSize: '0.875rem',
+                    },
+                }}
+            >
             {/* Parent Node (FI or Feature) */}
             <TreeItem
                 itemId={`parent-${parentArtifact.id}`}
@@ -315,10 +382,16 @@ export function QATree({
                             statusElement={
                                 parentArtifact.status && (
                                     <StatusDropdown
-                                        currentStatus={parentArtifact.status}
+                                        currentStatus={getEffectiveStatus(parentArtifact.path, parentArtifact.status)}
                                         artifactType={treeType === 'fi' ? 'feature-increment' : 'feature'}
-                                        onStatusChange={() => {}}
-                                        disabled={true}
+                                        onStatusChange={(newStatus) => handleStatusChange(
+                                            parentArtifact.path,
+                                            treeType === 'fi' ? 'feature-increment' : 'feature',
+                                            getEffectiveStatus(parentArtifact.path, parentArtifact.status),
+                                            newStatus
+                                        )}
+                                        loading={isStatusLoading(parentArtifact.path)}
+                                        size="small"
                                     />
                                 )
                             }
@@ -348,18 +421,17 @@ export function QATree({
                                         title={child.title}
                                         statusElement={
                                             child.status && (
-                                                <Chip
-                                                    label={child.status}
+                                                <StatusDropdown
+                                                    currentStatus={getEffectiveStatus(child.path, child.status)}
+                                                    artifactType={treeType === 'fi' ? 'test-case' : 'regression-test'}
+                                                    onStatusChange={(newStatus) => handleStatusChange(
+                                                        child.path,
+                                                        treeType === 'fi' ? 'test-case' : 'regression-test',
+                                                        getEffectiveStatus(child.path, child.status),
+                                                        newStatus
+                                                    )}
+                                                    loading={isStatusLoading(child.path)}
                                                     size="small"
-                                                    sx={{
-                                                        height: 20,
-                                                        fontSize: '0.65rem',
-                                                        fontWeight: 600,
-                                                        bgcolor: child.status === 'Pass' ? '#dcfce7' :
-                                                                 child.status === 'Fail' ? '#fee2e2' : '#f1f5f9',
-                                                        color: child.status === 'Pass' ? '#166534' :
-                                                               child.status === 'Fail' ? '#991b1b' : '#64748b',
-                                                    }}
                                                 />
                                             )
                                         }
@@ -383,5 +455,6 @@ export function QATree({
                 )}
             </TreeItem>
         </SimpleTreeView>
+        </Box>
     );
 }
