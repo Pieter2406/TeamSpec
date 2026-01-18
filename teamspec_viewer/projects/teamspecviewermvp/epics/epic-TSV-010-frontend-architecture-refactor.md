@@ -123,14 +123,18 @@ _Stories belonging to this Epic follow the naming pattern `s-e010-YYY-descriptio
 
 | Story ID | Description | Status | Sprint | Estimate |
 |----------|-------------|--------|--------|----------|
-| {TBD} | Create `shared/components` + barrel exports | {TBD} | {TBD} | {TBD} |
-| {TBD} | Move FA/BA dashboard modules to `features/dashboards` | {TBD} | {TBD} | {TBD} |
-| {TBD} | Move DEV/SA/QA modules + unify tree/status usage | {TBD} | {TBD} | {TBD} |
-| {TBD} | Configure path aliases and update imports | {TBD} | {TBD} | {TBD} |
+| [s-e010-001](../stories/backlog/s-e010-001-setup-folder-structure-aliases.md) | Setup folder structure and path aliases | Backlog | — | 2 |
+| [s-e010-002](../stories/backlog/s-e010-002-migrate-shared-module.md) | Migrate shared module (contexts, hooks, utils, constants) | Backlog | — | 3 |
+| [s-e010-003](../stories/backlog/s-e010-003-migrate-shared-components.md) | Migrate shared components (ArtifactTree, ArtifactReader, StatusDropdown, TBDIndicator) | Backlog | — | 5 |
+| [s-e010-004](../stories/backlog/s-e010-004-migrate-feature-modules.md) | Migrate feature modules (layout, search, product-portfolio) | Backlog | — | 5 |
+| [s-e010-005](../stories/backlog/s-e010-005-migrate-dashboard-shared-components.md) | Migrate dashboard shared components (QuickViewPanel, LinkedStoriesPanel, FiltersPanel) | Backlog | — | 3 |
+| [s-e010-006](../stories/backlog/s-e010-006-migrate-dashboard-role-modules.md) | Migrate dashboard role modules (FA/BA/DEV/SA/QA dashboards + trees) | Backlog | — | 8 |
+| [s-e010-007](../stories/backlog/s-e010-007-migrate-api-module-cleanup.md) | Migrate API module + cleanup old files | Backlog | — | 5 |
 
-**Total Stories:** {TBD}  
-**Completed:** {TBD}  
-**Remaining:** {TBD}
+**Total Stories:** 7  
+**Total Story Points:** 31  
+**Completed:** 0  
+**Remaining:** 7
 
 ---
 
